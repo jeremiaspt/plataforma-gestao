@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { hasRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { appRedirectUrl } from "@/lib/url";
 
 export async function POST(request: Request) {
   const currentUser = await requireUser();
 
   if (!hasRole(currentUser, "admin")) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+    return NextResponse.redirect(appRedirectUrl("/dashboard", request));
   }
 
   const formData = await request.formData();
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
   const roleKeys = formData.getAll("roles").map(String);
 
   if (!name || !email || password.length < 8 || roleKeys.length === 0) {
-    return NextResponse.redirect(new URL("/utilizadores", request.url));
+    return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
   }
 
   const passwordHash = await bcrypt.hash(password, 12);
@@ -38,5 +39,5 @@ export async function POST(request: Request) {
     }
   });
 
-  return NextResponse.redirect(new URL("/utilizadores", request.url));
+  return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
 }
