@@ -47,8 +47,17 @@ export async function POST(
   const description = String(formData.get("description") || "").trim();
   const credits = Number(formData.get("credits"));
   const price = Number(formData.get("price"));
+  const teacherPrice = Number(formData.get("teacherPrice"));
 
-  if (!description || !Number.isInteger(credits) || credits < 1 || !Number.isFinite(price) || price < 0) {
+  if (
+    !description ||
+    !Number.isInteger(credits) ||
+    credits < 1 ||
+    !Number.isFinite(price) ||
+    price < 0 ||
+    !Number.isFinite(teacherPrice) ||
+    teacherPrice < 0
+  ) {
     return redirectPath(request, "error");
   }
 
@@ -68,7 +77,8 @@ export async function POST(
     data: {
       description,
       credits,
-      price
+      price,
+      teacherPrice
     }
   });
 
