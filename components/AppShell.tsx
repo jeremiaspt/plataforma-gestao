@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, LogOut, Users } from "lucide-react";
+import { LayoutDashboard, LogOut, UserRound, Users } from "lucide-react";
 
 export function AppShell({
   children,
@@ -20,6 +20,10 @@ export function AppShell({
           <Link href="/utilizadores">
             <Users size={18} />
             Utilizadores
+          </Link>
+          <Link href="/conta">
+            <UserRound size={18} />
+            A minha conta
           </Link>
           <form action="/api/auth/logout" method="post">
             <button type="submit">

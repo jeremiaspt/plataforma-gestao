@@ -193,6 +193,11 @@ h1 {
   font-size: 14px;
 }
 
+.success {
+  color: var(--primary-dark);
+  font-size: 14px;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -236,6 +241,71 @@ h1 {
   padding: 10px;
 }
 
+.compact {
+  grid-template-columns: 1fr;
+}
+
+.user-edit {
+  margin: 0;
+}
+
+.user-edit-grid {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1.1fr 1.3fr 1fr 1.4fr 80px 260px;
+}
+
+.user-edit-grid input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.action-row .button {
+  min-height: 36px;
+  padding: 8px 10px;
+}
+
+.danger {
+  background: var(--danger);
+}
+
+.danger:hover {
+  background: #8f1d14;
+}
+
+.status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 700;
+  justify-content: center;
+  padding: 6px 9px;
+}
+
+.status.active {
+  background: #e6f5f2;
+  color: #0f766e;
+}
+
+.status.inactive {
+  background: #fee4e2;
+  color: var(--danger);
+}
+
+.account-form {
+  margin-top: 18px;
+  max-width: 460px;
+}
+
 @media (max-width: 780px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -246,6 +316,10 @@ h1 {
   }
 
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-edit-grid {
     grid-template-columns: 1fr;
   }
 

@@ -71,22 +71,48 @@ export default async function UsersPage() {
               <th>Email</th>
               <th>Contacto</th>
               <th>Categorias</th>
+              <th>Estado</th>
+              <th>Ações</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td>{user.name}</td>
-                <td>{user.email}</td>
-                <td>{user.phone || "-"}</td>
-                <td>
-                  <div className="badge-row">
-                    {user.roles.map((userRole) => (
-                      <span className="badge" key={userRole.role.id}>
-                        {userRole.role.name}
+                <td colSpan={6}>
+                  <form className="user-edit" action={`/api/users/${user.id}`} method="post">
+                    <div className="user-edit-grid">
+                      <input name="name" defaultValue={user.name} required />
+                      <input name="email" type="email" defaultValue={user.email} required />
+                      <input name="phone" defaultValue={user.phone || ""} />
+                      <div className="checkbox-grid compact">
+                        {roleOptions.map((role) => (
+                          <label className="checkbox" key={role.key}>
+                            <input
+                              type="checkbox"
+                              name="roles"
+                              value={role.key}
+                              defaultChecked={user.roles.some((userRole) => userRole.role.key === role.key)}
+                            />
+                            {role.label}
+                          </label>
+                        ))}
+                      </div>
+                      <span className={user.active ? "status active" : "status inactive"}>
+                        {user.active ? "Ativo" : "Inativo"}
                       </span>
-                    ))}
-                  </div>
+                      <div className="action-row">
+                        <button className="button secondary" name="action" value="update" type="submit">
+                          Guardar
+                        </button>
+                        <button className="button secondary" name="action" value="toggle-active" type="submit">
+                          {user.active ? "Desativar" : "Ativar"}
+                        </button>
+                        <button className="button danger" name="action" value="delete" type="submit">
+                          Remover
+                        </button>
+                      </div>
+                    </div>
+                  </form>
                 </td>
               </tr>
             ))}
