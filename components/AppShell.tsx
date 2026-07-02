@@ -29,6 +29,10 @@ export function AppShell({
             <Dumbbell size={18} />
             Treinos Personalizados
           </Link>
+          <Link href="/treinos-personalizados/pagamentos">
+            <Dumbbell size={18} />
+            Pagamentos TP
+          </Link>
           <Link href="/conta">
             <UserRound size={18} />
             A minha conta

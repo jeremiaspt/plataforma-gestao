@@ -4,6 +4,8 @@ import { requireUser } from "@/lib/auth";
 const toolCards = [
   { title: "Utilizadores", description: "Criar, editar e autorizar acessos.", role: "admin", href: "/utilizadores" },
   { title: "Treinos Personalizados", description: "Configurar pagamentos e créditos.", role: "admin", href: "/treinos-personalizados/tipos" },
+  { title: "Pagamentos TP", description: "Lançar pagamentos de treinos personalizados.", role: "recepcao", href: "/treinos-personalizados/pagamentos" },
+  { title: "Pagamentos TP", description: "Consultar pagamentos lançados.", role: "professor", href: "/treinos-personalizados/pagamentos" },
   { title: "Piscina 25m", description: "Mapa de disponibilidade por pista e dia.", role: "professor", href: "/piscina-25m" },
   { title: "Piscina 25m", description: "Mapa de disponibilidade por pista e dia.", role: "recepcao", href: "/piscina-25m" },
   { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#" },

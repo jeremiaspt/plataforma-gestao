@@ -16,6 +16,8 @@ model User {
   active             Boolean             @default(true)
   roles              UserRole[]
   poolScheduleBlocks PoolScheduleBlock[]
+  personalTrainingPaymentsAsTeacher PersonalTrainingPayment[] @relation("PersonalTrainingTeacher")
+  personalTrainingPaymentsCreated    PersonalTrainingPayment[] @relation("PersonalTrainingCreatedBy")
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
 }
@@ -79,6 +81,40 @@ model PersonalTrainingPaymentType {
   price       Decimal  @default(0) @db.Decimal(10, 2)
   teacherPrice Decimal @default(0) @db.Decimal(10, 2)
   active      Boolean  @default(true)
+  payments    PersonalTrainingPayment[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model PersonalTrainingStudent {
+  id            String   @id @default(cuid())
+  memberNumber  String   @unique
+  fullName      String
+  payments      PersonalTrainingPayment[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model PersonalTrainingPayment {
+  id              String                      @id @default(cuid())
+  teacherId       String
+  teacher         User                        @relation("PersonalTrainingTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  studentId       String
+  student         PersonalTrainingStudent     @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  paymentTypeId   String
+  paymentType     PersonalTrainingPaymentType @relation(fields: [paymentTypeId], references: [id], onDelete: Restrict)
+  quantity        Int
+  creditsPerUnit  Int
+  totalCredits    Int
+  pricePerUnit    Decimal                     @db.Decimal(10, 2)
+  totalPrice      Decimal                     @db.Decimal(10, 2)
+  teacherPricePerUnit Decimal                  @db.Decimal(10, 2)
+  teacherTotal    Decimal                     @db.Decimal(10, 2)
+  createdById     String?
+  createdBy       User?                       @relation("PersonalTrainingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt       DateTime                    @default(now())
+  updatedAt       DateTime                    @updatedAt
+
+  @@index([teacherId, studentId])
+  @@index([createdAt])
 }

@@ -492,6 +492,59 @@ h1 {
   flex-wrap: nowrap;
 }
 
+.teacher-filter {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 420px) auto;
+  margin: 18px 0;
+}
+
+.payment-launch-form {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) 150px minmax(220px, 1fr) minmax(320px, 1.4fr) 120px auto;
+}
+
+.payment-launch-form .wide {
+  min-width: 0;
+}
+
+.payments-table {
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.payments-header,
+.payments-row {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 90px 170px 220px minmax(360px, 1fr) 60px 80px 120px 140px;
+  min-width: 1240px;
+}
+
+.payments-header {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.payments-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.payments-row small {
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
+}
+
 @media (max-width: 780px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -515,6 +568,11 @@ h1 {
 
   .payment-type-form,
   .payment-type-create {
+    grid-template-columns: 1fr;
+  }
+
+  .teacher-filter,
+  .payment-launch-form {
     grid-template-columns: 1fr;
   }
 
