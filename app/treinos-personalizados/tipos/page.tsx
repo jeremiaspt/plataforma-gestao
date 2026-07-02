@@ -26,7 +26,7 @@ export default async function PersonalTrainingTypesPage({
           <div>
             <p className="eyebrow">Treinos Personalizados</p>
             <h1>Tipos de pagamento</h1>
-            <p className="muted">Define as descrições disponíveis e quantos créditos cada pagamento atribui.</p>
+            <p className="muted">Define as descrições disponíveis, créditos e valor de cada pagamento.</p>
           </div>
           <form action="/api/personal-training/payment-types/defaults" method="post">
             <button className="button secondary" type="submit">
@@ -36,7 +36,7 @@ export default async function PersonalTrainingTypesPage({
         </div>
 
         {params.success ? <p className="success">Alterações guardadas.</p> : null}
-        {params.error ? <p className="error">Não foi possível guardar. Confirma a descrição e os créditos.</p> : null}
+        {params.error ? <p className="error">Não foi possível guardar. Confirma a descrição, créditos e valor.</p> : null}
 
         <form className="payment-type-form" action="/api/personal-training/payment-types" method="post">
           <div className="field">
@@ -46,6 +46,10 @@ export default async function PersonalTrainingTypesPage({
           <div className="field">
             <label htmlFor="credits">Créditos</label>
             <input id="credits" name="credits" type="number" min="1" step="1" required />
+          </div>
+          <div className="field">
+            <label htmlFor="price">Valor (€)</label>
+            <input id="price" name="price" type="number" min="0" step="0.01" required />
           </div>
           <button className="button" type="submit">
             Criar tipo
@@ -60,6 +64,7 @@ export default async function PersonalTrainingTypesPage({
             <tr>
               <th>Descrição</th>
               <th>Créditos</th>
+              <th>Valor</th>
               <th>Estado</th>
               <th>Ações</th>
             </tr>
@@ -67,10 +72,11 @@ export default async function PersonalTrainingTypesPage({
           <tbody>
             {paymentTypes.map((paymentType) => (
               <tr key={paymentType.id}>
-                <td colSpan={4}>
+                <td colSpan={5}>
                   <form className="payment-type-row" action={`/api/personal-training/payment-types/${paymentType.id}`} method="post">
                     <input name="description" defaultValue={paymentType.description} required />
                     <input name="credits" type="number" min="1" step="1" defaultValue={paymentType.credits} required />
+                    <input name="price" type="number" min="0" step="0.01" defaultValue={paymentType.price.toString()} required />
                     <span className={paymentType.active ? "status active" : "status inactive"}>
                       {paymentType.active ? "Ativo" : "Inativo"}
                     </span>

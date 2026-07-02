@@ -446,7 +446,7 @@ h1 {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: 1fr 140px auto;
+  grid-template-columns: 1fr 140px 140px auto;
   margin-top: 18px;
 }
 
@@ -454,7 +454,7 @@ h1 {
   align-items: start;
   display: grid;
   gap: 10px;
-  grid-template-columns: 1fr 110px 90px 260px;
+  grid-template-columns: 1fr 110px 120px 90px 260px;
 }
 
 .payment-type-row input {

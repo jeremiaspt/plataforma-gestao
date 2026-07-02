@@ -76,6 +76,7 @@ model PersonalTrainingPaymentType {
   id          String   @id @default(cuid())
   description String   @unique
   credits     Int
+  price       Decimal  @default(0) @db.Decimal(10, 2)
   active      Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
