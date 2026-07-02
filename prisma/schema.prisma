@@ -8,15 +8,16 @@ datasource db {
 }
 
 model User {
-  id           String     @id @default(cuid())
-  name         String
-  email        String     @unique
-  phone        String?
-  passwordHash String
-  active       Boolean    @default(true)
-  roles        UserRole[]
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+  id                 String              @id @default(cuid())
+  name               String
+  email              String              @unique
+  phone              String?
+  passwordHash       String
+  active             Boolean             @default(true)
+  roles              UserRole[]
+  poolScheduleBlocks PoolScheduleBlock[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 }
 
 model Role {
@@ -52,4 +53,21 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+}
+
+model PoolScheduleBlock {
+  id           String   @id @default(cuid())
+  weekday      Int
+  laneNumber   Int
+  startMinutes Int
+  endMinutes   Int
+  title        String
+  type         String
+  notes        String?
+  createdById  String?
+  createdBy    User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([weekday, laneNumber, startMinutes, endMinutes])
 }

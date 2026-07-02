@@ -26,7 +26,8 @@ a {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -154,7 +155,8 @@ h1 {
   font-weight: 700;
 }
 
-.field input {
+.field input,
+.field select {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   padding: 11px 12px;
@@ -306,6 +308,140 @@ h1 {
   max-width: 460px;
 }
 
+.day-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.day-tab {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #334155;
+  font-weight: 700;
+  padding: 9px 12px;
+}
+
+.day-tab.active,
+.day-tab:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.pool-form {
+  align-items: end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr 1fr 1.2fr auto;
+}
+
+.pool-panel {
+  margin-top: 16px;
+}
+
+.pool-table-wrap {
+  max-height: 72vh;
+  overflow: auto;
+}
+
+.pool-table {
+  border-collapse: collapse;
+  min-width: 920px;
+  width: 100%;
+}
+
+.pool-table th,
+.pool-table td {
+  border: 1px solid var(--line);
+  min-width: 120px;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pool-table thead th,
+.pool-table tbody th {
+  background: #f8fafc;
+  position: sticky;
+  z-index: 1;
+}
+
+.pool-table thead th {
+  top: 0;
+}
+
+.pool-table tbody th {
+  left: 0;
+  min-width: 76px;
+}
+
+.pool-cell {
+  background: #ffffff;
+  height: 34px;
+}
+
+.pool-cell.occupied {
+  color: #102a43;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.pool-cell.occupied strong,
+.pool-cell.occupied small {
+  display: block;
+}
+
+.pool-cell.occupied small {
+  color: #475569;
+  margin-top: 2px;
+}
+
+.type-aula {
+  background: #dff3ff;
+}
+
+.type-treino {
+  background: #e7f8ec;
+}
+
+.type-aluguer {
+  background: #fff4d6;
+}
+
+.type-manutencao {
+  background: #fee4e2;
+}
+
+.type-evento {
+  background: #ede9fe;
+}
+
+.type-outro {
+  background: #e2e8f0;
+}
+
+.schedule-list {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.schedule-item {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.schedule-item p {
+  margin: 4px 0 0;
+}
+
 @media (max-width: 780px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -321,6 +457,15 @@ h1 {
 
   .user-edit-grid {
     grid-template-columns: 1fr;
+  }
+
+  .pool-form {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-item {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .topbar {
