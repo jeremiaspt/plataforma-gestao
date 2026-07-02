@@ -71,3 +71,12 @@ model PoolScheduleBlock {
 
   @@index([weekday, laneNumber, startMinutes, endMinutes])
 }
+
+model PersonalTrainingPaymentType {
+  id          String   @id @default(cuid())
+  description String   @unique
+  credits     Int
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

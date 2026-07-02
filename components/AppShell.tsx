@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, LogOut, UserRound, Users, Waves } from "lucide-react";
+import { Dumbbell, LayoutDashboard, LogOut, UserRound, Users, Waves } from "lucide-react";
 
 export function AppShell({
   children,
@@ -24,6 +24,10 @@ export function AppShell({
           <Link href="/piscina-25m">
             <Waves size={18} />
             Piscina 25m
+          </Link>
+          <Link href="/treinos-personalizados/tipos">
+            <Dumbbell size={18} />
+            Treinos Personalizados
           </Link>
           <Link href="/conta">
             <UserRound size={18} />

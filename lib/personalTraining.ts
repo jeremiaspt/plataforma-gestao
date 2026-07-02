@@ -1,0 +1,23 @@
+export const defaultPersonalTrainingPaymentTypes = [
+  { description: "Natação TP Individual 30M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Individual 45M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Individual 60M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Individual 30M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Individual 45M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Individual 60M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Pares 30M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Pares 45M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Pares 60M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Pares 30M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Pares 45M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Pares 60M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Trio 30M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Trio 45M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Trio 60M - 10 Sessões", credits: 10 },
+  { description: "Natação TP Trio 30M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Trio 45M - 1 Sessão", credits: 1 },
+  { description: "Natação TP Trio 60M - 1 Sessão", credits: 1 },
+  { description: "Natação ITR - Individual 45 min - 1x Semana", credits: 1 },
+  { description: "Natação ITR - Individual 30 min - 1x Semana", credits: 1 },
+  { description: "Natação ITR - Grupo 45 min - 1x Semana", credits: 1 }
+];
