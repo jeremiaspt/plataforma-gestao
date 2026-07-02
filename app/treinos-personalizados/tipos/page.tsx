@@ -38,7 +38,7 @@ export default async function PersonalTrainingTypesPage({
         {params.success ? <p className="success">Alterações guardadas.</p> : null}
         {params.error ? <p className="error">Não foi possível guardar. Confirma a descrição, créditos e valor.</p> : null}
 
-        <form className="payment-type-form" action="/api/personal-training/payment-types" method="post">
+        <form className="payment-type-form stacked" action="/api/personal-training/payment-types" method="post">
           <div className="field">
             <label htmlFor="description">Descrição</label>
             <input id="description" name="description" required />
@@ -49,7 +49,7 @@ export default async function PersonalTrainingTypesPage({
           </div>
           <div className="field">
             <label htmlFor="price">Valor (€)</label>
-            <input id="price" name="price" type="number" min="0" step="0.01" required />
+            <input id="price" name="price" type="number" min="0" step="0.01" defaultValue="0.00" placeholder="0.00" required />
           </div>
           <button className="button" type="submit">
             Criar tipo
@@ -76,7 +76,10 @@ export default async function PersonalTrainingTypesPage({
                   <form className="payment-type-row" action={`/api/personal-training/payment-types/${paymentType.id}`} method="post">
                     <input name="description" defaultValue={paymentType.description} required />
                     <input name="credits" type="number" min="1" step="1" defaultValue={paymentType.credits} required />
-                    <input name="price" type="number" min="0" step="0.01" defaultValue={paymentType.price.toString()} required />
+                    <label className="inline-field">
+                      <span>Valor (€)</span>
+                      <input name="price" type="number" min="0" step="0.01" defaultValue={paymentType.price.toString()} required />
+                    </label>
                     <span className={paymentType.active ? "status active" : "status inactive"}>
                       {paymentType.active ? "Ativo" : "Inativo"}
                     </span>
