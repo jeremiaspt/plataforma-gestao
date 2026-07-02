@@ -315,6 +315,24 @@ h1 {
   margin: 18px 0;
 }
 
+.date-nav {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.date-picker {
+  align-items: flex-end;
+  display: flex;
+  gap: 10px;
+}
+
+.date-picker .field {
+  min-width: 180px;
+}
+
 .day-tab {
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -331,7 +349,7 @@ h1 {
 }
 
 .pool-form {
-  align-items: end;
+  align-items: flex-end;
   display: grid;
   gap: 12px;
   grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr 1fr 1.2fr auto;
@@ -398,6 +416,14 @@ h1 {
   margin-top: 2px;
 }
 
+.booking-chip {
+  background: rgba(15, 118, 110, 0.12);
+  border-radius: 6px;
+  color: #0f766e !important;
+  font-weight: 700;
+  padding: 3px 5px;
+}
+
 .type-aula {
   background: #dff3ff;
 }
@@ -444,7 +470,7 @@ h1 {
 
 .payment-type-form,
 .payment-type-create {
-  align-items: end;
+  align-items: flex-end;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(260px, 1fr) 120px 150px 170px auto;
@@ -493,7 +519,7 @@ h1 {
 }
 
 .teacher-filter {
-  align-items: end;
+  align-items: flex-end;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(260px, 420px) auto;
@@ -501,7 +527,7 @@ h1 {
 }
 
 .payment-launch-form {
-  align-items: end;
+  align-items: flex-end;
   display: grid;
   gap: 12px;
   grid-template-columns: minmax(220px, 1fr) 150px minmax(220px, 1fr) minmax(320px, 1.4fr) 120px auto;
@@ -564,6 +590,12 @@ h1 {
 
   .pool-form {
     grid-template-columns: 1fr;
+  }
+
+  .date-picker {
+    align-items: stretch;
+    flex-direction: column;
+    width: 100%;
   }
 
   .payment-type-form,

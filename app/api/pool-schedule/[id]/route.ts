@@ -15,8 +15,8 @@ export async function POST(
 
   const { id } = await params;
   const formData = await request.formData();
-  const weekday = Number(formData.get("weekday"));
-  const redirectPath = `/piscina-25m?day=${Number.isInteger(weekday) ? weekday : 1}`;
+  const selectedDate = String(formData.get("date") || "");
+  const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}` : ""}`;
 
   await prisma.poolScheduleBlock.delete({ where: { id } });
 

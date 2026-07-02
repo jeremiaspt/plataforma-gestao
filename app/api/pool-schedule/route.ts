@@ -14,13 +14,14 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const weekday = Number(formData.get("weekday"));
   const laneNumber = Number(formData.get("laneNumber"));
+  const selectedDate = String(formData.get("date") || "");
   const title = String(formData.get("title") || "").trim();
   const type = String(formData.get("type") || "outro");
   const notes = String(formData.get("notes") || "").trim();
   const startMinutes = parseTimeToMinutes(String(formData.get("startTime") || ""));
   const endMinutes = parseTimeToMinutes(String(formData.get("endTime") || ""));
-  const redirectPath = `/piscina-25m?day=${Number.isInteger(weekday) ? weekday : 1}`;
-  const errorPath = `${redirectPath}&error=1`;
+  const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}` : ""}`;
+  const errorPath = `${redirectPath}${redirectPath.includes("?") ? "&" : "?"}error=1`;
 
   if (
     !poolWeekdays.some((day) => day.key === weekday) ||

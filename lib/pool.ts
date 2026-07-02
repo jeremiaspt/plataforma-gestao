@@ -38,6 +38,48 @@ export function buildTimeSlots(weekday: number) {
   return slots;
 }
 
+export function dateToInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+export function parseDateParam(value?: string) {
+  if (!value) {
+    return new Date();
+  }
+
+  const parsed = new Date(`${value}T00:00:00`);
+
+  if (Number.isNaN(parsed.getTime())) {
+    return new Date();
+  }
+
+  return parsed;
+}
+
+export function dateToWeekday(date: Date) {
+  return date.getDay();
+}
+
+export function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+  return nextDate;
+}
+
+export function isTodayOrFuture(date: Date) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const selected = new Date(date);
+  selected.setHours(0, 0, 0, 0);
+
+  return selected >= today;
+}
+
 export function formatMinutes(totalMinutes: number) {
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;

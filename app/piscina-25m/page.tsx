@@ -3,10 +3,15 @@ import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
+  addDays,
   buildTimeSlots,
   canAccessPoolMap,
+  dateToInputValue,
+  dateToWeekday,
   dayBounds,
   formatMinutes,
+  isTodayOrFuture,
+  parseDateParam,
   poolBlockTypes,
   poolLanes,
   poolWeekdays
@@ -15,7 +20,7 @@ import {
 export default async function PoolMapPage({
   searchParams
 }: {
-  searchParams: Promise<{ day?: string; error?: string }>;
+  searchParams: Promise<{ date?: string; error?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -26,9 +31,14 @@ export default async function PoolMapPage({
     redirect("/dashboard");
   }
 
-  const selectedDay = Number(params.day ?? 1);
-  const weekday = poolWeekdays.some((day) => day.key === selectedDay) ? selectedDay : 1;
-  const selectedDayLabel = poolWeekdays.find((day) => day.key === weekday)?.label || "Segunda";
+  const selectedDate = parseDateParam(params.date);
+  const selectedDateValue = dateToInputValue(selectedDate);
+  const weekday = dateToWeekday(selectedDate);
+  const selectedDayLabel = poolWeekdays.find((day) => day.key === weekday)?.label || "Dia";
+  const previousDate = dateToInputValue(addDays(selectedDate, -1));
+  const nextDate = dateToInputValue(addDays(selectedDate, 1));
+  const todayDate = dateToInputValue(new Date());
+  const canBookSelectedDate = isTodayOrFuture(selectedDate);
   const slots = buildTimeSlots(weekday);
   const bounds = dayBounds(weekday);
 
@@ -38,10 +48,27 @@ export default async function PoolMapPage({
     include: { createdBy: { select: { name: true } } }
   });
 
+  const bookings = await prisma.personalTrainingBooking.findMany({
+    where: {
+      bookingDate: new Date(`${selectedDateValue}T00:00:00`)
+    },
+    include: {
+      teacher: { select: { name: true } },
+      student: true,
+      paymentType: true,
+      poolBlock: true
+    },
+    orderBy: [{ startMinutes: "asc" }]
+  });
+
   function blockForSlot(laneNumber: number, slot: number) {
     return blocks.find(
       (block) => block.laneNumber === laneNumber && slot >= block.startMinutes && slot < block.endMinutes
     );
+  }
+
+  function bookingsForBlock(blockId: string, slot: number) {
+    return bookings.filter((booking) => booking.poolBlockId === blockId && slot >= booking.startMinutes && slot < booking.endMinutes);
   }
 
   return (
@@ -52,27 +79,45 @@ export default async function PoolMapPage({
             <p className="eyebrow">Piscina 25m</p>
             <h1>Mapa de disponibilidade</h1>
             <p className="muted">
-              {selectedDayLabel}, {formatMinutes(bounds.start)} - {formatMinutes(bounds.end)}
+              {selectedDayLabel}, {selectedDate.toLocaleDateString("pt-PT")} · {formatMinutes(bounds.start)} - {formatMinutes(bounds.end)}
             </p>
           </div>
         </div>
 
-        <div className="day-tabs">
-          {poolWeekdays.map((day) => (
-            <a className={day.key === weekday ? "day-tab active" : "day-tab"} href={`/piscina-25m?day=${day.key}`} key={day.key}>
-              {day.shortLabel}
-            </a>
-          ))}
+        <div className="date-nav">
+          <a className="button secondary" href={`/piscina-25m?date=${previousDate}`}>
+            Dia anterior
+          </a>
+          <a className="button secondary" href={`/piscina-25m?date=${todayDate}`}>
+            Hoje
+          </a>
+          <a className="button secondary" href={`/piscina-25m?date=${nextDate}`}>
+            Dia seguinte
+          </a>
+          <form className="date-picker" action="/piscina-25m" method="get">
+            <label className="field" htmlFor="date">
+              <span>Data</span>
+              <input id="date" name="date" type="date" defaultValue={selectedDateValue} />
+            </label>
+            <button className="button" type="submit">
+              Ver
+            </button>
+          </form>
         </div>
+
+        {!canBookSelectedDate ? (
+          <p className="muted">Esta data está no passado. Pode ser consultada, mas não vai permitir novas marcações.</p>
+        ) : null}
 
         {params.error ? <p className="error">Não foi possível criar a ocupação. Confirma horários, pista e sobreposições.</p> : null}
 
         {isAdmin ? (
           <form className="pool-form" action="/api/pool-schedule" method="post">
             <input type="hidden" name="weekday" value={weekday} />
+            <input type="hidden" name="date" value={selectedDateValue} />
             <div className="field">
               <label htmlFor="title">Ocupação</label>
-              <input id="title" name="title" required placeholder="Ex.: Escola de Natação" />
+              <input id="title" name="title" required placeholder="Ex.: PT" />
             </div>
             <div className="field">
               <label htmlFor="laneNumber">Pista</label>
@@ -130,6 +175,7 @@ export default async function PoolMapPage({
                   <th>{formatMinutes(slot)}</th>
                   {poolLanes.map((lane) => {
                     const block = blockForSlot(lane, slot);
+                    const slotBookings = block ? bookingsForBlock(block.id, slot) : [];
 
                     return (
                       <td className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"} key={lane}>
@@ -139,6 +185,11 @@ export default async function PoolMapPage({
                             <small>
                               {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
                             </small>
+                            {slotBookings.map((booking) => (
+                              <small className="booking-chip" key={booking.id}>
+                                {booking.teacher.name}: {booking.student.fullName}
+                              </small>
+                            ))}
                           </span>
                         ) : null}
                       </td>
@@ -153,12 +204,12 @@ export default async function PoolMapPage({
 
       {isAdmin ? (
         <section className="panel">
-          <h2>Ocupações de {selectedDayLabel}</h2>
+          <h2>Ocupações semanais de {selectedDayLabel}</h2>
           <div className="schedule-list">
-            {blocks.length === 0 ? <p className="muted">Ainda não existem ocupações para este dia.</p> : null}
+            {blocks.length === 0 ? <p className="muted">Ainda não existem ocupações para este dia da semana.</p> : null}
             {blocks.map((block) => (
               <form className="schedule-item" action={`/api/pool-schedule/${block.id}`} method="post" key={block.id}>
-                <input type="hidden" name="weekday" value={weekday} />
+                <input type="hidden" name="date" value={selectedDateValue} />
                 <div>
                   <strong>{block.title}</strong>
                   <p className="muted">
