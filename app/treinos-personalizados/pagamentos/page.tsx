@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
+import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
 import { prisma } from "@/lib/prisma";
 
 export default async function PersonalTrainingPaymentsPage({
@@ -29,7 +30,7 @@ export default async function PersonalTrainingPaymentsPage({
 
   const selectedTeacherId = canCreate ? params.teacherId || teachers[0]?.id || "" : user.id;
 
-  const [paymentTypes, teacherStudents, payments] = await Promise.all([
+  const [paymentTypes, teacherStudents, payments, creditBalances] = await Promise.all([
     prisma.personalTrainingPaymentType.findMany({
       where: { active: true },
       orderBy: { description: "asc" }
@@ -50,7 +51,8 @@ export default async function PersonalTrainingPaymentsPage({
         paymentType: true,
         createdBy: { select: { name: true } }
       }
-    })
+    }),
+    selectedTeacherId ? getCreditBalancesForTeacher(selectedTeacherId) : Promise.resolve([])
   ]);
 
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId);
@@ -132,6 +134,41 @@ export default async function PersonalTrainingPaymentsPage({
             </form>
           </>
         ) : null}
+      </section>
+
+      <section className="panel" style={{ marginTop: 16 }}>
+        <div className="topbar">
+          <div>
+            <p className="eyebrow">Créditos</p>
+            <h1>Saldos dos alunos</h1>
+            <p className="muted">O saldo pode ir até -2 créditos para permitir marcações excecionais.</p>
+          </div>
+        </div>
+
+        <div className="credits-table">
+          <div className="credits-header">
+            <span>Utente</span>
+            <span>Comprados</span>
+            <span>Usados</span>
+            <span>Saldo</span>
+            <span>Estado</span>
+          </div>
+          {creditBalances.length === 0 ? <p className="muted">Ainda não existem saldos para este professor.</p> : null}
+          {creditBalances.map((balance) => (
+            <div className="credits-row" key={balance.studentId}>
+              <span>
+                {balance.fullName}
+                <small>{balance.memberNumber}</small>
+              </span>
+              <span>{balance.purchasedCredits}</span>
+              <span>{balance.usedCredits}</span>
+              <span className={balance.availableCredits < 0 ? "negative-balance" : ""}>{balance.availableCredits}</span>
+              <span className={balance.canBook ? "status active" : "status inactive"}>
+                {balance.canBook ? "Pode marcar" : "Sem margem"}
+              </span>
+            </div>
+          ))}
+        </div>
       </section>
 
       <section className="panel" style={{ marginTop: 16 }}>
