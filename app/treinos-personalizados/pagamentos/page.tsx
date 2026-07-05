@@ -4,7 +4,6 @@ import { requireUser } from "@/lib/auth";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel, getBillingPeriod } from "@/lib/billingCycles";
 import { decimalToNumber, formatCurrency } from "@/lib/money";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
-import { getTrainingTypeName } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 
 function getAdminGlobalPeriod(monthValue: string) {
@@ -141,15 +140,17 @@ export default async function PersonalTrainingPaymentsPage({
   );
   const trainingTypeStats = Array.from(
     payments.reduce((map, payment) => {
-      const typeName = getTrainingTypeName(payment.paymentType.description);
-      const current = map.get(typeName) || { typeName, quantity: 0 };
+      const typeName = payment.paymentType.description;
+      const current = map.get(typeName) || { typeName, quantity: 0, totalClient: 0, totalTeacher: 0 };
       current.quantity += payment.quantity;
+      current.totalClient += decimalToNumber(payment.totalPrice);
+      current.totalTeacher += decimalToNumber(payment.teacherTotal);
       map.set(typeName, current);
       return map;
-    }, new Map<string, { typeName: string; quantity: number }>())
+    }, new Map<string, { typeName: string; quantity: number; totalClient: number; totalTeacher: number }>())
   )
     .map(([, value]) => value)
-    .sort((a, b) => b.quantity - a.quantity || a.typeName.localeCompare(b.typeName));
+    .sort((a, b) => b.totalTeacher - a.totalTeacher || b.quantity - a.quantity || a.typeName.localeCompare(b.typeName));
   const maxTrainingTypeQuantity = Math.max(...trainingTypeStats.map((item) => item.quantity), 0);
   const globalStats = globalPayments.reduce(
     (stats, payment) => ({
@@ -362,12 +363,12 @@ export default async function PersonalTrainingPaymentsPage({
             <div className="chart-panel">
               <div>
                 <h2>Tipos de treino pagos</h2>
-                <p className="muted">Quantidade paga por tipo de treino no periodo selecionado.</p>
+                <p className="muted">Quantidade e valor por tipo de pagamento no periodo selecionado.</p>
               </div>
               <div className="bar-chart">
                 {trainingTypeStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
                 {trainingTypeStats.map((item) => (
-                  <div className="bar-row" key={item.typeName}>
+                  <div className="bar-row training-type-bar-row" key={item.typeName}>
                     <span title={item.typeName}>{item.typeName}</span>
                     <div className="bar-track">
                       <div
@@ -376,6 +377,10 @@ export default async function PersonalTrainingPaymentsPage({
                       />
                     </div>
                     <strong>{item.quantity}</strong>
+                    <strong>
+                      {formatCurrency(item.totalTeacher)}
+                      {isAdmin ? <small>{formatCurrency(item.totalClient)} utente</small> : null}
+                    </strong>
                   </div>
                 ))}
               </div>
