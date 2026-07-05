@@ -284,6 +284,7 @@ export default async function PersonalTrainingPaymentsPage({
                 <span>Data</span>
                 <span>Professor</span>
                 <span>Utente</span>
+                <span>Lancado por</span>
                 <span>Tipo</span>
                 <span>Qtd.</span>
                 <span>Creditos</span>
@@ -299,6 +300,7 @@ export default async function PersonalTrainingPaymentsPage({
                     {payment.student.fullName}
                     <small>{payment.student.memberNumber}</small>
                   </span>
+                  <span>{payment.createdBy?.name || "-"}</span>
                   <span>{payment.paymentType.description}</span>
                   <span>{payment.quantity}</span>
                   <span>{payment.totalCredits}</span>

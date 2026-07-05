@@ -13,9 +13,9 @@ export const billingCycleOptions = [
   },
   {
     key: "day_19_to_18",
-    label: "Dia 19 do mês anterior ao dia 18 do mês corrente",
-    startDay: 19,
-    endDay: 18
+    label: "Dia 20 do mês anterior ao dia 19 do mês corrente",
+    startDay: 20,
+    endDay: 19
   }
 ];
 
@@ -53,8 +53,8 @@ export function getBillingPeriod(cycleKey: string | null | undefined, monthValue
 
   if (cycleKey === "day_19_to_18") {
     return {
-      start: new Date(year, monthIndex - 1, 19),
-      endExclusive: new Date(year, monthIndex, 19)
+      start: new Date(year, monthIndex - 1, 20),
+      endExclusive: new Date(year, monthIndex, 20)
     };
   }
 
