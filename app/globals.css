@@ -411,6 +411,11 @@ h1 {
   display: block;
 }
 
+.pool-cell-content {
+  display: grid;
+  gap: 4px;
+}
+
 .pool-cell.occupied small {
   color: #475569;
   margin-top: 2px;
@@ -422,6 +427,34 @@ h1 {
   color: #0f766e !important;
   font-weight: 700;
   padding: 3px 5px;
+}
+
+.inline-booking-list {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.inline-booking-form {
+  background: rgba(255, 255, 255, 0.74);
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+}
+
+.inline-booking-form select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 7px 8px;
+  width: 100%;
+}
+
+.inline-booking-form .button {
+  min-height: 34px;
+  padding: 7px 9px;
 }
 
 .booking-blocks {
@@ -611,8 +644,8 @@ h1 {
   align-items: center;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(260px, 1fr) 110px 90px 90px 130px;
-  min-width: 720px;
+  grid-template-columns: minmax(220px, 1fr) minmax(360px, 1.2fr) 110px 90px 90px 130px;
+  min-width: 1060px;
 }
 
 .credits-header {

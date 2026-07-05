@@ -13,3 +13,21 @@ export function isExclusiveTrainingType(description?: string | null) {
   const normalized = description.toLowerCase();
   return normalized.includes("pares") || normalized.includes("trio") || normalized.includes("grupo");
 }
+
+export function requiredParticipantsForType(description?: string | null) {
+  if (!description) {
+    return 1;
+  }
+
+  const normalized = description.toLowerCase();
+
+  if (normalized.includes("trio") || normalized.includes("grupo")) {
+    return 3;
+  }
+
+  if (normalized.includes("pares")) {
+    return 2;
+  }
+
+  return 1;
+}

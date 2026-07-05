@@ -148,6 +148,7 @@ export default async function PersonalTrainingPaymentsPage({
         <div className="credits-table">
           <div className="credits-header">
             <span>Utente</span>
+            <span>Tipo</span>
             <span>Comprados</span>
             <span>Usados</span>
             <span>Saldo</span>
@@ -160,6 +161,7 @@ export default async function PersonalTrainingPaymentsPage({
                 {balance.fullName}
                 <small>{balance.memberNumber}</small>
               </span>
+              <span>{balance.paymentTypeDescription}</span>
               <span>{balance.purchasedCredits}</span>
               <span>{balance.usedCredits}</span>
               <span className={balance.availableCredits < 0 ? "negative-balance" : ""}>{balance.availableCredits}</span>

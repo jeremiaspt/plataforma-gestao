@@ -2,7 +2,11 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
-import { paymentTypeMatchesDuration, trainingDurationOptions } from "@/lib/personalTrainingRules";
+import {
+  paymentTypeMatchesDuration,
+  requiredParticipantsForType,
+  trainingDurationOptions
+} from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 import {
   addDays,
@@ -74,9 +78,6 @@ export default async function PoolMapPage({
       ])
     : [[], []];
 
-  const bookableBlocks = blocks.filter((block) => block.type === "treino");
-  const bookableBalances = creditBalances.filter((balance) => balance.canBook);
-
   function blockForSlot(laneNumber: number, slot: number) {
     return blocks.find(
       (block) => block.laneNumber === laneNumber && slot >= block.startMinutes && slot < block.endMinutes
@@ -85,6 +86,21 @@ export default async function PoolMapPage({
 
   function bookingsForBlock(blockId: string, slot: number) {
     return bookings.filter((booking) => booking.poolBlockId === blockId && slot >= booking.startMinutes && slot < booking.endMinutes);
+  }
+
+  function groupedBookingsForBlock(blockId: string, slot: number) {
+    const grouped = new Map<string, { teacherName: string; studentNames: string[] }>();
+
+    for (const booking of bookingsForBlock(blockId, slot)) {
+      const current = grouped.get(booking.bookingGroupId) || {
+        teacherName: booking.teacher.name,
+        studentNames: []
+      };
+      current.studentNames.push(booking.student.fullName);
+      grouped.set(booking.bookingGroupId, current);
+    }
+
+    return Array.from(grouped.values());
   }
 
   return (
@@ -192,22 +208,69 @@ export default async function PoolMapPage({
                   <th>{formatMinutes(slot)}</th>
                   {poolLanes.map((lane) => {
                     const block = blockForSlot(lane, slot);
-                    const slotBookings = block ? bookingsForBlock(block.id, slot) : [];
+                    const slotBookings = block ? groupedBookingsForBlock(block.id, slot) : [];
+                    const isBlockStart = Boolean(block && slot === block.startMinutes);
+                    const canBookBlock = Boolean(isProfessor && canBookSelectedDate && block?.type === "treino" && isBlockStart);
 
                     return (
                       <td className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"} key={lane}>
                         {block ? (
-                          <span>
+                          <div className="pool-cell-content">
                             <strong>{block.title}</strong>
                             <small>
                               {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
                             </small>
-                            {slotBookings.map((booking) => (
-                              <small className="booking-chip" key={booking.id}>
-                                {booking.teacher.name}: {booking.student.fullName}
+                            {slotBookings.map((booking, index) => (
+                              <small className="booking-chip" key={`${booking.teacherName}-${index}`}>
+                                {booking.teacherName}: {booking.studentNames.join(", ")}
                               </small>
                             ))}
-                          </span>
+                            {canBookBlock ? (
+                              <div className="inline-booking-list">
+                                {trainingDurationOptions
+                                  .filter((duration) => block.endMinutes - block.startMinutes >= duration)
+                                  .flatMap((duration) =>
+                                    paymentTypes
+                                      .filter((type) => paymentTypeMatchesDuration(type.description, duration))
+                                      .map((type) => {
+                                        const requiredParticipants = requiredParticipantsForType(type.description);
+                                        const eligibleBalances = creditBalances.filter(
+                                          (balance) => balance.paymentTypeId === type.id && balance.canBook
+                                        );
+
+                                        return (
+                                          <form
+                                            className="inline-booking-form"
+                                            action="/api/personal-training/bookings"
+                                            method="post"
+                                            key={`${duration}-${type.id}`}
+                                          >
+                                            <input type="hidden" name="date" value={selectedDateValue} />
+                                            <input type="hidden" name="poolBlockId" value={block.id} />
+                                            <input type="hidden" name="durationMinutes" value={duration} />
+                                            <input type="hidden" name="paymentTypeId" value={type.id} />
+                                            <strong>{duration} min</strong>
+                                            <small>{type.description}</small>
+                                            {Array.from({ length: requiredParticipants }).map((_, index) => (
+                                              <select name="studentIds" required key={index}>
+                                                <option value="">Utente {index + 1}</option>
+                                                {eligibleBalances.map((balance) => (
+                                                  <option value={balance.studentId} key={balance.studentId}>
+                                                    {balance.fullName} · saldo {balance.availableCredits}
+                                                  </option>
+                                                ))}
+                                              </select>
+                                            ))}
+                                            <button className="button" type="submit" disabled={eligibleBalances.length < requiredParticipants}>
+                                              Marcar
+                                            </button>
+                                          </form>
+                                        );
+                                      })
+                                  )}
+                              </div>
+                            ) : null}
+                          </div>
                         ) : null}
                       </td>
                     );
@@ -219,79 +282,6 @@ export default async function PoolMapPage({
         </div>
       </section>
 
-      {isProfessor && canBookSelectedDate ? (
-        <section className="panel">
-          <div className="topbar">
-            <div>
-              <p className="eyebrow">Marcações</p>
-              <h1>Marcar aula PT</h1>
-              <p className="muted">Cada marcação consome 1 crédito. O aluno pode ir até -2 créditos.</p>
-            </div>
-          </div>
-
-          {bookableBlocks.length === 0 ? <p className="muted">Não existem blocos de treino disponíveis nesta data.</p> : null}
-          {creditBalances.length === 0 ? <p className="muted">Ainda não tens alunos com créditos lançados.</p> : null}
-          {creditBalances.length > 0 && bookableBalances.length === 0 ? (
-            <p className="muted">Os teus alunos já atingiram o limite mínimo de créditos.</p>
-          ) : null}
-
-          <div className="booking-blocks">
-            {bookableBlocks.map((block) => (
-              <article className="booking-block" key={block.id}>
-                <div>
-                  <strong>
-                    {block.title} · Pista {block.laneNumber}
-                  </strong>
-                  <p className="muted">
-                    {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
-                  </p>
-                </div>
-
-                <div className="booking-forms">
-                  {trainingDurationOptions
-                    .filter((duration) => block.endMinutes - block.startMinutes >= duration)
-                    .map((duration) => {
-                      const matchingTypes = paymentTypes.filter((type) =>
-                        paymentTypeMatchesDuration(type.description, duration)
-                      );
-
-                      return (
-                        <form className="booking-form" action="/api/personal-training/bookings" method="post" key={duration}>
-                          <input type="hidden" name="date" value={selectedDateValue} />
-                          <input type="hidden" name="poolBlockId" value={block.id} />
-                          <input type="hidden" name="durationMinutes" value={duration} />
-                          <div className="field">
-                            <label>Aluno</label>
-                            <select name="studentId" required>
-                              {bookableBalances.map((balance) => (
-                                <option value={balance.studentId} key={balance.studentId}>
-                                  {balance.fullName} · saldo {balance.availableCredits}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <div className="field">
-                            <label>{duration} min</label>
-                            <select name="paymentTypeId" required>
-                              {matchingTypes.map((type) => (
-                                <option value={type.id} key={type.id}>
-                                  {type.description}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-                          <button className="button" type="submit" disabled={matchingTypes.length === 0 || bookableBalances.length === 0}>
-                            Marcar
-                          </button>
-                        </form>
-                      );
-                    })}
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      ) : null}
 
       {isAdmin ? (
         <section className="panel">

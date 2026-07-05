@@ -125,6 +125,7 @@ model PersonalTrainingPayment {
 
 model PersonalTrainingBooking {
   id             String                  @id @default(cuid())
+  bookingGroupId String                  @default(cuid())
   bookingDate    DateTime                @db.Date
   poolBlockId    String
   poolBlock      PoolScheduleBlock       @relation(fields: [poolBlockId], references: [id], onDelete: Restrict)
@@ -143,6 +144,7 @@ model PersonalTrainingBooking {
   updatedAt      DateTime                @updatedAt
 
   @@index([bookingDate, poolBlockId])
+  @@index([bookingGroupId])
   @@index([teacherId, bookingDate])
   @@index([studentId, bookingDate])
 }
