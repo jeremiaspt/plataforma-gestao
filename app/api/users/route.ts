@@ -30,6 +30,7 @@ export async function POST(request: Request) {
       name,
       email,
       phone,
+      billingCycle: "calendar_month",
       passwordHash,
       roles: {
         create: roles.map((role) => ({

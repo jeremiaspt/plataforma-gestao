@@ -256,10 +256,11 @@ h1 {
   align-items: start;
   display: grid;
   gap: 10px;
-  grid-template-columns: 1.1fr 1.3fr 1fr 1.4fr 80px 260px;
+  grid-template-columns: 1fr 1.25fr 0.9fr 1.25fr 1.35fr 80px 250px;
 }
 
-.user-edit-grid input {
+.user-edit-grid input,
+.user-edit-grid select {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   min-width: 0;
@@ -692,6 +693,81 @@ h1 {
   margin-top: 3px;
 }
 
+.tabs {
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+}
+
+.tab {
+  border: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: #475569;
+  font-weight: 700;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
+.tab.active,
+.tab:hover {
+  background: #e6f5f2;
+  border-color: var(--line);
+  border-bottom-color: #e6f5f2;
+  color: var(--primary-dark);
+}
+
+.tab-content {
+  display: grid;
+  gap: 14px;
+}
+
+.period-filter {
+  align-items: flex-end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 180px minmax(240px, 1fr) auto;
+}
+
+.period-summary {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 3px;
+  min-height: 39px;
+  padding: 8px 10px;
+}
+
+.period-summary small {
+  color: var(--muted);
+}
+
+.stats-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.stat-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+}
+
+.stat-card span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stat-card strong {
+  font-size: 20px;
+}
+
 .credits-table {
   display: grid;
   gap: 8px;
@@ -768,7 +844,9 @@ h1 {
   }
 
   .teacher-filter,
-  .payment-launch-form {
+  .payment-launch-form,
+  .period-filter,
+  .stats-grid {
     grid-template-columns: 1fr;
   }
 

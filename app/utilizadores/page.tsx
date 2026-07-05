@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
+import { billingCycleOptions, getBillingCycleLabel } from "@/lib/billingCycles";
 import { prisma } from "@/lib/prisma";
 import { roleOptions } from "@/lib/roles";
 
@@ -71,6 +72,7 @@ export default async function UsersPage() {
               <th>Email</th>
               <th>Contacto</th>
               <th>Categorias</th>
+              <th>Ciclo</th>
               <th>Estado</th>
               <th>Ações</th>
             </tr>
@@ -78,7 +80,7 @@ export default async function UsersPage() {
           <tbody>
             {users.map((user) => (
               <tr key={user.id}>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <form className="user-edit" action={`/api/users/${user.id}`} method="post">
                     <div className="user-edit-grid">
                       <input name="name" defaultValue={user.name} required />
@@ -97,6 +99,13 @@ export default async function UsersPage() {
                           </label>
                         ))}
                       </div>
+                      <select name="billingCycle" defaultValue={user.billingCycle} title={getBillingCycleLabel(user.billingCycle)}>
+                        {billingCycleOptions.map((option) => (
+                          <option value={option.key} key={option.key}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
                       <span className={user.active ? "status active" : "status inactive"}>
                         {user.active ? "Ativo" : "Inativo"}
                       </span>

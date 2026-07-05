@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { isBillingCycleKey } from "@/lib/billingCycles";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -43,9 +44,10 @@ export async function POST(
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").toLowerCase().trim();
   const phone = String(formData.get("phone") || "").trim();
+  const billingCycle = String(formData.get("billingCycle") || "calendar_month");
   const roleKeys = formData.getAll("roles").map(String);
 
-  if (!name || !email || roleKeys.length === 0) {
+  if (!name || !email || roleKeys.length === 0 || !isBillingCycleKey(billingCycle)) {
     return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
   }
 
@@ -57,6 +59,7 @@ export async function POST(
       name,
       email,
       phone,
+      billingCycle,
       roles: {
         deleteMany: {},
         create: roles.map((role) => ({
