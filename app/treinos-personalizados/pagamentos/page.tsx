@@ -181,7 +181,20 @@ export default async function PersonalTrainingPaymentsPage({
   )
     .map(([, value]) => value)
     .sort((a, b) => b.totalTeacher - a.totalTeacher || a.teacherName.localeCompare(b.teacherName));
-  const maxGlobalTeacherTotal = Math.max(...globalTeacherStats.map((teacher) => teacher.totalTeacher), 0);
+  const globalTrainingTypeStats = Array.from(
+    globalPayments.reduce((map, payment) => {
+      const typeName = payment.paymentType.description;
+      const current = map.get(typeName) || { typeName, quantity: 0, totalClient: 0, totalTeacher: 0 };
+      current.quantity += payment.quantity;
+      current.totalClient += decimalToNumber(payment.totalPrice);
+      current.totalTeacher += decimalToNumber(payment.teacherTotal);
+      map.set(typeName, current);
+      return map;
+    }, new Map<string, { typeName: string; quantity: number; totalClient: number; totalTeacher: number }>())
+  )
+    .map(([, value]) => value)
+    .sort((a, b) => b.totalTeacher - a.totalTeacher || b.quantity - a.quantity || a.typeName.localeCompare(b.typeName));
+  const maxGlobalTrainingTypeTotal = Math.max(...globalTrainingTypeStats.map((type) => type.totalTeacher), 0);
 
   return (
     <AppShell userName={user.name}>
@@ -474,25 +487,31 @@ export default async function PersonalTrainingPaymentsPage({
 
             <div className="chart-panel">
               <div>
-                <h2>Total por professor</h2>
-                <p className="muted">Valor total a pagar a cada professor no periodo selecionado.</p>
+                <h2>Total por tipo de treino</h2>
+                <p className="muted">Quantidade e valor por tipo de pagamento no periodo selecionado.</p>
               </div>
               <div className="bar-chart">
-                {globalTeacherStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
-                {globalTeacherStats.map((teacher) => (
-                  <div className="bar-row global-bar-row" key={teacher.teacherName}>
-                    <span title={teacher.teacherName}>{teacher.teacherName}</span>
+                {globalTrainingTypeStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
+                {globalTrainingTypeStats.map((type) => (
+                  <div className="bar-row training-type-bar-row" key={type.typeName}>
+                    <span title={type.typeName}>{type.typeName}</span>
                     <div className="bar-track">
                       <div
                         className="bar-fill"
                         style={{
                           width: `${
-                            maxGlobalTeacherTotal ? Math.max(8, (teacher.totalTeacher / maxGlobalTeacherTotal) * 100) : 0
+                            maxGlobalTrainingTypeTotal
+                              ? Math.max(8, (type.totalTeacher / maxGlobalTrainingTypeTotal) * 100)
+                              : 0
                           }%`
                         }}
                       />
                     </div>
-                    <strong>{formatCurrency(teacher.totalTeacher)}</strong>
+                    <strong>{type.quantity}</strong>
+                    <strong>
+                      {formatCurrency(type.totalTeacher)}
+                      <small>{formatCurrency(type.totalClient)} utente</small>
+                    </strong>
                   </div>
                 ))}
               </div>
