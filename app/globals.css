@@ -424,6 +424,35 @@ h1 {
   padding: 3px 5px;
 }
 
+.booking-blocks {
+  display: grid;
+  gap: 12px;
+}
+
+.booking-block {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
+.booking-block p {
+  margin: 4px 0 0;
+}
+
+.booking-forms {
+  display: grid;
+  gap: 10px;
+}
+
+.booking-form {
+  align-items: flex-end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr) auto;
+}
+
 .type-aula {
   background: #dff3ff;
 }
@@ -635,6 +664,10 @@ h1 {
     align-items: stretch;
     flex-direction: column;
     width: 100%;
+  }
+
+  .booking-form {
+    grid-template-columns: 1fr;
   }
 
   .payment-type-form,

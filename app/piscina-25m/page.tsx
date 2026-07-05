@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
+import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
+import { paymentTypeMatchesDuration, trainingDurationOptions } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 import {
   addDays,
@@ -20,12 +22,13 @@ import {
 export default async function PoolMapPage({
   searchParams
 }: {
-  searchParams: Promise<{ date?: string; error?: string }>;
+  searchParams: Promise<{ date?: string; error?: string; success?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
   const isAdmin = hasRole(user, "admin");
+  const isProfessor = hasRole(user, "professor");
 
   if (!canAccessPoolMap(roleKeys)) {
     redirect("/dashboard");
@@ -60,6 +63,19 @@ export default async function PoolMapPage({
     },
     orderBy: [{ startMinutes: "asc" }]
   });
+
+  const [creditBalances, paymentTypes] = isProfessor
+    ? await Promise.all([
+        getCreditBalancesForTeacher(user.id),
+        prisma.personalTrainingPaymentType.findMany({
+          where: { active: true },
+          orderBy: { description: "asc" }
+        })
+      ])
+    : [[], []];
+
+  const bookableBlocks = blocks.filter((block) => block.type === "treino");
+  const bookableBalances = creditBalances.filter((balance) => balance.canBook);
 
   function blockForSlot(laneNumber: number, slot: number) {
     return blocks.find(
@@ -109,7 +125,8 @@ export default async function PoolMapPage({
           <p className="muted">Esta data está no passado. Pode ser consultada, mas não vai permitir novas marcações.</p>
         ) : null}
 
-        {params.error ? <p className="error">Não foi possível criar a ocupação. Confirma horários, pista e sobreposições.</p> : null}
+        {params.success ? <p className="success">Marcação criada com sucesso.</p> : null}
+        {params.error ? <p className="error">Não foi possível concluir a ação. Confirma horários, créditos, aluno e sobreposições.</p> : null}
 
         {isAdmin ? (
           <form className="pool-form" action="/api/pool-schedule" method="post">
@@ -201,6 +218,80 @@ export default async function PoolMapPage({
           </table>
         </div>
       </section>
+
+      {isProfessor && canBookSelectedDate ? (
+        <section className="panel">
+          <div className="topbar">
+            <div>
+              <p className="eyebrow">Marcações</p>
+              <h1>Marcar aula PT</h1>
+              <p className="muted">Cada marcação consome 1 crédito. O aluno pode ir até -2 créditos.</p>
+            </div>
+          </div>
+
+          {bookableBlocks.length === 0 ? <p className="muted">Não existem blocos de treino disponíveis nesta data.</p> : null}
+          {creditBalances.length === 0 ? <p className="muted">Ainda não tens alunos com créditos lançados.</p> : null}
+          {creditBalances.length > 0 && bookableBalances.length === 0 ? (
+            <p className="muted">Os teus alunos já atingiram o limite mínimo de créditos.</p>
+          ) : null}
+
+          <div className="booking-blocks">
+            {bookableBlocks.map((block) => (
+              <article className="booking-block" key={block.id}>
+                <div>
+                  <strong>
+                    {block.title} · Pista {block.laneNumber}
+                  </strong>
+                  <p className="muted">
+                    {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
+                  </p>
+                </div>
+
+                <div className="booking-forms">
+                  {trainingDurationOptions
+                    .filter((duration) => block.endMinutes - block.startMinutes >= duration)
+                    .map((duration) => {
+                      const matchingTypes = paymentTypes.filter((type) =>
+                        paymentTypeMatchesDuration(type.description, duration)
+                      );
+
+                      return (
+                        <form className="booking-form" action="/api/personal-training/bookings" method="post" key={duration}>
+                          <input type="hidden" name="date" value={selectedDateValue} />
+                          <input type="hidden" name="poolBlockId" value={block.id} />
+                          <input type="hidden" name="durationMinutes" value={duration} />
+                          <div className="field">
+                            <label>Aluno</label>
+                            <select name="studentId" required>
+                              {bookableBalances.map((balance) => (
+                                <option value={balance.studentId} key={balance.studentId}>
+                                  {balance.fullName} · saldo {balance.availableCredits}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="field">
+                            <label>{duration} min</label>
+                            <select name="paymentTypeId" required>
+                              {matchingTypes.map((type) => (
+                                <option value={type.id} key={type.id}>
+                                  {type.description}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <button className="button" type="submit" disabled={matchingTypes.length === 0 || bookableBalances.length === 0}>
+                            Marcar
+                          </button>
+                        </form>
+                      );
+                    })}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {isAdmin ? (
         <section className="panel">
