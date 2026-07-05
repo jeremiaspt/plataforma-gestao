@@ -180,6 +180,7 @@ export default async function PersonalTrainingPaymentsPage({
   )
     .map(([, value]) => value)
     .sort((a, b) => b.totalTeacher - a.totalTeacher || a.teacherName.localeCompare(b.teacherName));
+  const maxGlobalTeacherTotal = Math.max(...globalTeacherStats.map((teacher) => teacher.totalTeacher), 0);
 
   return (
     <AppShell userName={user.name}>
@@ -463,6 +464,32 @@ export default async function PersonalTrainingPaymentsPage({
               <div className="stat-card">
                 <span>Total professores</span>
                 <strong>{formatCurrency(globalStats.totalTeacher)}</strong>
+              </div>
+            </div>
+
+            <div className="chart-panel">
+              <div>
+                <h2>Total por professor</h2>
+                <p className="muted">Valor total a pagar a cada professor no periodo selecionado.</p>
+              </div>
+              <div className="bar-chart">
+                {globalTeacherStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
+                {globalTeacherStats.map((teacher) => (
+                  <div className="bar-row global-bar-row" key={teacher.teacherName}>
+                    <span title={teacher.teacherName}>{teacher.teacherName}</span>
+                    <div className="bar-track">
+                      <div
+                        className="bar-fill"
+                        style={{
+                          width: `${
+                            maxGlobalTeacherTotal ? Math.max(8, (teacher.totalTeacher / maxGlobalTeacherTotal) * 100) : 0
+                          }%`
+                        }}
+                      />
+                    </div>
+                    <strong>{formatCurrency(teacher.totalTeacher)}</strong>
+                  </div>
+                ))}
               </div>
             </div>
 
