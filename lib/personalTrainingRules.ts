@@ -28,7 +28,7 @@ export function isExclusiveTrainingType(description?: string | null) {
   }
 
   const normalized = description.toLowerCase();
-  return normalized.includes("pares") || normalized.includes("trio") || normalized.includes("grupo");
+  return normalized.includes("pares") || normalized.includes("trio");
 }
 
 export function requiredParticipantsForType(description?: string | null) {

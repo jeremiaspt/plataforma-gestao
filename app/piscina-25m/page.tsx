@@ -140,7 +140,7 @@ export default async function PoolMapPage({
       const current = grouped.get(booking.bookingGroupId) || {
         teacherName: booking.teacher.name,
         studentNames: [],
-        exclusive: description.includes("pares") || description.includes("trio") || description.includes("grupo")
+        exclusive: description.includes("pares") || description.includes("trio")
       };
       current.studentNames.push(booking.student.fullName);
       grouped.set(booking.bookingGroupId, current);
@@ -259,8 +259,8 @@ export default async function PoolMapPage({
                   <th>{formatMinutes(slot)}</th>
                   {poolLanes.map((lane) => {
                     const block = blockForSlot(lane, slot);
-                    const slotBookings = block ? groupedBookingsForBlock(block.id, slot) : [];
                     const isBlockStart = Boolean(block && slot === block.startMinutes);
+                    const slotBookings = block && isBlockStart ? groupedBookingsForBlock(block.id, slot) : [];
                     const blockGroups =
                       block && isBlockStart ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes) : [];
                     const hasVacancy =
@@ -273,10 +273,14 @@ export default async function PoolMapPage({
                       <td className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"} key={lane}>
                         {block ? (
                           <div className="pool-cell-content">
-                            <strong>{block.title}</strong>
-                            <small>
-                              {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
-                            </small>
+                            {isBlockStart ? (
+                              <>
+                                <strong>{block.title}</strong>
+                                <small>
+                                  {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
+                                </small>
+                              </>
+                            ) : null}
                             {slotBookings.map((booking, index) => (
                               <small className="booking-chip" key={`${booking.teacherName}-${index}`}>
                                 {booking.teacherName}: {booking.studentNames.join(", ")}
