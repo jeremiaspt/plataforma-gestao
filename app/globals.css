@@ -676,8 +676,8 @@ h1 {
 
 .payments-header.teacher-values,
 .payments-row.teacher-values {
-  grid-template-columns: 90px 170px 220px 150px minmax(360px, 1fr) 60px 80px 140px;
-  min-width: 1270px;
+  grid-template-columns: 90px 220px 150px minmax(360px, 1fr) 60px 80px 140px;
+  min-width: 1100px;
 }
 
 .payments-header {

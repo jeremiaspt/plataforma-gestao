@@ -282,7 +282,7 @@ export default async function PersonalTrainingPaymentsPage({
             <div className="payments-table">
               <div className={isAdmin ? "payments-header" : "payments-header teacher-values"}>
                 <span>Data</span>
-                <span>Professor</span>
+                {isAdmin ? <span>Professor</span> : null}
                 <span>Utente</span>
                 <span>Lancado por</span>
                 <span>Tipo</span>
@@ -295,7 +295,7 @@ export default async function PersonalTrainingPaymentsPage({
               {payments.map((payment) => (
                 <div className={isAdmin ? "payments-row" : "payments-row teacher-values"} key={payment.id}>
                   <span>{payment.createdAt.toLocaleDateString("pt-PT")}</span>
-                  <span>{payment.teacher.name}</span>
+                  {isAdmin ? <span>{payment.teacher.name}</span> : null}
                   <span>
                     {payment.student.fullName}
                     <small>{payment.student.memberNumber}</small>
