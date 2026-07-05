@@ -4,12 +4,35 @@ import { requireUser } from "@/lib/auth";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel, getBillingPeriod } from "@/lib/billingCycles";
 import { decimalToNumber, formatCurrency } from "@/lib/money";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
+import { getTrainingTypeName } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
+
+function getAdminGlobalPeriod(monthValue: string) {
+  const [yearValue, monthValueText] = monthValue.split("-");
+  const year = Number(yearValue);
+  const monthIndex = Number(monthValueText) - 1;
+  const now = new Date();
+  const isCurrentMonth = year === now.getFullYear() && monthIndex === now.getMonth();
+
+  return {
+    start: new Date(year, monthIndex, 1),
+    endExclusive: isCurrentMonth
+      ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+      : new Date(year, monthIndex + 1, 1)
+  };
+}
 
 export default async function PersonalTrainingPaymentsPage({
   searchParams
 }: {
-  searchParams: Promise<{ teacherId?: string; error?: string; success?: string; tab?: string; month?: string }>;
+  searchParams: Promise<{
+    teacherId?: string;
+    error?: string;
+    success?: string;
+    tab?: string;
+    month?: string;
+    globalMonth?: string;
+  }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -34,16 +57,19 @@ export default async function PersonalTrainingPaymentsPage({
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId);
   const selectedBillingCycle = selectedTeacher?.billingCycle || user.billingCycle || "calendar_month";
   const selectedMonth = params.month || currentBillingMonthValue();
-  const activeTab = params.tab === "payments" ? "payments" : "credits";
+  const selectedGlobalMonth = params.globalMonth || currentBillingMonthValue();
+  const activeTab = isAdmin && params.tab === "global" ? "global" : params.tab === "payments" ? "payments" : "credits";
   const billingPeriod = getBillingPeriod(selectedBillingCycle, selectedMonth);
+  const globalPeriod = getAdminGlobalPeriod(selectedGlobalMonth);
 
-  const tabHref = (tab: "credits" | "payments") => {
+  const tabHref = (tab: "credits" | "payments" | "global") => {
     const query = new URLSearchParams();
     if (canCreate && selectedTeacherId) {
       query.set("teacherId", selectedTeacherId);
     }
     query.set("tab", tab);
     query.set("month", selectedMonth);
+    query.set("globalMonth", selectedGlobalMonth);
 
     return `/treinos-personalizados/pagamentos?${query.toString()}`;
   };
@@ -56,7 +82,7 @@ export default async function PersonalTrainingPaymentsPage({
     return `/api/personal-training/reports/${type}?${query.toString()}`;
   };
 
-  const [paymentTypes, teacherStudents, payments, creditBalances] = await Promise.all([
+  const [paymentTypes, teacherStudents, payments, creditBalances, globalPayments] = await Promise.all([
     prisma.personalTrainingPaymentType.findMany({
       where: { active: true },
       orderBy: { description: "asc" }
@@ -83,7 +109,24 @@ export default async function PersonalTrainingPaymentsPage({
         createdBy: { select: { name: true } }
       }
     }),
-    selectedTeacherId ? getCreditBalancesForTeacher(selectedTeacherId) : Promise.resolve([])
+    selectedTeacherId ? getCreditBalancesForTeacher(selectedTeacherId) : Promise.resolve([]),
+    isAdmin
+      ? prisma.personalTrainingPayment.findMany({
+          where: {
+            createdAt: {
+              gte: globalPeriod.start,
+              lt: globalPeriod.endExclusive
+            }
+          },
+          orderBy: [{ teacher: { name: "asc" } }, { createdAt: "desc" }],
+          include: {
+            teacher: { select: { name: true } },
+            student: true,
+            paymentType: true,
+            createdBy: { select: { name: true } }
+          }
+        })
+      : Promise.resolve([])
   ]);
 
   const paymentStats = payments.reduce(
@@ -96,6 +139,47 @@ export default async function PersonalTrainingPaymentsPage({
     }),
     { count: 0, quantity: 0, credits: 0, totalClient: 0, totalTeacher: 0 }
   );
+  const trainingTypeStats = Array.from(
+    payments.reduce((map, payment) => {
+      const typeName = getTrainingTypeName(payment.paymentType.description);
+      const current = map.get(typeName) || { typeName, quantity: 0 };
+      current.quantity += payment.quantity;
+      map.set(typeName, current);
+      return map;
+    }, new Map<string, { typeName: string; quantity: number }>())
+  )
+    .map(([, value]) => value)
+    .sort((a, b) => b.quantity - a.quantity || a.typeName.localeCompare(b.typeName));
+  const maxTrainingTypeQuantity = Math.max(...trainingTypeStats.map((item) => item.quantity), 0);
+  const globalStats = globalPayments.reduce(
+    (stats, payment) => ({
+      count: stats.count + 1,
+      quantity: stats.quantity + payment.quantity,
+      credits: stats.credits + payment.totalCredits,
+      totalClient: stats.totalClient + decimalToNumber(payment.totalPrice),
+      totalTeacher: stats.totalTeacher + decimalToNumber(payment.teacherTotal)
+    }),
+    { count: 0, quantity: 0, credits: 0, totalClient: 0, totalTeacher: 0 }
+  );
+  const globalTeacherStats = Array.from(
+    globalPayments.reduce((map, payment) => {
+      const current = map.get(payment.teacherId) || {
+        teacherName: payment.teacher.name,
+        count: 0,
+        quantity: 0,
+        totalClient: 0,
+        totalTeacher: 0
+      };
+      current.count += 1;
+      current.quantity += payment.quantity;
+      current.totalClient += decimalToNumber(payment.totalPrice);
+      current.totalTeacher += decimalToNumber(payment.teacherTotal);
+      map.set(payment.teacherId, current);
+      return map;
+    }, new Map<string, { teacherName: string; count: number; quantity: number; totalClient: number; totalTeacher: number }>())
+  )
+    .map(([, value]) => value)
+    .sort((a, b) => b.totalTeacher - a.totalTeacher || a.teacherName.localeCompare(b.teacherName));
 
   return (
     <AppShell userName={user.name}>
@@ -120,6 +204,7 @@ export default async function PersonalTrainingPaymentsPage({
             <form className="teacher-filter" method="get" action="/treinos-personalizados/pagamentos">
               <input type="hidden" name="tab" value={activeTab} />
               <input type="hidden" name="month" value={selectedMonth} />
+              <input type="hidden" name="globalMonth" value={selectedGlobalMonth} />
               <div className="field">
                 <label htmlFor="teacherId">Professor</label>
                 <select id="teacherId" name="teacherId" defaultValue={selectedTeacherId}>
@@ -194,6 +279,11 @@ export default async function PersonalTrainingPaymentsPage({
           <a className={activeTab === "payments" ? "tab active" : "tab"} href={tabHref("payments")}>
             Pagamentos
           </a>
+          {isAdmin ? (
+            <a className={activeTab === "global" ? "tab active" : "tab"} href={tabHref("global")}>
+              Totais gerais
+            </a>
+          ) : null}
         </div>
 
         {activeTab === "credits" ? (
@@ -268,6 +358,28 @@ export default async function PersonalTrainingPaymentsPage({
               </div>
             </div>
 
+            <div className="chart-panel">
+              <div>
+                <h2>Tipos de treino pagos</h2>
+                <p className="muted">Quantidade paga por tipo de treino no periodo selecionado.</p>
+              </div>
+              <div className="bar-chart">
+                {trainingTypeStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
+                {trainingTypeStats.map((item) => (
+                  <div className="bar-row" key={item.typeName}>
+                    <span title={item.typeName}>{item.typeName}</span>
+                    <div className="bar-track">
+                      <div
+                        className="bar-fill"
+                        style={{ width: `${maxTrainingTypeQuantity ? Math.max(8, (item.quantity / maxTrainingTypeQuantity) * 100) : 0}%` }}
+                      />
+                    </div>
+                    <strong>{item.quantity}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {isAdmin ? (
               <div className="report-actions">
                 <a className="button secondary" href={reportHref("payments")}>
@@ -306,6 +418,70 @@ export default async function PersonalTrainingPaymentsPage({
                   <span>{payment.totalCredits}</span>
                   {isAdmin ? <span>{formatCurrency(payment.totalPrice)}</span> : null}
                   <span>{formatCurrency(payment.teacherTotal)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {activeTab === "global" && isAdmin ? (
+          <div className="tab-content">
+            <form className="period-filter" method="get" action="/treinos-personalizados/pagamentos">
+              <input type="hidden" name="teacherId" value={selectedTeacherId} />
+              <input type="hidden" name="tab" value="global" />
+              <input type="hidden" name="month" value={selectedMonth} />
+              <div className="field">
+                <label htmlFor="globalMonth">Mes</label>
+                <input id="globalMonth" name="globalMonth" type="month" defaultValue={selectedGlobalMonth} />
+              </div>
+              <div className="period-summary">
+                <strong>{formatBillingPeriod(globalPeriod.start, globalPeriod.endExclusive)}</strong>
+                <small>Todos os professores</small>
+              </div>
+              <button className="button secondary" type="submit">
+                Consultar
+              </button>
+            </form>
+
+            <div className="stats-grid">
+              <div className="stat-card">
+                <span>Pagamentos</span>
+                <strong>{globalStats.count}</strong>
+              </div>
+              <div className="stat-card">
+                <span>Quantidade</span>
+                <strong>{globalStats.quantity}</strong>
+              </div>
+              <div className="stat-card">
+                <span>Creditos</span>
+                <strong>{globalStats.credits}</strong>
+              </div>
+              <div className="stat-card">
+                <span>Total utente</span>
+                <strong>{formatCurrency(globalStats.totalClient)}</strong>
+              </div>
+              <div className="stat-card">
+                <span>Total professores</span>
+                <strong>{formatCurrency(globalStats.totalTeacher)}</strong>
+              </div>
+            </div>
+
+            <div className="global-payments-table">
+              <div className="global-payments-header">
+                <span>Professor</span>
+                <span>Pagamentos</span>
+                <span>Quantidade</span>
+                <span>Total utente</span>
+                <span>Total professor</span>
+              </div>
+              {globalTeacherStats.length === 0 ? <p className="muted">Nao existem pagamentos neste periodo.</p> : null}
+              {globalTeacherStats.map((teacher) => (
+                <div className="global-payments-row" key={teacher.teacherName}>
+                  <span>{teacher.teacherName}</span>
+                  <span>{teacher.count}</span>
+                  <span>{teacher.quantity}</span>
+                  <span>{formatCurrency(teacher.totalClient)}</span>
+                  <span>{formatCurrency(teacher.totalTeacher)}</span>
                 </div>
               ))}
             </div>
