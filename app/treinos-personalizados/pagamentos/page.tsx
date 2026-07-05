@@ -14,6 +14,7 @@ export default async function PersonalTrainingPaymentsPage({
   const user = await requireUser();
   const params = await searchParams;
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
+  const isAdmin = roleKeys.includes("admin");
   const canCreate = roleKeys.includes("admin") || roleKeys.includes("recepcao");
   const canViewAsTeacher = roleKeys.includes("professor");
 
@@ -45,6 +46,14 @@ export default async function PersonalTrainingPaymentsPage({
     query.set("month", selectedMonth);
 
     return `/treinos-personalizados/pagamentos?${query.toString()}`;
+  };
+
+  const reportHref = (type: "payments" | "bookings") => {
+    const query = new URLSearchParams();
+    query.set("teacherId", selectedTeacherId);
+    query.set("month", selectedMonth);
+
+    return `/api/personal-training/reports/${type}?${query.toString()}`;
   };
 
   const [paymentTypes, teacherStudents, payments, creditBalances] = await Promise.all([
@@ -247,30 +256,43 @@ export default async function PersonalTrainingPaymentsPage({
                 <span>Creditos</span>
                 <strong>{paymentStats.credits}</strong>
               </div>
-              <div className="stat-card">
-                <span>Total utente</span>
-                <strong>{formatCurrency(paymentStats.totalClient)}</strong>
-              </div>
+              {isAdmin ? (
+                <div className="stat-card">
+                  <span>Total utente</span>
+                  <strong>{formatCurrency(paymentStats.totalClient)}</strong>
+                </div>
+              ) : null}
               <div className="stat-card">
                 <span>Total professor</span>
                 <strong>{formatCurrency(paymentStats.totalTeacher)}</strong>
               </div>
             </div>
 
+            {isAdmin ? (
+              <div className="report-actions">
+                <a className="button secondary" href={reportHref("payments")}>
+                  Exportar pagamentos Excel
+                </a>
+                <a className="button secondary" href={reportHref("bookings")}>
+                  Exportar agendamentos Excel
+                </a>
+              </div>
+            ) : null}
+
             <div className="payments-table">
-              <div className="payments-header">
+              <div className={isAdmin ? "payments-header" : "payments-header teacher-values"}>
                 <span>Data</span>
                 <span>Professor</span>
                 <span>Utente</span>
                 <span>Tipo</span>
                 <span>Qtd.</span>
                 <span>Creditos</span>
-                <span>Total utente</span>
+                {isAdmin ? <span>Total utente</span> : null}
                 <span>Total professor</span>
               </div>
               {payments.length === 0 ? <p className="muted">Nao existem pagamentos neste ciclo.</p> : null}
               {payments.map((payment) => (
-                <div className="payments-row" key={payment.id}>
+                <div className={isAdmin ? "payments-row" : "payments-row teacher-values"} key={payment.id}>
                   <span>{payment.createdAt.toLocaleDateString("pt-PT")}</span>
                   <span>{payment.teacher.name}</span>
                   <span>
@@ -280,7 +302,7 @@ export default async function PersonalTrainingPaymentsPage({
                   <span>{payment.paymentType.description}</span>
                   <span>{payment.quantity}</span>
                   <span>{payment.totalCredits}</span>
-                  <span>{formatCurrency(payment.totalPrice)}</span>
+                  {isAdmin ? <span>{formatCurrency(payment.totalPrice)}</span> : null}
                   <span>{formatCurrency(payment.teacherTotal)}</span>
                 </div>
               ))}

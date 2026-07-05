@@ -674,6 +674,12 @@ h1 {
   min-width: 1240px;
 }
 
+.payments-header.teacher-values,
+.payments-row.teacher-values {
+  grid-template-columns: 90px 170px 220px minmax(360px, 1fr) 60px 80px 140px;
+  min-width: 1120px;
+}
+
 .payments-header {
   color: #475569;
   font-size: 12px;
@@ -747,6 +753,12 @@ h1 {
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .stat-card {
