@@ -1,8 +1,10 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
-import { getCreditBalanceForTeacherStudentType } from "@/lib/personalTrainingCredits";
+import { getCreditBalanceForTeacherStudentTrainingType } from "@/lib/personalTrainingCredits";
 import {
+  getTrainingTypeKey,
+  getTrainingTypeName,
   isExclusiveTrainingType,
   paymentTypeMatchesDuration,
   requiredParticipantsForType,
@@ -23,7 +25,7 @@ export async function POST(request: Request) {
   const dateValue = String(formData.get("date") || "");
   const poolBlockId = String(formData.get("poolBlockId") || "");
   const studentIds = Array.from(new Set(formData.getAll("studentIds").map(String).filter(Boolean)));
-  const paymentTypeId = String(formData.get("paymentTypeId") || "");
+  const trainingTypeKey = String(formData.get("trainingTypeKey") || "");
   const durationMinutes = Number(formData.get("durationMinutes"));
   const redirectPath = `/piscina-25m?date=${dateValue || ""}`;
   const errorPath = `${redirectPath}&error=1`;
@@ -33,37 +35,47 @@ export async function POST(request: Request) {
     !dateValue ||
     !poolBlockId ||
     studentIds.length === 0 ||
-    !paymentTypeId ||
+    !trainingTypeKey ||
     !trainingDurationOptions.includes(durationMinutes) ||
     !isTodayOrFuture(bookingDate)
   ) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
-  const [block, paymentType] = await Promise.all([
+  const [block, paymentTypes] = await Promise.all([
     prisma.poolScheduleBlock.findUnique({ where: { id: poolBlockId } }),
-    prisma.personalTrainingPaymentType.findFirst({ where: { id: paymentTypeId, active: true } })
+    prisma.personalTrainingPaymentType.findMany({
+      where: { active: true },
+      orderBy: { credits: "desc" }
+    })
   ]);
+
+  const matchingPaymentTypes = paymentTypes.filter(
+    (paymentType) =>
+      getTrainingTypeKey(paymentType.description) === trainingTypeKey &&
+      paymentTypeMatchesDuration(paymentType.description, durationMinutes)
+  );
+  const paymentType = matchingPaymentTypes[0];
+  const trainingTypeName = paymentType ? getTrainingTypeName(paymentType.description) : "";
 
   if (
     !block ||
     block.type !== "treino" ||
     block.weekday !== dateToWeekday(bookingDate) ||
     block.endMinutes - block.startMinutes < durationMinutes ||
-    !paymentType ||
-    !paymentTypeMatchesDuration(paymentType.description, durationMinutes)
+    !paymentType
   ) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
-  const requiredParticipants = requiredParticipantsForType(paymentType.description);
+  const requiredParticipants = requiredParticipantsForType(trainingTypeName);
 
   if (studentIds.length !== requiredParticipants) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
   const balances = await Promise.all(
-    studentIds.map((studentId) => getCreditBalanceForTeacherStudentType(user.id, studentId, paymentTypeId))
+    studentIds.map((studentId) => getCreditBalanceForTeacherStudentTrainingType(user.id, studentId, trainingTypeKey))
   );
 
   if (balances.some((balance) => !balance?.canBook)) {
@@ -90,7 +102,7 @@ export async function POST(request: Request) {
     (booking) => booking.teacherId === user.id || studentIds.includes(booking.studentId)
   );
   const existingExclusive = overlappingBookings.some((booking) => isExclusiveTrainingType(booking.paymentType?.description));
-  const newExclusive = isExclusiveTrainingType(paymentType.description);
+  const newExclusive = isExclusiveTrainingType(trainingTypeName);
   const exceedsCapacity = overlappingGroups.size >= 2;
 
   if (sameTeacherOrStudent || existingExclusive || (newExclusive && overlappingGroups.size > 0) || exceedsCapacity) {
@@ -106,7 +118,7 @@ export async function POST(request: Request) {
       poolBlockId,
       teacherId: user.id,
       studentId,
-      paymentTypeId,
+      paymentTypeId: paymentType.id,
       startMinutes,
       endMinutes,
       durationMinutes,

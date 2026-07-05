@@ -161,7 +161,7 @@ export default async function PersonalTrainingPaymentsPage({
                 {balance.fullName}
                 <small>{balance.memberNumber}</small>
               </span>
-              <span>{balance.paymentTypeDescription}</span>
+              <span>{balance.trainingTypeName}</span>
               <span>{balance.purchasedCredits}</span>
               <span>{balance.usedCredits}</span>
               <span className={balance.availableCredits < 0 ? "negative-balance" : ""}>{balance.availableCredits}</span>

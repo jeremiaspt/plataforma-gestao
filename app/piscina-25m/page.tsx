@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { BookingModal } from "@/components/BookingModal";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
 import {
+  getTrainingTypeKey,
+  getTrainingTypeName,
   paymentTypeMatchesDuration,
-  requiredParticipantsForType,
   trainingDurationOptions
 } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
@@ -77,6 +79,24 @@ export default async function PoolMapPage({
         })
       ])
     : [[], []];
+  const trainingTypeMap = new Map<string, { key: string; name: string; durationMinutes: number }>();
+
+  for (const paymentType of paymentTypes) {
+    for (const duration of trainingDurationOptions) {
+      if (paymentTypeMatchesDuration(paymentType.description, duration)) {
+        const key = getTrainingTypeKey(paymentType.description);
+        trainingTypeMap.set(key, {
+          key,
+          name: getTrainingTypeName(paymentType.description),
+          durationMinutes: duration
+        });
+      }
+    }
+  }
+
+  const trainingTypes = Array.from(trainingTypeMap.values()).sort(
+    (a, b) => a.durationMinutes - b.durationMinutes || a.name.localeCompare(b.name)
+  );
   const selectedBookingBlock = params.bookingBlockId
     ? blocks.find((block) => block.id === params.bookingBlockId && block.type === "treino")
     : null;
@@ -294,68 +314,18 @@ export default async function PoolMapPage({
       </section>
 
       {isProfessor && canBookSelectedDate && selectedBookingBlock ? (
-        <div className="modal-backdrop">
-          <section className="booking-modal">
-            <div className="topbar">
-              <div>
-                <p className="eyebrow">Marcação PT</p>
-                <h1>
-                  {selectedBookingBlock.title} · Pista {selectedBookingBlock.laneNumber}
-                </h1>
-                <p className="muted">
-                  {formatMinutes(selectedBookingBlock.startMinutes)} - {formatMinutes(selectedBookingBlock.endMinutes)}
-                </p>
-              </div>
-              <a className="button secondary" href={`/piscina-25m?date=${selectedDateValue}`}>
-                Fechar
-              </a>
-            </div>
-
-            <div className="modal-booking-list">
-              {trainingDurationOptions
-                .filter((duration) => selectedBookingBlock.endMinutes - selectedBookingBlock.startMinutes >= duration)
-                .flatMap((duration) =>
-                  paymentTypes
-                    .filter((type) => paymentTypeMatchesDuration(type.description, duration))
-                    .map((type) => {
-                      const requiredParticipants = requiredParticipantsForType(type.description);
-                      const eligibleBalances = creditBalances.filter(
-                        (balance) => balance.paymentTypeId === type.id && balance.canBook
-                      );
-
-                      return (
-                        <form className="modal-booking-form" action="/api/personal-training/bookings" method="post" key={`${duration}-${type.id}`}>
-                          <input type="hidden" name="date" value={selectedDateValue} />
-                          <input type="hidden" name="poolBlockId" value={selectedBookingBlock.id} />
-                          <input type="hidden" name="durationMinutes" value={duration} />
-                          <input type="hidden" name="paymentTypeId" value={type.id} />
-                          <div>
-                            <strong>{duration} min</strong>
-                            <p className="muted">{type.description}</p>
-                          </div>
-                          {Array.from({ length: requiredParticipants }).map((_, index) => (
-                            <div className="field" key={index}>
-                              <label>Utente {index + 1}</label>
-                              <select name="studentIds" required>
-                                <option value="">Selecionar utente</option>
-                                {eligibleBalances.map((balance) => (
-                                  <option value={balance.studentId} key={balance.studentId}>
-                                    {balance.fullName} · saldo {balance.availableCredits}
-                                  </option>
-                                ))}
-                              </select>
-                            </div>
-                          ))}
-                          <button className="button" type="submit" disabled={eligibleBalances.length < requiredParticipants}>
-                            Marcar aula
-                          </button>
-                        </form>
-                      );
-                    })
-                )}
-            </div>
-          </section>
-        </div>
+        <BookingModal
+          date={selectedDateValue}
+          poolBlockId={selectedBookingBlock.id}
+          blockTitle={selectedBookingBlock.title}
+          laneNumber={selectedBookingBlock.laneNumber}
+          startLabel={formatMinutes(selectedBookingBlock.startMinutes)}
+          endLabel={formatMinutes(selectedBookingBlock.endMinutes)}
+          maxDurationMinutes={selectedBookingBlock.endMinutes - selectedBookingBlock.startMinutes}
+          closeHref={`/piscina-25m?date=${selectedDateValue}`}
+          trainingTypes={trainingTypes}
+          creditBalances={creditBalances}
+        />
       ) : null}
 
 

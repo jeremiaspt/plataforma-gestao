@@ -484,23 +484,11 @@ h1 {
   width: min(920px, 100%);
 }
 
-.modal-booking-list {
-  display: grid;
-  gap: 12px;
-}
-
-.modal-booking-form {
+.booking-popup-form {
   align-items: end;
-  border: 1px solid var(--line);
-  border-radius: 8px;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(150px, 0.7fr)) auto;
-  padding: 12px;
-}
-
-.modal-booking-form p {
-  margin: 4px 0 0;
+  grid-template-columns: 140px minmax(260px, 1fr) repeat(3, minmax(150px, 0.75fr)) auto;
 }
 
 .type-aula {
@@ -721,7 +709,7 @@ h1 {
     grid-template-columns: 1fr;
   }
 
-  .modal-booking-form {
+  .booking-popup-form {
     grid-template-columns: 1fr;
   }
 
