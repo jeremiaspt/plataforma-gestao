@@ -97,8 +97,56 @@ export default async function PoolMapPage({
   const trainingTypes = Array.from(trainingTypeMap.values()).sort(
     (a, b) => a.durationMinutes - b.durationMinutes || a.name.localeCompare(b.name)
   );
+  const teacherBookingGroups = new Map<
+    string,
+    {
+      groupId: string;
+      poolBlockId: string;
+      laneNumber: number;
+      blockTitle: string;
+      startMinutes: number;
+      endMinutes: number;
+      durationMinutes: number;
+      trainingTypeKey: string;
+      trainingTypeName: string;
+      studentIds: string[];
+      studentNames: string[];
+    }
+  >();
+
+  if (isProfessor) {
+    for (const booking of bookings.filter((booking) => booking.teacherId === user.id && booking.status !== "cancelled")) {
+      const current =
+        teacherBookingGroups.get(booking.bookingGroupId) ||
+        {
+          groupId: booking.bookingGroupId,
+          poolBlockId: booking.poolBlockId,
+          laneNumber: booking.poolBlock.laneNumber,
+          blockTitle: booking.poolBlock.title,
+          startMinutes: booking.startMinutes,
+          endMinutes: booking.endMinutes,
+          durationMinutes: booking.durationMinutes,
+          trainingTypeKey: booking.paymentType ? getTrainingTypeKey(booking.paymentType.description) : "",
+          trainingTypeName: booking.paymentType ? getTrainingTypeName(booking.paymentType.description) : "",
+          studentIds: [],
+          studentNames: []
+        };
+
+      current.studentIds.push(booking.studentId);
+      current.studentNames.push(booking.student.fullName);
+      teacherBookingGroups.set(booking.bookingGroupId, current);
+    }
+  }
+
+  const teacherBookings = Array.from(teacherBookingGroups.values()).sort((a, b) => a.startMinutes - b.startMinutes);
+  const editBookingGroup = params.bookingBlockId
+    ? teacherBookings.find((booking) => booking.groupId === params.bookingBlockId)
+    : null;
+  const selectedEditBlock = editBookingGroup
+    ? blocks.find((block) => block.id === editBookingGroup.poolBlockId)
+    : null;
   const selectedBookingBlock = params.bookingBlockId
-    ? blocks.find((block) => block.id === params.bookingBlockId && block.type === "treino")
+    ? blocks.find((block) => block.id === params.bookingBlockId && block.type === "treino") || selectedEditBlock || null
     : null;
 
   function blockForSlot(laneNumber: number, slot: number) {
@@ -331,7 +379,52 @@ export default async function PoolMapPage({
           closeHref={`/piscina-25m?date=${selectedDateValue}`}
           trainingTypes={trainingTypes}
           creditBalances={creditBalances}
+          editBooking={
+            editBookingGroup
+              ? {
+                  groupId: editBookingGroup.groupId,
+                  startMinutes: editBookingGroup.startMinutes,
+                  durationMinutes: editBookingGroup.durationMinutes,
+                  trainingTypeKey: editBookingGroup.trainingTypeKey,
+                  studentIds: editBookingGroup.studentIds
+                }
+              : undefined
+          }
         />
+      ) : null}
+
+      {isProfessor && teacherBookings.length > 0 ? (
+        <section className="panel">
+          <h2>As minhas marcações</h2>
+          <div className="teacher-bookings-list">
+            {teacherBookings.map((booking) => (
+              <div className="teacher-booking-row" key={booking.groupId}>
+                <div>
+                  <strong>
+                    {formatMinutes(booking.startMinutes)} - {formatMinutes(booking.endMinutes)} · {booking.blockTitle} · Pista {booking.laneNumber}
+                  </strong>
+                  <p className="muted">
+                    {booking.trainingTypeName} · {booking.studentNames.join(", ")}
+                  </p>
+                </div>
+                {canBookSelectedDate ? (
+                  <div className="action-row compact-actions">
+                    <a className="button secondary" href={`/piscina-25m?date=${selectedDateValue}&bookingBlockId=${booking.groupId}`}>
+                      Alterar
+                    </a>
+                    <form action="/api/personal-training/bookings/cancel" method="post">
+                      <input type="hidden" name="date" value={selectedDateValue} />
+                      <input type="hidden" name="bookingGroupId" value={booking.groupId} />
+                      <button className="button danger" type="submit">
+                        Anular
+                      </button>
+                    </form>
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </section>
       ) : null}
 
 

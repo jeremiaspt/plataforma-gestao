@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const dateValue = String(formData.get("date") || "");
   const poolBlockId = String(formData.get("poolBlockId") || "");
+  const existingBookingGroupId = String(formData.get("bookingGroupId") || "");
   const studentIds = Array.from(new Set(formData.getAll("studentIds").map(String).filter(Boolean)));
   const trainingTypeKey = String(formData.get("trainingTypeKey") || "");
   const durationMinutes = Number(formData.get("durationMinutes"));
@@ -44,6 +45,8 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
+  let existingBookingsForEdit: Awaited<ReturnType<typeof prisma.personalTrainingBooking.findMany>> = [];
+
   const [block, paymentTypes] = await Promise.all([
     prisma.poolScheduleBlock.findUnique({ where: { id: poolBlockId } }),
     prisma.personalTrainingPaymentType.findMany({
@@ -51,6 +54,20 @@ export async function POST(request: Request) {
       orderBy: { credits: "desc" }
     })
   ]);
+
+  if (existingBookingGroupId) {
+    existingBookingsForEdit = await prisma.personalTrainingBooking.findMany({
+      where: {
+        bookingGroupId: existingBookingGroupId,
+        teacherId: user.id,
+        status: { not: "cancelled" }
+      }
+    });
+
+    if (existingBookingsForEdit.length === 0 || existingBookingsForEdit.some((booking) => !isTodayOrFuture(booking.bookingDate))) {
+      return NextResponse.redirect(appRedirectUrl(errorPath, request));
+    }
+  }
 
   const matchingPaymentTypes = paymentTypes.filter(
     (paymentType) =>
@@ -82,7 +99,18 @@ export async function POST(request: Request) {
     studentIds.map((studentId) => getCreditBalanceForTeacherStudentTrainingType(user.id, studentId, trainingTypeKey))
   );
 
-  if (balances.some((balance) => !balance?.canBook)) {
+  const existingCreditsByStudent = new Map(
+    existingBookingsForEdit
+      .filter((booking) => booking.paymentTypeId === paymentType.id)
+      .map((booking) => [booking.studentId, booking.creditsUsed])
+  );
+  const hasEnoughCredits = balances.every((balance, index) => {
+    if (!balance) return false;
+    const restoredCredits = existingCreditsByStudent.get(studentIds[index]) || 0;
+    return balance.availableCredits + restoredCredits > -2;
+  });
+
+  if (!hasEnoughCredits) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
@@ -95,6 +123,7 @@ export async function POST(request: Request) {
       bookingDate: bookingDateValue,
       poolBlockId,
       status: { not: "cancelled" },
+      bookingGroupId: existingBookingGroupId ? { not: existingBookingGroupId } : undefined,
       startMinutes: { lt: endMinutes },
       endMinutes: { gt: startMinutes }
     },
@@ -115,19 +144,32 @@ export async function POST(request: Request) {
 
   const bookingGroupId = crypto.randomUUID();
 
-  await prisma.personalTrainingBooking.createMany({
-    data: studentIds.map((studentId) => ({
-      bookingGroupId,
-      bookingDate: bookingDateValue,
-      poolBlockId,
-      teacherId: user.id,
-      studentId,
-      paymentTypeId: paymentType.id,
-      startMinutes,
-      endMinutes,
-      durationMinutes,
-      creditsUsed: 1
-    }))
+  await prisma.$transaction(async (tx) => {
+    if (existingBookingGroupId) {
+      await tx.personalTrainingBooking.updateMany({
+        where: {
+          bookingGroupId: existingBookingGroupId,
+          teacherId: user.id,
+          status: { not: "cancelled" }
+        },
+        data: { status: "cancelled" }
+      });
+    }
+
+    await tx.personalTrainingBooking.createMany({
+      data: studentIds.map((studentId) => ({
+        bookingGroupId,
+        bookingDate: bookingDateValue,
+        poolBlockId,
+        teacherId: user.id,
+        studentId,
+        paymentTypeId: paymentType.id,
+        startMinutes,
+        endMinutes,
+        durationMinutes,
+        creditsUsed: 1
+      }))
+    });
   });
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&success=1`, request));

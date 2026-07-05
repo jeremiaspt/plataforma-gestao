@@ -30,7 +30,8 @@ export function BookingModal({
   maxDurationMinutes,
   closeHref,
   trainingTypes,
-  creditBalances
+  creditBalances,
+  editBooking
 }: {
   date: string;
   poolBlockId: string;
@@ -44,19 +45,28 @@ export function BookingModal({
   closeHref: string;
   trainingTypes: TrainingTypeOption[];
   creditBalances: CreditBalanceOption[];
+  editBooking?: {
+    groupId: string;
+    startMinutes: number;
+    durationMinutes: number;
+    trainingTypeKey: string;
+    studentIds: string[];
+  };
 }) {
   const availableDurations = trainingDurationOptions.filter((duration) => duration <= maxDurationMinutes);
-  const [durationMinutes, setDurationMinutes] = useState(availableDurations[0] || 30);
+  const [durationMinutes, setDurationMinutes] = useState(editBooking?.durationMinutes || availableDurations[0] || 30);
   const filteredTypes = useMemo(
     () => trainingTypes.filter((type) => type.durationMinutes === durationMinutes),
     [durationMinutes, trainingTypes]
   );
-  const [trainingTypeKey, setTrainingTypeKey] = useState(filteredTypes[0]?.key || "");
+  const [trainingTypeKey, setTrainingTypeKey] = useState(editBooking?.trainingTypeKey || filteredTypes[0]?.key || "");
   const selectedType = filteredTypes.find((type) => type.key === trainingTypeKey) || filteredTypes[0];
   const selectedTypeKey = selectedType?.key || "";
   const requiredParticipants = requiredParticipantsForType(selectedType?.name);
   const eligibleBalances = creditBalances.filter(
-    (balance) => balance.trainingTypeKey === selectedTypeKey && balance.canBook
+    (balance) =>
+      balance.trainingTypeKey === selectedTypeKey &&
+      (balance.canBook || Boolean(editBooking?.studentIds.includes(balance.studentId)))
   );
   const startOptions = useMemo(() => {
     const options: number[] = [];
@@ -68,7 +78,7 @@ export function BookingModal({
 
     return options;
   }, [blockEndMinutes, blockStartMinutes, durationMinutes]);
-  const [startMinutes, setStartMinutes] = useState(startOptions[0] || blockStartMinutes);
+  const [startMinutes, setStartMinutes] = useState(editBooking?.startMinutes || startOptions[0] || blockStartMinutes);
 
   function handleDurationChange(value: string) {
     const nextDuration = Number(value);
@@ -103,6 +113,7 @@ export function BookingModal({
         </div>
 
         <form className="booking-popup-form" action="/api/personal-training/bookings" method="post">
+          {editBooking ? <input type="hidden" name="bookingGroupId" value={editBooking.groupId} /> : null}
           <input type="hidden" name="date" value={date} />
           <input type="hidden" name="poolBlockId" value={poolBlockId} />
           <input type="hidden" name="durationMinutes" value={durationMinutes} />
@@ -145,7 +156,7 @@ export function BookingModal({
           {Array.from({ length: requiredParticipants }).map((_, index) => (
             <div className="field" key={index}>
               <label>Utente {index + 1}</label>
-              <select name="studentIds" required>
+              <select name="studentIds" defaultValue={editBooking?.studentIds[index] || ""} required>
                 <option value="">Selecionar utente</option>
                 {eligibleBalances.map((balance) => (
                   <option value={balance.studentId} key={balance.studentId}>
@@ -157,7 +168,7 @@ export function BookingModal({
           ))}
 
           <button className="button" type="submit" disabled={!selectedTypeKey || eligibleBalances.length < requiredParticipants}>
-            Marcar aula
+            {editBooking ? "Guardar alteração" : "Marcar aula"}
           </button>
         </form>
       </section>

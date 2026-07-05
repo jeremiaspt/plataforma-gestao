@@ -378,6 +378,7 @@ h1 {
   padding: 4px 6px;
   text-align: left;
   vertical-align: top;
+  max-width: 180px;
 }
 
 .pool-table thead th,
@@ -416,6 +417,15 @@ h1 {
   display: grid;
   gap: 3px;
   max-width: 180px;
+  overflow: hidden;
+}
+
+.pool-cell-content strong,
+.pool-cell-content small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pool-cell.occupied small {
@@ -457,6 +467,7 @@ h1 {
   gap: 2px;
   max-height: 44px;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .booking-summary small {
@@ -512,6 +523,26 @@ h1 {
 .booking-popup-form button {
   grid-column: 1 / -1;
   justify-self: end;
+}
+
+.teacher-bookings-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.teacher-booking-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.teacher-booking-row p {
+  margin: 4px 0 0;
 }
 
 .type-aula {
@@ -742,6 +773,11 @@ h1 {
   }
 
   .schedule-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .teacher-booking-row {
     align-items: flex-start;
     flex-direction: column;
   }
