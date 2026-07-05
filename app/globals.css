@@ -429,61 +429,78 @@ h1 {
   padding: 3px 5px;
 }
 
-.inline-booking-list {
+.vacancy-chip,
+.full-chip {
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 3px 5px;
+  width: fit-content;
+}
+
+.vacancy-chip {
+  background: #e6f5f2;
+  color: #0f766e !important;
+}
+
+.full-chip {
+  background: #fee4e2;
+  color: var(--danger) !important;
+}
+
+.booking-summary {
   display: grid;
-  gap: 6px;
-  margin-top: 6px;
+  gap: 3px;
 }
 
-.inline-booking-form {
-  background: rgba(255, 255, 255, 0.74);
-  border: 1px solid rgba(15, 23, 42, 0.12);
+.mini-button {
+  background: var(--primary);
+  border-radius: 6px;
+  color: white;
+  display: inline-flex;
+  font-weight: 700;
+  justify-content: center;
+  margin-top: 4px;
+  padding: 5px 8px;
+  width: fit-content;
+}
+
+.modal-backdrop {
+  align-items: center;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 20;
+}
+
+.booking-modal {
+  background: var(--panel);
   border-radius: 8px;
-  display: grid;
-  gap: 6px;
-  padding: 8px;
+  max-height: min(86vh, 820px);
+  overflow: auto;
+  padding: 20px;
+  width: min(920px, 100%);
 }
 
-.inline-booking-form select {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  min-width: 0;
-  padding: 7px 8px;
-  width: 100%;
-}
-
-.inline-booking-form .button {
-  min-height: 34px;
-  padding: 7px 9px;
-}
-
-.booking-blocks {
+.modal-booking-list {
   display: grid;
   gap: 12px;
 }
 
-.booking-block {
+.modal-booking-form {
+  align-items: end;
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
-  gap: 14px;
-  padding: 14px;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 1fr) repeat(3, minmax(150px, 0.7fr)) auto;
+  padding: 12px;
 }
 
-.booking-block p {
+.modal-booking-form p {
   margin: 4px 0 0;
-}
-
-.booking-forms {
-  display: grid;
-  gap: 10px;
-}
-
-.booking-form {
-  align-items: flex-end;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr) auto;
 }
 
 .type-aula {
@@ -699,12 +716,12 @@ h1 {
     width: 100%;
   }
 
-  .booking-form {
+  .payment-type-form,
+  .payment-type-create {
     grid-template-columns: 1fr;
   }
 
-  .payment-type-form,
-  .payment-type-create {
+  .modal-booking-form {
     grid-template-columns: 1fr;
   }
 

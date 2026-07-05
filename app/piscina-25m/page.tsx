@@ -26,7 +26,7 @@ import {
 export default async function PoolMapPage({
   searchParams
 }: {
-  searchParams: Promise<{ date?: string; error?: string; success?: string }>;
+  searchParams: Promise<{ date?: string; error?: string; success?: string; bookingBlockId?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -77,6 +77,9 @@ export default async function PoolMapPage({
         })
       ])
     : [[], []];
+  const selectedBookingBlock = params.bookingBlockId
+    ? blocks.find((block) => block.id === params.bookingBlockId && block.type === "treino")
+    : null;
 
   function blockForSlot(laneNumber: number, slot: number) {
     return blocks.find(
@@ -101,6 +104,34 @@ export default async function PoolMapPage({
     }
 
     return Array.from(grouped.values());
+  }
+
+  function blockBookingGroups(blockId: string, startMinutes: number, endMinutes: number) {
+    const grouped = new Map<string, { teacherName: string; studentNames: string[]; exclusive: boolean }>();
+    const blockBookings = bookings.filter(
+      (booking) =>
+        booking.poolBlockId === blockId &&
+        booking.startMinutes < endMinutes &&
+        booking.endMinutes > startMinutes
+    );
+
+    for (const booking of blockBookings) {
+      const description = booking.paymentType?.description?.toLowerCase() || "";
+      const current = grouped.get(booking.bookingGroupId) || {
+        teacherName: booking.teacher.name,
+        studentNames: [],
+        exclusive: description.includes("pares") || description.includes("trio") || description.includes("grupo")
+      };
+      current.studentNames.push(booking.student.fullName);
+      grouped.set(booking.bookingGroupId, current);
+    }
+
+    return Array.from(grouped.values());
+  }
+
+  function hasBlockVacancy(blockId: string, startMinutes: number, endMinutes: number) {
+    const groups = blockBookingGroups(blockId, startMinutes, endMinutes);
+    return groups.length < 2 && !groups.some((group) => group.exclusive);
   }
 
   return (
@@ -210,7 +241,13 @@ export default async function PoolMapPage({
                     const block = blockForSlot(lane, slot);
                     const slotBookings = block ? groupedBookingsForBlock(block.id, slot) : [];
                     const isBlockStart = Boolean(block && slot === block.startMinutes);
-                    const canBookBlock = Boolean(isProfessor && canBookSelectedDate && block?.type === "treino" && isBlockStart);
+                    const blockGroups =
+                      block && isBlockStart ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes) : [];
+                    const hasVacancy =
+                      block && isBlockStart ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes) : false;
+                    const canBookBlock = Boolean(
+                      isProfessor && canBookSelectedDate && block?.type === "treino" && isBlockStart && hasVacancy
+                    );
 
                     return (
                       <td className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"} key={lane}>
@@ -225,50 +262,24 @@ export default async function PoolMapPage({
                                 {booking.teacherName}: {booking.studentNames.join(", ")}
                               </small>
                             ))}
-                            {canBookBlock ? (
-                              <div className="inline-booking-list">
-                                {trainingDurationOptions
-                                  .filter((duration) => block.endMinutes - block.startMinutes >= duration)
-                                  .flatMap((duration) =>
-                                    paymentTypes
-                                      .filter((type) => paymentTypeMatchesDuration(type.description, duration))
-                                      .map((type) => {
-                                        const requiredParticipants = requiredParticipantsForType(type.description);
-                                        const eligibleBalances = creditBalances.filter(
-                                          (balance) => balance.paymentTypeId === type.id && balance.canBook
-                                        );
-
-                                        return (
-                                          <form
-                                            className="inline-booking-form"
-                                            action="/api/personal-training/bookings"
-                                            method="post"
-                                            key={`${duration}-${type.id}`}
-                                          >
-                                            <input type="hidden" name="date" value={selectedDateValue} />
-                                            <input type="hidden" name="poolBlockId" value={block.id} />
-                                            <input type="hidden" name="durationMinutes" value={duration} />
-                                            <input type="hidden" name="paymentTypeId" value={type.id} />
-                                            <strong>{duration} min</strong>
-                                            <small>{type.description}</small>
-                                            {Array.from({ length: requiredParticipants }).map((_, index) => (
-                                              <select name="studentIds" required key={index}>
-                                                <option value="">Utente {index + 1}</option>
-                                                {eligibleBalances.map((balance) => (
-                                                  <option value={balance.studentId} key={balance.studentId}>
-                                                    {balance.fullName} · saldo {balance.availableCredits}
-                                                  </option>
-                                                ))}
-                                              </select>
-                                            ))}
-                                            <button className="button" type="submit" disabled={eligibleBalances.length < requiredParticipants}>
-                                              Marcar
-                                            </button>
-                                          </form>
-                                        );
-                                      })
-                                  )}
+                            {block.type === "treino" && isBlockStart ? (
+                              <small className={hasVacancy ? "vacancy-chip" : "full-chip"}>
+                                {hasVacancy ? "Vaga" : "Sem vaga"}
+                              </small>
+                            ) : null}
+                            {block.type === "treino" && isBlockStart && blockGroups.length > 0 ? (
+                              <div className="booking-summary">
+                                {blockGroups.map((group, index) => (
+                                  <small key={`${group.teacherName}-${index}`}>
+                                    {group.teacherName}: {group.studentNames.join(", ")}
+                                  </small>
+                                ))}
                               </div>
+                            ) : null}
+                            {canBookBlock ? (
+                              <a className="mini-button" href={`/piscina-25m?date=${selectedDateValue}&bookingBlockId=${block.id}`}>
+                                Marcar
+                              </a>
                             ) : null}
                           </div>
                         ) : null}
@@ -281,6 +292,71 @@ export default async function PoolMapPage({
           </table>
         </div>
       </section>
+
+      {isProfessor && canBookSelectedDate && selectedBookingBlock ? (
+        <div className="modal-backdrop">
+          <section className="booking-modal">
+            <div className="topbar">
+              <div>
+                <p className="eyebrow">Marcação PT</p>
+                <h1>
+                  {selectedBookingBlock.title} · Pista {selectedBookingBlock.laneNumber}
+                </h1>
+                <p className="muted">
+                  {formatMinutes(selectedBookingBlock.startMinutes)} - {formatMinutes(selectedBookingBlock.endMinutes)}
+                </p>
+              </div>
+              <a className="button secondary" href={`/piscina-25m?date=${selectedDateValue}`}>
+                Fechar
+              </a>
+            </div>
+
+            <div className="modal-booking-list">
+              {trainingDurationOptions
+                .filter((duration) => selectedBookingBlock.endMinutes - selectedBookingBlock.startMinutes >= duration)
+                .flatMap((duration) =>
+                  paymentTypes
+                    .filter((type) => paymentTypeMatchesDuration(type.description, duration))
+                    .map((type) => {
+                      const requiredParticipants = requiredParticipantsForType(type.description);
+                      const eligibleBalances = creditBalances.filter(
+                        (balance) => balance.paymentTypeId === type.id && balance.canBook
+                      );
+
+                      return (
+                        <form className="modal-booking-form" action="/api/personal-training/bookings" method="post" key={`${duration}-${type.id}`}>
+                          <input type="hidden" name="date" value={selectedDateValue} />
+                          <input type="hidden" name="poolBlockId" value={selectedBookingBlock.id} />
+                          <input type="hidden" name="durationMinutes" value={duration} />
+                          <input type="hidden" name="paymentTypeId" value={type.id} />
+                          <div>
+                            <strong>{duration} min</strong>
+                            <p className="muted">{type.description}</p>
+                          </div>
+                          {Array.from({ length: requiredParticipants }).map((_, index) => (
+                            <div className="field" key={index}>
+                              <label>Utente {index + 1}</label>
+                              <select name="studentIds" required>
+                                <option value="">Selecionar utente</option>
+                                {eligibleBalances.map((balance) => (
+                                  <option value={balance.studentId} key={balance.studentId}>
+                                    {balance.fullName} · saldo {balance.availableCredits}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          ))}
+                          <button className="button" type="submit" disabled={eligibleBalances.length < requiredParticipants}>
+                            Marcar aula
+                          </button>
+                        </form>
+                      );
+                    })
+                )}
+            </div>
+          </section>
+        </div>
+      ) : null}
 
 
       {isAdmin ? (
