@@ -27,6 +27,7 @@ export async function POST(request: Request) {
   const studentIds = Array.from(new Set(formData.getAll("studentIds").map(String).filter(Boolean)));
   const trainingTypeKey = String(formData.get("trainingTypeKey") || "");
   const durationMinutes = Number(formData.get("durationMinutes"));
+  const requestedStartMinutes = Number(formData.get("startMinutes"));
   const redirectPath = `/piscina-25m?date=${dateValue || ""}`;
   const errorPath = `${redirectPath}&error=1`;
   const bookingDate = parseDateParam(dateValue);
@@ -37,6 +38,7 @@ export async function POST(request: Request) {
     studentIds.length === 0 ||
     !trainingTypeKey ||
     !trainingDurationOptions.includes(durationMinutes) ||
+    !Number.isInteger(requestedStartMinutes) ||
     !isTodayOrFuture(bookingDate)
   ) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
@@ -62,7 +64,9 @@ export async function POST(request: Request) {
     !block ||
     block.type !== "treino" ||
     block.weekday !== dateToWeekday(bookingDate) ||
-    block.endMinutes - block.startMinutes < durationMinutes ||
+    requestedStartMinutes < block.startMinutes ||
+    requestedStartMinutes + durationMinutes > block.endMinutes ||
+    requestedStartMinutes % 5 !== 0 ||
     !paymentType
   ) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
@@ -82,7 +86,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
-  const startMinutes = block.startMinutes;
+  const startMinutes = requestedStartMinutes;
   const endMinutes = startMinutes + durationMinutes;
   const bookingDateValue = new Date(`${dateValue}T00:00:00`);
 

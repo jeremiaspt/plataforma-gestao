@@ -488,7 +488,7 @@ h1 {
   align-items: end;
   display: grid;
   gap: 12px;
-  grid-template-columns: 140px minmax(260px, 1fr) repeat(3, minmax(150px, 0.75fr)) auto;
+  grid-template-columns: 120px 120px minmax(240px, 1fr) repeat(3, minmax(150px, 0.75fr)) auto;
 }
 
 .type-aula {

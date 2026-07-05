@@ -25,6 +25,8 @@ export function BookingModal({
   laneNumber,
   startLabel,
   endLabel,
+  blockStartMinutes,
+  blockEndMinutes,
   maxDurationMinutes,
   closeHref,
   trainingTypes,
@@ -36,6 +38,8 @@ export function BookingModal({
   laneNumber: number;
   startLabel: string;
   endLabel: string;
+  blockStartMinutes: number;
+  blockEndMinutes: number;
   maxDurationMinutes: number;
   closeHref: string;
   trainingTypes: TrainingTypeOption[];
@@ -54,12 +58,30 @@ export function BookingModal({
   const eligibleBalances = creditBalances.filter(
     (balance) => balance.trainingTypeKey === selectedTypeKey && balance.canBook
   );
+  const startOptions = useMemo(() => {
+    const options: number[] = [];
+    const latestStart = blockEndMinutes - durationMinutes;
+
+    for (let minutes = blockStartMinutes; minutes <= latestStart; minutes += 5) {
+      options.push(minutes);
+    }
+
+    return options;
+  }, [blockEndMinutes, blockStartMinutes, durationMinutes]);
+  const [startMinutes, setStartMinutes] = useState(startOptions[0] || blockStartMinutes);
 
   function handleDurationChange(value: string) {
     const nextDuration = Number(value);
     const nextTypes = trainingTypes.filter((type) => type.durationMinutes === nextDuration);
     setDurationMinutes(nextDuration);
     setTrainingTypeKey(nextTypes[0]?.key || "");
+    setStartMinutes(blockStartMinutes);
+  }
+
+  function formatMinutes(totalMinutes: number) {
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
   }
 
   return (
@@ -85,6 +107,7 @@ export function BookingModal({
           <input type="hidden" name="poolBlockId" value={poolBlockId} />
           <input type="hidden" name="durationMinutes" value={durationMinutes} />
           <input type="hidden" name="trainingTypeKey" value={selectedTypeKey} />
+          <input type="hidden" name="startMinutes" value={startMinutes} />
 
           <div className="field">
             <label>Duração</label>
@@ -92,6 +115,17 @@ export function BookingModal({
               {availableDurations.map((duration) => (
                 <option value={duration} key={duration}>
                   {duration} min
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label>Início</label>
+            <select value={startMinutes} onChange={(event) => setStartMinutes(Number(event.target.value))}>
+              {startOptions.map((minutes) => (
+                <option value={minutes} key={minutes}>
+                  {formatMinutes(minutes)}
                 </option>
               ))}
             </select>

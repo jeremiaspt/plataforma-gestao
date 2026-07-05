@@ -38,7 +38,7 @@ export function requiredParticipantsForType(description?: string | null) {
 
   const normalized = description.toLowerCase();
 
-  if (normalized.includes("trio") || normalized.includes("grupo")) {
+  if (normalized.includes("trio")) {
     return 3;
   }
 

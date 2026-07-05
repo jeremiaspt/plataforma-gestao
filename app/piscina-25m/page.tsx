@@ -321,6 +321,8 @@ export default async function PoolMapPage({
           laneNumber={selectedBookingBlock.laneNumber}
           startLabel={formatMinutes(selectedBookingBlock.startMinutes)}
           endLabel={formatMinutes(selectedBookingBlock.endMinutes)}
+          blockStartMinutes={selectedBookingBlock.startMinutes}
+          blockEndMinutes={selectedBookingBlock.endMinutes}
           maxDurationMinutes={selectedBookingBlock.endMinutes - selectedBookingBlock.startMinutes}
           closeHref={`/piscina-25m?date=${selectedDateValue}`}
           trainingTypes={trainingTypes}
