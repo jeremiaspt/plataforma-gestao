@@ -243,7 +243,7 @@ export default async function PersonalTrainingPaymentsPage({
   }));
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} roles={roleKeys}>
       <section className="panel">
         <div className="topbar">
           <div>

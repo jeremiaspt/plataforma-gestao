@@ -7,6 +7,7 @@ import { roleOptions } from "@/lib/roles";
 
 export default async function UsersPage() {
   const currentUser = await requireUser();
+  const roleKeys = currentUser.roles.map((userRole) => userRole.role.key);
 
   if (!hasRole(currentUser, "admin")) {
     redirect("/dashboard");
@@ -18,7 +19,7 @@ export default async function UsersPage() {
   });
 
   return (
-    <AppShell userName={currentUser.name}>
+    <AppShell userName={currentUser.name} roles={roleKeys}>
       <section className="panel">
         <div className="topbar">
           <div>

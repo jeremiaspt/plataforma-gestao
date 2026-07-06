@@ -11,6 +11,7 @@ export default async function EmailSettingsPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  const roleKeys = user.roles.map((userRole) => userRole.role.key);
   const activeTab = params.tab === "logs" ? "logs" : "settings";
 
   if (!hasRole(user, "admin")) {
@@ -26,7 +27,7 @@ export default async function EmailSettingsPage({
   ]);
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} roles={roleKeys}>
       <section className="panel">
         <div className="topbar">
           <div>

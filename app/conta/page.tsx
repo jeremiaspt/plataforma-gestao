@@ -8,9 +8,10 @@ export default async function AccountPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  const roleKeys = user.roles.map((userRole) => userRole.role.key);
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} roles={roleKeys}>
       <section className="panel">
         <p className="eyebrow">Conta</p>
         <h1>A minha conta</h1>

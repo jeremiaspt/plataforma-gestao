@@ -58,7 +58,7 @@ export default async function DashboardPage() {
   );
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} roles={roles}>
       <section className="dashboard-hero">
         <div>
           <p className="eyebrow">Area de trabalho</p>

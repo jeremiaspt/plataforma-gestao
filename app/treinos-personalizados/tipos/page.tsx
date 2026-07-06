@@ -10,6 +10,7 @@ export default async function PersonalTrainingTypesPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  const roleKeys = user.roles.map((userRole) => userRole.role.key);
 
   if (!hasRole(user, "admin")) {
     redirect("/dashboard");
@@ -20,7 +21,7 @@ export default async function PersonalTrainingTypesPage({
   });
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} roles={roleKeys}>
       <section className="panel">
         <div className="topbar">
           <div>

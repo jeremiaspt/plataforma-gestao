@@ -291,7 +291,7 @@ export default async function PoolMapPage({
   }
 
   return (
-    <AppShell userName={user.name}>
+    <AppShell userName={user.name} roles={roleKeys}>
       <section className="panel">
         <div className="topbar">
           <div>

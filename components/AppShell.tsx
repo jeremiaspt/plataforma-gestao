@@ -3,11 +3,17 @@ import { Dumbbell, LayoutDashboard, LogOut, Mail, UserRound, Users, Waves } from
 
 export function AppShell({
   children,
-  userName
+  userName,
+  roles
 }: {
   children: React.ReactNode;
   userName: string;
+  roles: string[];
 }) {
+  const isAdmin = roles.includes("admin");
+  const canUsePool = isAdmin || roles.includes("professor") || roles.includes("recepcao");
+  const canUsePayments = isAdmin || roles.includes("professor") || roles.includes("recepcao");
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -24,27 +30,37 @@ export function AppShell({
             <LayoutDashboard size={18} />
             Dashboard
           </Link>
-          <Link href="/utilizadores">
-            <Users size={18} />
-            Utilizadores
-          </Link>
-          <Link href="/piscina-25m">
-            <Waves size={18} />
-            Piscina 25m
-          </Link>
-          <Link href="/treinos-personalizados/tipos">
-            <Dumbbell size={18} />
-            Treinos Personalizados
-          </Link>
-          <Link href="/treinos-personalizados/pagamentos">
-            <Dumbbell size={18} />
-            Pagamentos TP
-          </Link>
+          {canUsePool ? (
+            <Link href="/piscina-25m">
+              <Waves size={18} />
+              Piscina 25m
+            </Link>
+          ) : null}
+          {isAdmin ? (
+            <Link href="/treinos-personalizados/tipos">
+              <Dumbbell size={18} />
+              Treinos Personalizados
+            </Link>
+          ) : null}
+          {canUsePayments ? (
+            <Link href="/treinos-personalizados/pagamentos">
+              <Dumbbell size={18} />
+              Pagamentos TP
+            </Link>
+          ) : null}
           <span className="nav-label">Configuracao</span>
-          <Link href="/configuracoes-email">
-            <Mail size={18} />
-            Emails
-          </Link>
+          {isAdmin ? (
+            <Link href="/utilizadores">
+              <Users size={18} />
+              Utilizadores
+            </Link>
+          ) : null}
+          {isAdmin ? (
+            <Link href="/configuracoes-email">
+              <Mail size={18} />
+              Emails
+            </Link>
+          ) : null}
           <Link href="/conta">
             <UserRound size={18} />
             A minha conta
