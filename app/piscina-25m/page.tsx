@@ -169,13 +169,15 @@ export default async function PoolMapPage({
     return bookings.filter((booking) => booking.poolBlockId === blockId && slot >= booking.startMinutes && slot < booking.endMinutes);
   }
 
-  function groupedBookingsForBlock(blockId: string, slot: number) {
-    const grouped = new Map<string, { teacherName: string; studentNames: string[] }>();
+  function groupedBookingsStartingAt(blockId: string, slot: number) {
+    const grouped = new Map<string, { teacherName: string; studentNames: string[]; startMinutes: number; endMinutes: number }>();
 
-    for (const booking of bookingsForBlock(blockId, slot)) {
+    for (const booking of bookings.filter((booking) => booking.poolBlockId === blockId && booking.startMinutes === slot)) {
       const current = grouped.get(booking.bookingGroupId) || {
         teacherName: booking.teacher.name,
-        studentNames: []
+        studentNames: [],
+        startMinutes: booking.startMinutes,
+        endMinutes: booking.endMinutes
       };
       current.studentNames.push(booking.student.fullName);
       grouped.set(booking.bookingGroupId, current);
@@ -308,6 +310,12 @@ export default async function PoolMapPage({
       <section className="panel pool-panel">
         <div className="pool-table-wrap">
           <table className="pool-table">
+            <colgroup>
+              <col className="time-column" />
+              {poolLanes.map((lane) => (
+                <col className="lane-column" key={lane} />
+              ))}
+            </colgroup>
             <thead>
               <tr>
                 <th>Hora</th>
@@ -323,9 +331,7 @@ export default async function PoolMapPage({
                   {poolLanes.map((lane) => {
                     const block = blockForSlot(lane, slot);
                     const isBlockStart = Boolean(block && slot === block.startMinutes);
-                    const slotBookings = block && isBlockStart ? groupedBookingsForBlock(block.id, slot) : [];
-                    const blockGroups =
-                      block && isBlockStart ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes) : [];
+                    const slotBookings = block ? groupedBookingsStartingAt(block.id, slot) : [];
                     const hasVacancy =
                       block && isBlockStart ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes) : false;
                     const canBookBlock = Boolean(
@@ -346,23 +352,14 @@ export default async function PoolMapPage({
                             ) : null}
                             {slotBookings.map((booking, index) => (
                               <small className="booking-chip" key={`${booking.teacherName}-${index}`}>
-                                {booking.teacherName}: {booking.studentNames.join(", ")}
+                                {formatMinutes(booking.startMinutes)} - {formatMinutes(booking.endMinutes)} · {booking.teacherName}:{" "}
+                                {booking.studentNames.join(", ")}
                               </small>
                             ))}
                             {block.type === "treino" && isBlockStart ? (
                               <small className={hasVacancy ? "vacancy-chip" : "full-chip"}>
                                 {hasVacancy ? "Vaga" : "Sem vaga"}
                               </small>
-                            ) : null}
-                            {block.type === "treino" && isBlockStart && blockGroups.length > 0 ? (
-                              <div className="booking-summary">
-                                {blockGroups.map((group, index) => (
-                                  <small key={`${group.teacherName}-${index}`}>
-                                    {formatMinutes(group.startMinutes)} - {formatMinutes(group.endMinutes)} · {group.teacherName}:{" "}
-                                    {group.studentNames.join(", ")}
-                                  </small>
-                                ))}
-                              </div>
                             ) : null}
                             {canBookBlock ? (
                               <a className="mini-button" href={`/piscina-25m?date=${selectedDateValue}&bookingBlockId=${block.id}`}>
