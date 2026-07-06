@@ -564,7 +564,7 @@ h1 {
   align-items: flex-end;
   display: grid;
   gap: 12px;
-  grid-template-columns: 1.4fr 0.8fr 0.8fr 0.8fr 1fr 1.2fr auto;
+  grid-template-columns: minmax(180px, 1.3fr) 96px 110px 110px 130px minmax(190px, 1fr) minmax(160px, 1fr) auto;
 }
 
 .pool-panel {

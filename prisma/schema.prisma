@@ -17,6 +17,7 @@ model User {
   billingCycle       String              @default("calendar_month")
   roles              UserRole[]
   poolScheduleBlocks PoolScheduleBlock[]
+  poolClassesAsTeacher PoolScheduleBlock[] @relation("PoolClassTeacher")
   personalTrainingPaymentsAsTeacher PersonalTrainingPayment[] @relation("PersonalTrainingTeacher")
   personalTrainingPaymentsCreated    PersonalTrainingPayment[] @relation("PersonalTrainingCreatedBy")
   personalTrainingBookingsAsTeacher  PersonalTrainingBooking[] @relation("PersonalTrainingBookingTeacher")
@@ -68,6 +69,8 @@ model PoolScheduleBlock {
   title        String
   type         String
   notes        String?
+  teacherId    String?
+  teacher      User?    @relation("PoolClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
   createdById  String?
   createdBy    User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
   bookings     PersonalTrainingBooking[]

@@ -18,6 +18,7 @@ export async function POST(request: Request) {
   const title = String(formData.get("title") || "").trim();
   const type = String(formData.get("type") || "outro");
   const notes = String(formData.get("notes") || "").trim();
+  const teacherId = String(formData.get("teacherId") || "");
   const startMinutes = parseTimeToMinutes(String(formData.get("startTime") || ""));
   const endMinutes = parseTimeToMinutes(String(formData.get("endTime") || ""));
   const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}` : ""}`;
@@ -46,6 +47,21 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
+  const selectedTeacher = teacherId
+    ? await prisma.user.findFirst({
+        where: {
+          id: teacherId,
+          active: true,
+          roles: { some: { role: { key: "professor" } } }
+        },
+        select: { id: true }
+      })
+    : null;
+
+  if ((type === "aula" && !selectedTeacher) || (teacherId && !selectedTeacher)) {
+    return NextResponse.redirect(appRedirectUrl(errorPath, request));
+  }
+
   const conflict = await prisma.poolScheduleBlock.findFirst({
     where: {
       weekday,
@@ -68,6 +84,7 @@ export async function POST(request: Request) {
       title,
       type,
       notes,
+      teacherId: selectedTeacher?.id || null,
       createdById: user.id
     }
   });

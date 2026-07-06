@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { BookingModal } from "@/components/BookingModal";
+import { PoolClassTeacherRequirement } from "@/components/PoolClassTeacherRequirement";
+import { PoolCurrentTimeScroller } from "@/components/PoolCurrentTimeScroller";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
 import {
@@ -48,6 +50,7 @@ export default async function PoolMapPage({
   const nextDate = dateToInputValue(addDays(selectedDate, 1));
   const todayDate = dateToInputValue(new Date());
   const canBookSelectedDate = isTodayOrFuture(selectedDate);
+  const isSelectedDateToday = selectedDateValue === dateToInputValue(new Date());
   const slots = buildTimeSlots(weekday);
   const bounds = dayBounds(weekday);
   const requestedTab = params.bookingBlockId ? "map" : params.tab;
@@ -67,8 +70,22 @@ export default async function PoolMapPage({
   const blocks = await prisma.poolScheduleBlock.findMany({
     where: { weekday },
     orderBy: [{ laneNumber: "asc" }, { startMinutes: "asc" }],
-    include: { createdBy: { select: { name: true } } }
+    include: {
+      createdBy: { select: { name: true } },
+      teacher: { select: { name: true } }
+    }
   });
+
+  const classTeachers = isAdmin
+    ? await prisma.user.findMany({
+        where: {
+          active: true,
+          roles: { some: { role: { key: "professor" } } }
+        },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true }
+      })
+    : [];
 
   const bookings = await prisma.personalTrainingBooking.findMany({
     where: {
@@ -408,6 +425,7 @@ export default async function PoolMapPage({
 
         {activeTab === "map" ? (
         <div className="pool-table-wrap">
+          <PoolCurrentTimeScroller enabled={isSelectedDateToday} startMinutes={bounds.start} endMinutes={bounds.end} />
           <table className="pool-table">
             <colgroup>
               <col className="time-column" />
@@ -425,7 +443,7 @@ export default async function PoolMapPage({
             </thead>
             <tbody>
               {slots.map((slot) => (
-                <tr key={slot}>
+                <tr id={`pool-slot-${slot}`} key={slot}>
                   <th>{formatMinutes(slot)}</th>
                   {poolLanes.map((lane) => {
                     const block = blockForSlot(lane, slot);
@@ -447,6 +465,7 @@ export default async function PoolMapPage({
                                 <small>
                                   {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
                                 </small>
+                                {block.type === "aula" && block.teacher ? <small>{block.teacher.name}</small> : null}
                               </>
                             ) : null}
                             {slotBookings.map((booking, index) => (
@@ -581,6 +600,7 @@ export default async function PoolMapPage({
         <section className="panel pool-list-panel">
           <h2>Ocupações semanais de {selectedDayLabel}</h2>
           <form className="pool-form" action="/api/pool-schedule" method="post">
+            <PoolClassTeacherRequirement />
             <input type="hidden" name="weekday" value={weekday} />
             <input type="hidden" name="date" value={selectedDateValue} />
             <div className="field">
@@ -616,6 +636,17 @@ export default async function PoolMapPage({
               </select>
             </div>
             <div className="field">
+              <label htmlFor="teacherId">Professor da aula</label>
+              <select id="teacherId" name="teacherId">
+                <option value="">Selecionar se for Aula</option>
+                {classTeachers.map((teacher) => (
+                  <option value={teacher.id} key={teacher.id}>
+                    {teacher.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
               <label htmlFor="notes">Notas</label>
               <input id="notes" name="notes" />
             </div>
@@ -632,6 +663,7 @@ export default async function PoolMapPage({
                   <strong>{block.title}</strong>
                   <p className="muted">
                     Pista {block.laneNumber}, {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
+                    {block.type === "aula" && block.teacher ? ` - ${block.teacher.name}` : ""}
                   </p>
                 </div>
                 <button className="button danger" name="action" value="delete" type="submit">
