@@ -59,7 +59,8 @@ export default async function PoolMapPage({
 
   const bookings = await prisma.personalTrainingBooking.findMany({
     where: {
-      bookingDate: new Date(`${selectedDateValue}T00:00:00`)
+      bookingDate: new Date(`${selectedDateValue}T00:00:00`),
+      status: { not: "cancelled" }
     },
     include: {
       teacher: { select: { name: true } },
