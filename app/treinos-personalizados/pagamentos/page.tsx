@@ -73,7 +73,7 @@ export default async function PersonalTrainingPaymentsPage({
           : "credits";
   const billingPeriod = getBillingPeriod(selectedBillingCycle, selectedMonth);
   const globalPeriod = getAdminGlobalPeriod(selectedGlobalMonth);
-  const managementTitle = isReceptionOnly ? "Pagamentos lancados por mim" : selectedTeacher?.name || user.name;
+  const managementTitle = isReceptionOnly ? "Pagamentos lançados por mim" : selectedTeacher?.name || user.name;
 
   const tabHref = (tab: "credits" | "payments" | "global") => {
     const query = new URLSearchParams();
@@ -234,7 +234,7 @@ export default async function PersonalTrainingPaymentsPage({
   const maxGlobalTrainingTypeTotal = Math.max(...globalTrainingTypeStats.map((type) => type.totalTeacher), 0);
   const paymentTypeOptions = paymentTypes.map((type) => ({
     id: type.id,
-    label: `${type.description} - ${type.credits} creditos - ${formatCurrency(type.price)}`,
+    label: `${type.description} - ${type.credits} créditos - ${formatCurrency(type.price)}`,
     requiredParticipants: requiredParticipantsForType(type.description)
   }));
   const teacherStudentOptions = teacherStudents.map((student) => ({
@@ -251,16 +251,16 @@ export default async function PersonalTrainingPaymentsPage({
             <h1>Pagamentos de aulas</h1>
             <p className="muted">
               {canCreate
-                ? "Lanca pagamentos para o professor selecionado."
-                : "Consulta os pagamentos lancados para os teus alunos."}
+                ? "Lança pagamentos para o professor selecionado."
+                : "Consulta os pagamentos lançados para os teus alunos."}
             </p>
           </div>
         </div>
 
-        {params.success ? <p className="success">Pagamento lancado com sucesso.</p> : null}
-        {params.creditSuccess ? <p className="success">Creditos corrigidos com sucesso.</p> : null}
+        {params.success ? <p className="success">Pagamento lançado com sucesso.</p> : null}
+        {params.creditSuccess ? <p className="success">Créditos corrigidos com sucesso.</p> : null}
         {params.paymentCancelSuccess ? <p className="success">Pagamento anulado com sucesso.</p> : null}
-        {params.error ? <p className="error">Nao foi possivel lancar o pagamento. Confirma professor, aluno, tipo e quantidade.</p> : null}
+        {params.error ? <p className="error">Não foi possível lançar o pagamento. Confirma professor, aluno, tipo e quantidade.</p> : null}
 
         {canCreate ? (
           <>
@@ -291,19 +291,19 @@ export default async function PersonalTrainingPaymentsPage({
       <section className="panel payment-workspace">
         <div className="topbar">
           <div>
-            <p className="eyebrow">Gestao</p>
+            <p className="eyebrow">Gestão</p>
             <h1>{managementTitle}</h1>
             <p className="muted">
               {isReceptionOnly
-                ? "Consulta e anula apenas pagamentos lancados pelo teu utilizador."
-                : `Ciclo de faturacao: ${getBillingCycleLabel(selectedBillingCycle)}`}
+                ? "Consulta e anula apenas pagamentos lançados pelo teu utilizador."
+                : `Ciclo de faturação: ${getBillingCycleLabel(selectedBillingCycle)}`}
             </p>
           </div>
         </div>
 
         <div className="tabs">
           <a className={activeTab === "credits" ? "tab active" : "tab"} href={tabHref("credits")}>
-            Creditos dos alunos
+            Créditos dos alunos
           </a>
           <a className={activeTab === "payments" ? "tab active" : "tab"} href={tabHref("payments")}>
             {isAdmin ? "Pagamentos professor selecionado" : "Pagamentos"}
@@ -327,7 +327,7 @@ export default async function PersonalTrainingPaymentsPage({
               <span>Estado</span>
               {isAdmin ? <span>Corrigir saldo</span> : null}
             </div>
-            {creditBalances.length === 0 ? <p className="muted">Ainda nao existem saldos para este professor.</p> : null}
+            {creditBalances.length === 0 ? <p className="muted">Ainda não existem saldos para este professor.</p> : null}
             {creditBalances.map((balance) => (
               <div className={isAdmin ? "credits-row admin-credits-row" : "credits-row"} key={`${balance.studentId}-${balance.trainingTypeName}`}>
                 <span>
@@ -387,7 +387,7 @@ export default async function PersonalTrainingPaymentsPage({
                 <strong>{paymentStats.quantity}</strong>
               </div>
               <div className="stat-card">
-                <span>Creditos</span>
+                <span>Créditos</span>
                 <strong>{paymentStats.credits}</strong>
               </div>
               {isAdmin ? (
@@ -405,7 +405,7 @@ export default async function PersonalTrainingPaymentsPage({
             <div className="chart-panel">
               <div>
                 <h2>Tipos de treino pagos</h2>
-                <p className="muted">Quantidade e valor por tipo de pagamento no periodo selecionado.</p>
+                <p className="muted">Quantidade e valor por tipo de pagamento no período selecionado.</p>
               </div>
               <div className="bar-chart">
                 {trainingTypeStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
@@ -448,14 +448,14 @@ export default async function PersonalTrainingPaymentsPage({
                 <span>Data</span>
                 {isAdmin ? <span>Professor</span> : null}
                 <span>Utente</span>
-                <span>Lancado por</span>
+                <span>Lançado por</span>
                 <span>Tipo</span>
                 <span>Qtd./Cred.</span>
                 <span>Valores</span>
                 <span>Estado</span>
-                {canCancelPayments ? <span>Acao</span> : null}
+                {canCancelPayments ? <span>Ação</span> : null}
               </div>
-              {payments.length === 0 ? <p className="muted">Nao existem pagamentos neste ciclo.</p> : null}
+              {payments.length === 0 ? <p className="muted">Não existem pagamentos neste ciclo.</p> : null}
               {payments.map((payment) => {
                 const isCancelled = payment.status === "cancelled";
                 const canCancelPayment = canCancelPayments && !isCancelled && (isAdmin || payment.createdById === user.id);
@@ -477,7 +477,7 @@ export default async function PersonalTrainingPaymentsPage({
                     <span>{payment.paymentType.description}</span>
                     <span>
                       {payment.quantity} qtd.
-                      <small>{payment.totalCredits} creditos</small>
+                      <small>{payment.totalCredits} créditos</small>
                     </span>
                     <span>
                       {formatCurrency(payment.teacherTotal)}
@@ -500,7 +500,7 @@ export default async function PersonalTrainingPaymentsPage({
                             </button>
                           </form>
                         ) : (
-                          <small className="muted">Sem permissao</small>
+                          <small className="muted">Sem permissão</small>
                         )}
                       </span>
                     ) : null}
@@ -513,7 +513,7 @@ export default async function PersonalTrainingPaymentsPage({
               <div className="payment-logs-table">
                 <div className="section-heading">
                   <div>
-                    <h2>Logs de anulacao</h2>
+                    <h2>Logs de anulação</h2>
                     <p className="muted">Pagamentos anulados no ciclo selecionado.</p>
                   </div>
                 </div>
@@ -522,11 +522,11 @@ export default async function PersonalTrainingPaymentsPage({
                   <span>Anulado por</span>
                   <span>Utente</span>
                   <span>Tipo</span>
-                  <span>Creditos</span>
+                  <span>Créditos</span>
                   <span>Total professor</span>
                   <span>Motivo</span>
                 </div>
-                {paymentCancelLogs.length === 0 ? <p className="muted">Nao existem anulacoes neste ciclo.</p> : null}
+                {paymentCancelLogs.length === 0 ? <p className="muted">Não existem anulações neste ciclo.</p> : null}
                 {paymentCancelLogs.map((log) => (
                   <div className="payment-logs-row" key={log.id}>
                     <span>{log.createdAt.toLocaleString("pt-PT")}</span>
@@ -575,7 +575,7 @@ export default async function PersonalTrainingPaymentsPage({
                 <strong>{globalStats.quantity}</strong>
               </div>
               <div className="stat-card">
-                <span>Creditos</span>
+                <span>Créditos</span>
                 <strong>{globalStats.credits}</strong>
               </div>
               <div className="stat-card">
@@ -591,7 +591,7 @@ export default async function PersonalTrainingPaymentsPage({
             <div className="chart-panel">
               <div>
                 <h2>Total por tipo de treino</h2>
-                <p className="muted">Quantidade e valor por tipo de pagamento no periodo selecionado.</p>
+                <p className="muted">Quantidade e valor por tipo de pagamento no período selecionado.</p>
               </div>
               <div className="bar-chart">
                 {globalTrainingTypeStats.length === 0 ? <p className="muted">Sem dados para apresentar.</p> : null}
@@ -628,7 +628,7 @@ export default async function PersonalTrainingPaymentsPage({
                 <span>Total utente</span>
                 <span>Total professor</span>
               </div>
-              {globalTeacherStats.length === 0 ? <p className="muted">Nao existem pagamentos neste periodo.</p> : null}
+              {globalTeacherStats.length === 0 ? <p className="muted">Não existem pagamentos neste período.</p> : null}
               {globalTeacherStats.map((teacher) => (
                 <div className="global-payments-row" key={teacher.teacherName}>
                   <span>{teacher.teacherName}</span>

@@ -545,9 +545,9 @@ export default async function PoolMapPage({
       {activeTab === "future-bookings" && isProfessor ? (
         <section className="panel pool-list-panel">
           <h2>Agenda futura</h2>
-          <p className="muted">Todas as tuas marcacoes de hoje em diante.</p>
+          <p className="muted">Todas as tuas marcações de hoje em diante.</p>
           <div className="teacher-bookings-list">
-            {futureTeacherBookings.length === 0 ? <p className="muted">Nao existem marcacoes futuras.</p> : null}
+            {futureTeacherBookings.length === 0 ? <p className="muted">Não existem marcações futuras.</p> : null}
             {futureTeacherBookings.map((booking) => (
               <div className="teacher-booking-row" key={booking.groupId}>
                 <div>
@@ -647,7 +647,7 @@ export default async function PoolMapPage({
         <section className="panel pool-list-panel">
           <h2>Logs de agendamentos PT</h2>
           <div className="booking-log-list">
-            {bookingLogs.length === 0 ? <p className="muted">Ainda nao existem logs para este dia.</p> : null}
+            {bookingLogs.length === 0 ? <p className="muted">Ainda não existem logs para este dia.</p> : null}
             {bookingLogs.map((log) => (
               <div className="booking-log-row" key={log.id}>
                 <div>

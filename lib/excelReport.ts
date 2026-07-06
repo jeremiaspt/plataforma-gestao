@@ -28,7 +28,7 @@ export function buildExcelTable(title: string, rows: Array<Record<string, unknow
               `<tr>${columns.map((column) => `<td>${escapeCell(row[column])}</td>`).join("")}</tr>`
           )
           .join("")
-      : `<tr><td>Sem dados para o periodo selecionado.</td></tr>`;
+      : `<tr><td>Sem dados para o período selecionado.</td></tr>`;
 
   return `<!doctype html>
 <html>

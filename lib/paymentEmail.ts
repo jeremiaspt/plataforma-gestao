@@ -23,7 +23,7 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
   const settings = await getPaymentEmailSettings();
   const cc = parseEmailList(settings.ccEmails);
   const studentSummary = payload.students.map((student) => student.fullName).join(", ");
-  const subject = `Pagamento TP lancado - ${studentSummary}`;
+  const subject = `Pagamento TP lançado - ${studentSummary}`;
   const paymentIdValue = payload.paymentIds.join(",");
 
   if (!settings.enabled) {
@@ -42,20 +42,20 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
   }
 
   const text = [
-    `Foi lancado um pagamento de treino personalizado.`,
+    `Foi lançado um pagamento de treino personalizado.`,
     `Professor: ${payload.teacherName}`,
     `Utentes: ${payload.students.map((student) => `${student.fullName} (${student.memberNumber})`).join(", ")}`,
     `Tipo: ${payload.paymentTypeDescription}`,
     `Quantidade: ${payload.quantity}`,
-    `Creditos: ${payload.totalCredits}`,
+    `Créditos: ${payload.totalCredits}`,
     `Total professor: ${formatCurrency(payload.teacherTotal)}`,
-    `Lancado por: ${payload.createdByName}`,
+    `Lançado por: ${payload.createdByName}`,
     `Data: ${payload.createdAt.toLocaleString("pt-PT")}`
   ].join("\n");
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-      <h2>Pagamento TP lancado</h2>
-      <p>Foi lancado um pagamento de treino personalizado.</p>
+      <h2>Pagamento TP lançado</h2>
+      <p>Foi lançado um pagamento de treino personalizado.</p>
       <table style="border-collapse: collapse;">
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Professor</strong></td><td>${payload.teacherName}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Utentes</strong></td><td>${payload.students
@@ -63,9 +63,9 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
           .join("<br />")}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Tipo</strong></td><td>${payload.paymentTypeDescription}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Quantidade</strong></td><td>${payload.quantity}</td></tr>
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Creditos</strong></td><td>${payload.totalCredits}</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Créditos</strong></td><td>${payload.totalCredits}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Total professor</strong></td><td>${formatCurrency(payload.teacherTotal)}</td></tr>
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Lancado por</strong></td><td>${payload.createdByName}</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Lançado por</strong></td><td>${payload.createdByName}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Data</strong></td><td>${payload.createdAt.toLocaleString("pt-PT")}</td></tr>
       </table>
     </div>

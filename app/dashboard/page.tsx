@@ -12,21 +12,21 @@ const toolCards = [
   },
   {
     title: "Treinos Personalizados",
-    description: "Configurar pagamentos e creditos.",
+    description: "Configurar pagamentos e créditos.",
     role: "admin",
     href: "/treinos-personalizados/tipos",
     icon: Settings
   },
   {
     title: "Pagamentos TP",
-    description: "Lancar pagamentos de treinos personalizados.",
+    description: "Lançar pagamentos de treinos personalizados.",
     role: "recepcao",
     href: "/treinos-personalizados/pagamentos",
     icon: Dumbbell
   },
   {
     title: "Pagamentos TP",
-    description: "Consultar pagamentos lancados.",
+    description: "Consultar pagamentos lançados.",
     role: "professor",
     href: "/treinos-personalizados/pagamentos",
     icon: Dumbbell
@@ -45,8 +45,8 @@ const toolCards = [
     href: "/piscina-25m",
     icon: Waves
   },
-  { title: "Limpeza", description: "Tarefas e estados de execucao.", role: "limpeza", href: "#", icon: Brush },
-  { title: "Manutencao", description: "Pedidos, prioridades e resolucao.", role: "manutencao", href: "#", icon: Settings }
+  { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#", icon: Brush },
+  { title: "Manutenção", description: "Pedidos, prioridades e resolução.", role: "manutencao", href: "#", icon: Settings }
 ];
 
 export default async function DashboardPage() {
@@ -62,8 +62,8 @@ export default async function DashboardPage() {
       <section className="dashboard-hero">
         <div>
           <p className="eyebrow">Area de trabalho</p>
-          <h1>Ferramentas disponiveis</h1>
-          <p className="muted">Acede rapidamente as areas autorizadas para o teu utilizador.</p>
+          <h1>Ferramentas disponíveis</h1>
+          <p className="muted">Acede rapidamente às áreas autorizadas para o teu utilizador.</p>
         </div>
         <span className="status active">{visibleTools.length} ferramentas</span>
       </section>

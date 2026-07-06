@@ -21,7 +21,7 @@ export function AppShell({
           <span className="brand-mark">PG</span>
           <span>
             <strong>Plataforma</strong>
-            <small>Gestao operacional</small>
+            <small>Gestão operacional</small>
           </span>
         </div>
         <nav className="nav">
@@ -48,7 +48,7 @@ export function AppShell({
               Pagamentos TP
             </Link>
           ) : null}
-          <span className="nav-label">Configuracao</span>
+          <span className="nav-label">Configuração</span>
           {isAdmin ? (
             <Link href="/utilizadores">
               <Users size={18} />

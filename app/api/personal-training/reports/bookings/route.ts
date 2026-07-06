@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
 
   if (!roleKeys.includes("admin")) {
-    return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
   const url = new URL(request.url);
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     Utente: booking.student.fullName,
     "Tipo de aula": booking.paymentType?.description || "",
     Duracao: `${booking.durationMinutes} min`,
-    "Creditos usados": booking.creditsUsed,
+    "Créditos usados": booking.creditsUsed,
     Estado: booking.status
   }));
 

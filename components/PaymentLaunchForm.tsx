@@ -91,7 +91,7 @@ export function PaymentLaunchForm({ teacherId, paymentTypes, students }: Props) 
       </div>
 
       <button className="button" type="submit" disabled={!teacherId || paymentTypes.length === 0}>
-        Lancar pagamento
+        Lançar pagamento
       </button>
     </form>
   );

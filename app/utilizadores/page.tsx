@@ -54,9 +54,9 @@ export default async function UsersPage({
       <section className="panel users-hero">
         <div className="topbar">
           <div>
-            <p className="eyebrow">Administracao</p>
+            <p className="eyebrow">Administração</p>
             <h1>Utilizadores</h1>
-            <p className="muted">Cria utilizadores, gere categorias, ciclos de faturacao e estado de acesso.</p>
+            <p className="muted">Cria utilizadores, gere categorias, ciclos de faturação e estado de acesso.</p>
           </div>
         </div>
 
@@ -113,9 +113,9 @@ export default async function UsersPage({
             <span>Categorias</span>
             <span>Ciclo</span>
             <span>Estado</span>
-            <span>Acoes</span>
+            <span>Ações</span>
           </div>
-          {users.length === 0 ? <p className="muted">Nao existem utilizadores para a pesquisa indicada.</p> : null}
+          {users.length === 0 ? <p className="muted">Não existem utilizadores para a pesquisa indicada.</p> : null}
           {users.map((user) => (
             <form className="user-edit users-row" action={`/api/users/${user.id}`} method="post" key={user.id}>
               <div className="user-identity-fields">
@@ -161,7 +161,7 @@ export default async function UsersPage({
 
         <div className="pagination">
           <span className="muted">
-            Pagina {currentPage} de {totalPages}
+            Página {currentPage} de {totalPages}
           </span>
           <div className="action-row compact-actions">
             <a className={currentPage <= 1 ? "button secondary disabled-link" : "button secondary"} href={previousPageHref}>

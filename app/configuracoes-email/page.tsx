@@ -31,18 +31,18 @@ export default async function EmailSettingsPage({
       <section className="panel email-settings-panel">
         <div className="topbar">
           <div>
-            <p className="eyebrow">Configuracao</p>
+            <p className="eyebrow">Configuração</p>
             <h1>Emails de pagamentos TP</h1>
-            <p className="muted">Os pagamentos lancados pela rececao ou admin enviam email ao professor com os CC definidos aqui.</p>
+            <p className="muted">Os pagamentos lançados pela receção ou admin enviam email ao professor com os CC definidos aqui.</p>
           </div>
         </div>
 
-        {params.success ? <p className="success">Configuracao guardada.</p> : null}
-        {params.error ? <p className="error">Nao foi possivel guardar a configuracao.</p> : null}
+        {params.success ? <p className="success">Configuração guardada.</p> : null}
+        {params.error ? <p className="error">Não foi possível guardar a configuração.</p> : null}
 
         <div className="tabs">
           <a className={activeTab === "settings" ? "tab active" : "tab"} href="/configuracoes-email?tab=settings">
-            Configuracoes
+            Configurações
           </a>
           <a className={activeTab === "logs" ? "tab active" : "tab"} href="/configuracoes-email?tab=logs">
             Logs
@@ -53,7 +53,7 @@ export default async function EmailSettingsPage({
           <form className="email-settings-form email-settings-card" action="/api/email-settings" method="post">
             <label className="checkbox">
               <input type="checkbox" name="enabled" defaultChecked={settings.enabled} />
-              Enviar emails ao professor quando e lancado um pagamento TP
+              Enviar emails ao professor quando é lançado um pagamento TP
             </label>
             <div className="field">
               <label htmlFor="ccEmails">CC diretor/coordenadores</label>
@@ -65,7 +65,7 @@ export default async function EmailSettingsPage({
                 rows={4}
               />
             </div>
-            <p className="muted">No Render devem estar definidas as variaveis RESEND_API_KEY e EMAIL_FROM.</p>
+            <p className="muted">No Render devem estar definidas as variáveis RESEND_API_KEY e EMAIL_FROM.</p>
             <button className="button" type="submit">
               Guardar configuracao
             </button>
@@ -82,7 +82,7 @@ export default async function EmailSettingsPage({
               <span>Assunto</span>
               <span>Erro</span>
             </div>
-            {logs.length === 0 ? <p className="muted">Ainda nao existem logs de email.</p> : null}
+            {logs.length === 0 ? <p className="muted">Ainda não existem logs de email.</p> : null}
             {logs.map((log) => (
               <div className="email-log-row" key={log.id}>
                 <span>{log.createdAt.toLocaleString("pt-PT")}</span>

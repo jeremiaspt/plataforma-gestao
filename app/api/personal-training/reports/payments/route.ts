@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
 
   if (!roleKeys.includes("admin")) {
-    return NextResponse.json({ error: "Sem permissao." }, { status: 403 });
+    return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
   const url = new URL(request.url);
@@ -55,13 +55,13 @@ export async function GET(request: Request) {
     Utente: payment.student.fullName,
     "Tipo de aula": payment.paymentType.description,
     Quantidade: payment.quantity,
-    "Creditos por unidade": payment.creditsPerUnit,
-    "Creditos totais": payment.totalCredits,
+    "Créditos por unidade": payment.creditsPerUnit,
+    "Créditos totais": payment.totalCredits,
     "Valor unitario utente": formatCurrency(payment.pricePerUnit),
     "Total utente": formatCurrency(payment.totalPrice),
     "Valor unitario professor": formatCurrency(payment.teacherPricePerUnit),
     "Total professor": formatCurrency(payment.teacherTotal),
-    "Lancado por": payment.createdBy?.name || ""
+    "Lançado por": payment.createdBy?.name || ""
   }));
 
   const title = `Pagamentos TP - ${teacher.name} - ${formatBillingPeriod(period.start, period.endExclusive)} - ${getBillingCycleLabel(
