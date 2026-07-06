@@ -244,7 +244,7 @@ export default async function PersonalTrainingPaymentsPage({
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
-      <section className="panel">
+      <section className="panel payment-page-hero">
         <div className="topbar">
           <div>
             <p className="eyebrow">Treinos Personalizados</p>
@@ -288,7 +288,7 @@ export default async function PersonalTrainingPaymentsPage({
         ) : null}
       </section>
 
-      <section className="panel" style={{ marginTop: 16 }}>
+      <section className="panel payment-workspace">
         <div className="topbar">
           <div>
             <p className="eyebrow">Gestao</p>
