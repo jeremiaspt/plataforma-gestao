@@ -156,11 +156,16 @@ h1 {
 }
 
 .field input,
-.field select {
+.field select,
+.field textarea {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   min-width: 0;
   padding: 9px 10px;
+}
+
+.field textarea {
+  resize: vertical;
 }
 
 .button {
@@ -977,6 +982,40 @@ h1 {
 .negative-balance {
   color: var(--danger);
   font-weight: 700;
+}
+
+.email-settings-form {
+  display: grid;
+  gap: 14px;
+  max-width: 760px;
+}
+
+.email-log-table {
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.email-log-header,
+.email-log-row {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 150px 90px 220px 220px minmax(260px, 1fr) minmax(220px, 1fr);
+  min-width: 1160px;
+}
+
+.email-log-header {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.email-log-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
 }
 
 @media (max-width: 780px) {

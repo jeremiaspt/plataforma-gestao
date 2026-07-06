@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { decimalToNumber } from "@/lib/money";
+import { sendPaymentNotificationEmail } from "@/lib/paymentEmail";
 import { requiredParticipantsForType } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
@@ -88,7 +89,7 @@ export async function POST(request: Request) {
   const totalPrice = pricePerUnit * quantity;
   const teacherTotal = teacherPricePerUnit * quantity;
 
-  await prisma.$transaction(
+  const createdPayments = await prisma.$transaction(
     studentIds.map((studentId) =>
       prisma.personalTrainingPayment.create({
         data: {
@@ -106,6 +107,35 @@ export async function POST(request: Request) {
         }
       })
     )
+  );
+
+  const students = await prisma.personalTrainingStudent.findMany({
+    where: { id: { in: studentIds } }
+  });
+  const studentsById = new Map(students.map((student) => [student.id, student]));
+
+  await Promise.all(
+    createdPayments.map((payment) => {
+      const student = studentsById.get(payment.studentId);
+
+      if (!student) {
+        return Promise.resolve();
+      }
+
+      return sendPaymentNotificationEmail({
+        paymentId: payment.id,
+        teacherEmail: teacher.email,
+        teacherName: teacher.name,
+        studentFullName: student.fullName,
+        studentMemberNumber: student.memberNumber,
+        paymentTypeDescription: paymentType.description,
+        quantity: payment.quantity,
+        totalCredits: payment.totalCredits,
+        teacherTotal: payment.teacherTotal,
+        createdByName: user.name,
+        createdAt: payment.createdAt
+      });
+    })
   );
 
   return NextResponse.redirect(appRedirectUrl(`${basePath}&success=1`, request));
