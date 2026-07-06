@@ -817,33 +817,44 @@ h1 {
 }
 
 .payment-type-table {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   display: grid;
   gap: 8px;
   margin-top: 14px;
   overflow-x: auto;
+  padding: 10px;
 }
 
 .payment-type-header,
 .payment-type-row {
   align-items: center;
   display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(420px, 1.5fr) 90px 130px 150px 84px 260px;
-  min-width: 1160px;
+  gap: 8px;
+  grid-template-columns: minmax(360px, 1.5fr) 78px 118px 132px 80px 244px;
+  min-width: 1040px;
 }
 
 .payment-type-header {
   color: #475569;
   font-size: 12px;
   font-weight: 700;
-  padding: 0 2px;
+  padding: 0 8px;
   text-transform: uppercase;
 }
 
 .payment-type-row {
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: #ffffff;
   padding: 8px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.payment-type-row:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
 }
 
 .payment-type-row input {
@@ -855,6 +866,33 @@ h1 {
 
 .compact-actions {
   flex-wrap: nowrap;
+}
+
+.payment-types-hero {
+  display: grid;
+  gap: 14px;
+}
+
+.payment-types-hero > .topbar {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0;
+  padding-bottom: 14px;
+}
+
+.payment-types-list {
+  margin-top: 16px;
+}
+
+.payment-types-list > h2 {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
+.payment-type-create {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
 }
 
 .payment-page-hero {

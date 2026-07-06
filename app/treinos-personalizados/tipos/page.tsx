@@ -22,7 +22,7 @@ export default async function PersonalTrainingTypesPage({
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
-      <section className="panel">
+      <section className="panel payment-types-hero">
         <div className="topbar">
           <div>
             <p className="eyebrow">Treinos Personalizados</p>
@@ -62,7 +62,7 @@ export default async function PersonalTrainingTypesPage({
         </form>
       </section>
 
-      <section className="panel" style={{ marginTop: 16 }}>
+      <section className="panel payment-types-list">
         <h2>Tipos configurados</h2>
         <div className="payment-type-table">
           <div className="payment-type-header">
