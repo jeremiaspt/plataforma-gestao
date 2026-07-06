@@ -28,7 +28,7 @@ import {
 export default async function PoolMapPage({
   searchParams
 }: {
-  searchParams: Promise<{ date?: string; error?: string; success?: string; bookingBlockId?: string }>;
+  searchParams: Promise<{ date?: string; error?: string; success?: string; bookingBlockId?: string; tab?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -50,6 +50,16 @@ export default async function PoolMapPage({
   const canBookSelectedDate = isTodayOrFuture(selectedDate);
   const slots = buildTimeSlots(weekday);
   const bounds = dayBounds(weekday);
+  const requestedTab = params.bookingBlockId ? "map" : params.tab;
+  const activeTab =
+    requestedTab === "my-bookings" && isProfessor
+      ? "my-bookings"
+      : requestedTab === "weekly" && isAdmin
+        ? "weekly"
+        : requestedTab === "logs" && isAdmin
+          ? "logs"
+          : "map";
+  const tabHref = (tab: "map" | "my-bookings" | "weekly" | "logs") => `/piscina-25m?date=${selectedDateValue}&tab=${tab}`;
 
   const blocks = await prisma.poolScheduleBlock.findMany({
     where: { weekday },
@@ -233,16 +243,17 @@ export default async function PoolMapPage({
         </div>
 
         <div className="date-nav">
-          <a className="button secondary" href={`/piscina-25m?date=${previousDate}`}>
+          <a className="button secondary" href={`/piscina-25m?date=${previousDate}&tab=${activeTab}`}>
             Dia anterior
           </a>
-          <a className="button secondary" href={`/piscina-25m?date=${todayDate}`}>
+          <a className="button secondary" href={`/piscina-25m?date=${todayDate}&tab=${activeTab}`}>
             Hoje
           </a>
-          <a className="button secondary" href={`/piscina-25m?date=${nextDate}`}>
+          <a className="button secondary" href={`/piscina-25m?date=${nextDate}&tab=${activeTab}`}>
             Dia seguinte
           </a>
           <form className="date-picker" action="/piscina-25m" method="get">
+            <input type="hidden" name="tab" value={activeTab} />
             <label className="field" htmlFor="date">
               <span>Data</span>
               <input id="date" name="date" type="date" defaultValue={selectedDateValue} />
@@ -260,7 +271,7 @@ export default async function PoolMapPage({
         {params.success ? <p className="success">Marcação criada com sucesso.</p> : null}
         {params.error ? <p className="error">Não foi possível concluir a ação. Confirma horários, créditos, aluno e sobreposições.</p> : null}
 
-        {isAdmin ? (
+        {false && isAdmin ? (
           <form className="pool-form" action="/api/pool-schedule" method="post">
             <input type="hidden" name="weekday" value={weekday} />
             <input type="hidden" name="date" value={selectedDateValue} />
@@ -308,6 +319,28 @@ export default async function PoolMapPage({
       </section>
 
       <section className="panel pool-panel">
+        <div className="tabs">
+          <a className={activeTab === "map" ? "tab active" : "tab"} href={tabHref("map")}>
+            Mapa
+          </a>
+          {isProfessor ? (
+            <a className={activeTab === "my-bookings" ? "tab active" : "tab"} href={tabHref("my-bookings")}>
+              As minhas marcações
+            </a>
+          ) : null}
+          {isAdmin ? (
+            <a className={activeTab === "weekly" ? "tab active" : "tab"} href={tabHref("weekly")}>
+              Ocupações semanais
+            </a>
+          ) : null}
+          {isAdmin ? (
+            <a className={activeTab === "logs" ? "tab active" : "tab"} href={tabHref("logs")}>
+              Logs de marcações
+            </a>
+          ) : null}
+        </div>
+
+        {activeTab === "map" ? (
         <div className="pool-table-wrap">
           <table className="pool-table">
             <colgroup>
@@ -376,6 +409,7 @@ export default async function PoolMapPage({
             </tbody>
           </table>
         </div>
+        ) : null}
       </section>
 
       {isProfessor && canBookSelectedDate && selectedBookingBlock ? (
@@ -406,10 +440,11 @@ export default async function PoolMapPage({
         />
       ) : null}
 
-      {isProfessor && teacherBookings.length > 0 ? (
+      {activeTab === "my-bookings" && isProfessor ? (
         <section className="panel">
           <h2>As minhas marcações</h2>
           <div className="teacher-bookings-list">
+            {teacherBookings.length === 0 ? <p className="muted">Ainda não existem marcações para este dia.</p> : null}
             {teacherBookings.map((booking) => (
               <div className="teacher-booking-row" key={booking.groupId}>
                 <div>
@@ -441,9 +476,52 @@ export default async function PoolMapPage({
       ) : null}
 
 
-      {isAdmin ? (
+      {activeTab === "weekly" && isAdmin ? (
         <section className="panel">
           <h2>Ocupações semanais de {selectedDayLabel}</h2>
+          <form className="pool-form" action="/api/pool-schedule" method="post">
+            <input type="hidden" name="weekday" value={weekday} />
+            <input type="hidden" name="date" value={selectedDateValue} />
+            <div className="field">
+              <label htmlFor="title">Ocupação</label>
+              <input id="title" name="title" required placeholder="Ex.: PT" />
+            </div>
+            <div className="field">
+              <label htmlFor="laneNumber">Pista</label>
+              <select id="laneNumber" name="laneNumber" required>
+                {poolLanes.map((lane) => (
+                  <option value={lane} key={lane}>
+                    Pista {lane}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="startTime">Início</label>
+              <input id="startTime" name="startTime" type="time" step="300" required />
+            </div>
+            <div className="field">
+              <label htmlFor="endTime">Fim</label>
+              <input id="endTime" name="endTime" type="time" step="300" required />
+            </div>
+            <div className="field">
+              <label htmlFor="type">Tipo</label>
+              <select id="type" name="type" required>
+                {poolBlockTypes.map((type) => (
+                  <option value={type.key} key={type.key}>
+                    {type.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="notes">Notas</label>
+              <input id="notes" name="notes" />
+            </div>
+            <button className="button" type="submit">
+              Adicionar
+            </button>
+          </form>
           <div className="schedule-list">
             {blocks.length === 0 ? <p className="muted">Ainda não existem ocupações para este dia da semana.</p> : null}
             {blocks.map((block) => (
@@ -464,7 +542,7 @@ export default async function PoolMapPage({
         </section>
       ) : null}
 
-      {isAdmin ? (
+      {activeTab === "logs" && isAdmin ? (
         <section className="panel">
           <h2>Logs de agendamentos PT</h2>
           <div className="booking-log-list">
