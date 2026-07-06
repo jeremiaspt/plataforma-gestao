@@ -20,7 +20,24 @@ export async function POST(
 
   if (action === "delete") {
     if (id !== currentUser.id) {
-      await prisma.user.delete({ where: { id } });
+      const [teacherPayments, teacherBookings] = await Promise.all([
+        prisma.personalTrainingPayment.count({ where: { teacherId: id } }),
+        prisma.personalTrainingBooking.count({ where: { teacherId: id } })
+      ]);
+
+      if (teacherPayments > 0 || teacherBookings > 0) {
+        await prisma.user.update({
+          where: { id },
+          data: { active: false }
+        });
+      } else {
+        await prisma.user.delete({ where: { id } }).catch(async () => {
+          await prisma.user.update({
+            where: { id },
+            data: { active: false }
+          });
+        });
+      }
     }
 
     return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
