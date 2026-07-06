@@ -15,9 +15,10 @@ const toolCards = [
 export default async function DashboardPage() {
   const user = await requireUser();
   const roles = user.roles.map((userRole) => userRole.role.key);
-  const visibleTools = roles.includes("admin")
-    ? toolCards.filter((tool, index, list) => list.findIndex((item) => item.title === tool.title) === index)
-    : toolCards.filter((tool) => roles.includes(tool.role));
+  const allowedTools = roles.includes("admin") ? toolCards : toolCards.filter((tool) => roles.includes(tool.role));
+  const visibleTools = allowedTools.filter(
+    (tool, index, list) => list.findIndex((item) => item.title === tool.title && item.href === tool.href) === index
+  );
 
   return (
     <AppShell userName={user.name}>

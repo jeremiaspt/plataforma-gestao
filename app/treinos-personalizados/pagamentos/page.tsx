@@ -41,6 +41,8 @@ export default async function PersonalTrainingPaymentsPage({
   const params = await searchParams;
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
   const isAdmin = roleKeys.includes("admin");
+  const isReception = roleKeys.includes("recepcao");
+  const isReceptionOnly = isReception && !isAdmin;
   const canCreate = roleKeys.includes("admin") || roleKeys.includes("recepcao");
   const canViewAsTeacher = roleKeys.includes("professor");
 
@@ -58,12 +60,20 @@ export default async function PersonalTrainingPaymentsPage({
 
   const selectedTeacherId = canCreate ? params.teacherId || teachers[0]?.id || "" : user.id;
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId);
-  const selectedBillingCycle = selectedTeacher?.billingCycle || user.billingCycle || "calendar_month";
+  const selectedBillingCycle = isReceptionOnly ? "calendar_month" : selectedTeacher?.billingCycle || user.billingCycle || "calendar_month";
   const selectedMonth = params.month || currentBillingMonthValue();
   const selectedGlobalMonth = params.globalMonth || currentBillingMonthValue();
-  const activeTab = isAdmin && params.tab === "global" ? "global" : params.tab === "payments" ? "payments" : "credits";
+  const activeTab =
+    isAdmin && params.tab === "global"
+      ? "global"
+      : params.tab === "credits"
+        ? "credits"
+        : params.tab === "payments" || isReceptionOnly
+          ? "payments"
+          : "credits";
   const billingPeriod = getBillingPeriod(selectedBillingCycle, selectedMonth);
   const globalPeriod = getAdminGlobalPeriod(selectedGlobalMonth);
+  const managementTitle = isReceptionOnly ? "Pagamentos lancados por mim" : selectedTeacher?.name || user.name;
 
   const tabHref = (tab: "credits" | "payments" | "global") => {
     const query = new URLSearchParams();
@@ -98,7 +108,13 @@ export default async function PersonalTrainingPaymentsPage({
       : Promise.resolve([]),
     prisma.personalTrainingPayment.findMany({
       where: {
-        ...(canCreate ? (selectedTeacherId ? { teacherId: selectedTeacherId } : {}) : { teacherId: user.id }),
+        ...(isAdmin
+          ? selectedTeacherId
+            ? { teacherId: selectedTeacherId }
+            : {}
+          : isReception
+            ? { createdById: user.id }
+            : { teacherId: user.id }),
         createdAt: {
           gte: billingPeriod.start,
           lt: billingPeriod.endExclusive
@@ -147,7 +163,7 @@ export default async function PersonalTrainingPaymentsPage({
 
   const activePayments = payments.filter((payment) => payment.status !== "cancelled");
   const activeGlobalPayments = globalPayments.filter((payment) => payment.status !== "cancelled");
-  const canCancelPayments = isAdmin || roleKeys.includes("recepcao");
+  const canCancelPayments = isAdmin || isReception;
 
   const paymentStats = activePayments.reduce(
     (stats, payment) => ({
@@ -276,8 +292,12 @@ export default async function PersonalTrainingPaymentsPage({
         <div className="topbar">
           <div>
             <p className="eyebrow">Gestao</p>
-            <h1>{selectedTeacher?.name || user.name}</h1>
-            <p className="muted">Ciclo de faturacao: {getBillingCycleLabel(selectedBillingCycle)}</p>
+            <h1>{managementTitle}</h1>
+            <p className="muted">
+              {isReceptionOnly
+                ? "Consulta e anula apenas pagamentos lancados pelo teu utilizador."
+                : `Ciclo de faturacao: ${getBillingCycleLabel(selectedBillingCycle)}`}
+            </p>
           </div>
         </div>
 
@@ -286,11 +306,11 @@ export default async function PersonalTrainingPaymentsPage({
             Creditos dos alunos
           </a>
           <a className={activeTab === "payments" ? "tab active" : "tab"} href={tabHref("payments")}>
-            Pagamentos
+            {isAdmin ? "Pagamentos professor selecionado" : "Pagamentos"}
           </a>
           {isAdmin ? (
             <a className={activeTab === "global" ? "tab active" : "tab"} href={tabHref("global")}>
-              Totais gerais
+              Pagamentos todos os professores
             </a>
           ) : null}
         </div>
@@ -430,10 +450,8 @@ export default async function PersonalTrainingPaymentsPage({
                 <span>Utente</span>
                 <span>Lancado por</span>
                 <span>Tipo</span>
-                <span>Qtd.</span>
-                <span>Creditos</span>
-                {isAdmin ? <span>Total utente</span> : null}
-                <span>Total professor</span>
+                <span>Qtd./Cred.</span>
+                <span>Valores</span>
                 <span>Estado</span>
                 {canCancelPayments ? <span>Acao</span> : null}
               </div>
@@ -457,10 +475,14 @@ export default async function PersonalTrainingPaymentsPage({
                     </span>
                     <span>{payment.createdBy?.name || "-"}</span>
                     <span>{payment.paymentType.description}</span>
-                    <span>{payment.quantity}</span>
-                    <span>{payment.totalCredits}</span>
-                    {isAdmin ? <span>{formatCurrency(payment.totalPrice)}</span> : null}
-                    <span>{formatCurrency(payment.teacherTotal)}</span>
+                    <span>
+                      {payment.quantity} qtd.
+                      <small>{payment.totalCredits} creditos</small>
+                    </span>
+                    <span>
+                      {formatCurrency(payment.teacherTotal)}
+                      {isAdmin ? <small>{formatCurrency(payment.totalPrice)} utente</small> : null}
+                    </span>
                     <span className={isCancelled ? "status inactive" : "status active"}>
                       {isCancelled ? "Anulado" : "Ativo"}
                       {isCancelled && payment.cancelledByName ? <small>por {payment.cancelledByName}</small> : null}

@@ -742,27 +742,27 @@ h1 {
 .payments-row {
   align-items: start;
   display: grid;
-  gap: 10px;
-  grid-template-columns: 90px 150px 200px 130px minmax(300px, 1fr) 55px 70px 110px 125px 90px;
-  min-width: 1420px;
+  gap: 8px;
+  grid-template-columns: 78px 135px minmax(170px, 1fr) 120px minmax(240px, 1.2fr) 78px 120px 82px;
+  min-width: 1040px;
 }
 
 .payments-header.teacher-values,
 .payments-row.teacher-values {
-  grid-template-columns: 90px 210px 130px minmax(300px, 1fr) 55px 70px 125px 90px;
-  min-width: 1120px;
+  grid-template-columns: 78px minmax(180px, 1fr) 120px minmax(240px, 1.2fr) 78px 120px 82px;
+  min-width: 900px;
 }
 
 .payments-header.with-actions,
 .payments-row.with-actions {
-  grid-template-columns: 90px 150px 200px 130px minmax(280px, 1fr) 55px 70px 110px 125px 90px 240px;
-  min-width: 1660px;
+  grid-template-columns: 78px 135px minmax(170px, 1fr) 120px minmax(220px, 1.2fr) 78px 120px 82px 210px;
+  min-width: 1260px;
 }
 
 .payments-header.teacher-values.with-actions,
 .payments-row.teacher-values.with-actions {
-  grid-template-columns: 90px 210px 130px minmax(280px, 1fr) 55px 70px 125px 90px 240px;
-  min-width: 1380px;
+  grid-template-columns: 78px minmax(180px, 1fr) 120px minmax(220px, 1.2fr) 78px 120px 82px 210px;
+  min-width: 1100px;
 }
 
 .payments-header {
@@ -775,7 +775,7 @@ h1 {
 .payments-row {
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 10px;
+  padding: 8px;
 }
 
 .payments-row small {
@@ -792,7 +792,7 @@ h1 {
 .payment-cancel-form {
   display: grid;
   gap: 6px;
-  grid-template-columns: minmax(120px, 1fr) auto;
+  grid-template-columns: minmax(92px, 1fr) auto;
 }
 
 .payment-cancel-form input {
