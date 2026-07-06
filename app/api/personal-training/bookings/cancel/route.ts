@@ -25,20 +25,42 @@ export async function POST(request: Request) {
       bookingGroupId,
       teacherId: user.id,
       status: { not: "cancelled" }
-    }
+    },
+    include: { student: true, paymentType: true, poolBlock: true }
   });
 
   if (bookings.length === 0 || bookings.some((booking) => !isTodayOrFuture(booking.bookingDate))) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&error=1`, request));
   }
 
-  await prisma.personalTrainingBooking.updateMany({
-    where: {
-      bookingGroupId,
-      teacherId: user.id,
-      status: { not: "cancelled" }
-    },
-    data: { status: "cancelled" }
+  await prisma.$transaction(async (tx) => {
+    await tx.personalTrainingBooking.updateMany({
+      where: {
+        bookingGroupId,
+        teacherId: user.id,
+        status: { not: "cancelled" }
+      },
+      data: { status: "cancelled" }
+    });
+
+    const booking = bookings[0];
+
+    await tx.personalTrainingBookingLog.create({
+      data: {
+        action: "cancelamento",
+        bookingGroupId,
+        bookingDate: booking.bookingDate,
+        teacherName: user.name,
+        studentNames: bookings.map((item) => item.student.fullName).join(", "),
+        paymentType: booking.paymentType?.description || null,
+        poolBlockTitle: booking.poolBlock.title,
+        laneNumber: booking.poolBlock.laneNumber,
+        startMinutes: booking.startMinutes,
+        endMinutes: booking.endMinutes,
+        createdById: user.id,
+        createdByName: user.name
+      }
+    });
   });
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&success=1`, request));

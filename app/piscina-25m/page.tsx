@@ -71,6 +71,15 @@ export default async function PoolMapPage({
     orderBy: [{ startMinutes: "asc" }]
   });
 
+  const bookingLogs = isAdmin
+    ? await prisma.personalTrainingBookingLog.findMany({
+        where: {
+          bookingDate: new Date(`${selectedDateValue}T00:00:00`)
+        },
+        orderBy: { createdAt: "desc" }
+      })
+    : [];
+
   const [creditBalances, paymentTypes] = isProfessor
     ? await Promise.all([
         getCreditBalancesForTeacher(user.id),
@@ -176,7 +185,10 @@ export default async function PoolMapPage({
   }
 
   function blockBookingGroups(blockId: string, startMinutes: number, endMinutes: number) {
-    const grouped = new Map<string, { teacherName: string; studentNames: string[]; exclusive: boolean }>();
+    const grouped = new Map<
+      string,
+      { teacherName: string; studentNames: string[]; exclusive: boolean; startMinutes: number; endMinutes: number }
+    >();
     const blockBookings = bookings.filter(
       (booking) =>
         booking.poolBlockId === blockId &&
@@ -189,7 +201,9 @@ export default async function PoolMapPage({
       const current = grouped.get(booking.bookingGroupId) || {
         teacherName: booking.teacher.name,
         studentNames: [],
-        exclusive: description.includes("pares") || description.includes("trio")
+        exclusive: description.includes("pares") || description.includes("trio"),
+        startMinutes: booking.startMinutes,
+        endMinutes: booking.endMinutes
       };
       current.studentNames.push(booking.student.fullName);
       grouped.set(booking.bookingGroupId, current);
@@ -344,7 +358,8 @@ export default async function PoolMapPage({
                               <div className="booking-summary">
                                 {blockGroups.map((group, index) => (
                                   <small key={`${group.teacherName}-${index}`}>
-                                    {group.teacherName}: {group.studentNames.join(", ")}
+                                    {formatMinutes(group.startMinutes)} - {formatMinutes(group.endMinutes)} · {group.teacherName}:{" "}
+                                    {group.studentNames.join(", ")}
                                   </small>
                                 ))}
                               </div>
@@ -447,6 +462,32 @@ export default async function PoolMapPage({
                   Remover
                 </button>
               </form>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {isAdmin ? (
+        <section className="panel">
+          <h2>Logs de agendamentos PT</h2>
+          <div className="booking-log-list">
+            {bookingLogs.length === 0 ? <p className="muted">Ainda nao existem logs para este dia.</p> : null}
+            {bookingLogs.map((log) => (
+              <div className="booking-log-row" key={log.id}>
+                <div>
+                  <strong>
+                    {log.action} · {log.teacherName}
+                  </strong>
+                  <p className="muted">
+                    {formatMinutes(log.startMinutes)} - {formatMinutes(log.endMinutes)} · {log.poolBlockTitle} · Pista {log.laneNumber}
+                  </p>
+                  <p className="muted">
+                    {log.studentNames}
+                    {log.paymentType ? ` · ${log.paymentType}` : ""}
+                  </p>
+                </div>
+                <span className="muted">{log.createdAt.toLocaleString("pt-PT")}</span>
+              </div>
             ))}
           </div>
         </section>

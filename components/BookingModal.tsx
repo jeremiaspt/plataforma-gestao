@@ -60,6 +60,7 @@ export function BookingModal({
     [durationMinutes, trainingTypes]
   );
   const [trainingTypeKey, setTrainingTypeKey] = useState(editBooking?.trainingTypeKey || filteredTypes[0]?.key || "");
+  const [selectedStudentIds, setSelectedStudentIds] = useState(editBooking?.studentIds || []);
   const selectedType = filteredTypes.find((type) => type.key === trainingTypeKey) || filteredTypes[0];
   const selectedTypeKey = selectedType?.key || "";
   const requiredParticipants = requiredParticipantsForType(selectedType?.name);
@@ -86,6 +87,20 @@ export function BookingModal({
     setDurationMinutes(nextDuration);
     setTrainingTypeKey(nextTypes[0]?.key || "");
     setStartMinutes(blockStartMinutes);
+    setSelectedStudentIds([]);
+  }
+
+  function handleTrainingTypeChange(value: string) {
+    setTrainingTypeKey(value);
+    setSelectedStudentIds([]);
+  }
+
+  function handleStudentChange(index: number, value: string) {
+    setSelectedStudentIds((current) => {
+      const next = [...current];
+      next[index] = value;
+      return next.slice(0, requiredParticipants);
+    });
   }
 
   function formatMinutes(totalMinutes: number) {
@@ -144,7 +159,7 @@ export function BookingModal({
 
           <div className="field">
             <label>Tipo de aula</label>
-            <select value={selectedTypeKey} onChange={(event) => setTrainingTypeKey(event.target.value)} required>
+            <select value={selectedTypeKey} onChange={(event) => handleTrainingTypeChange(event.target.value)} required>
               {filteredTypes.map((type) => (
                 <option value={type.key} key={type.key}>
                   {type.name}
@@ -156,13 +171,23 @@ export function BookingModal({
           {Array.from({ length: requiredParticipants }).map((_, index) => (
             <div className="field" key={index}>
               <label>Utente {index + 1}</label>
-              <select name="studentIds" defaultValue={editBooking?.studentIds[index] || ""} required>
+              <select
+                name="studentIds"
+                value={selectedStudentIds[index] || ""}
+                onChange={(event) => handleStudentChange(index, event.target.value)}
+                required
+              >
                 <option value="">Selecionar utente</option>
-                {eligibleBalances.map((balance) => (
-                  <option value={balance.studentId} key={balance.studentId}>
-                    {balance.fullName} · saldo {balance.availableCredits}
-                  </option>
-                ))}
+                {eligibleBalances
+                  .filter(
+                    (balance) =>
+                      !selectedStudentIds.some((studentId, studentIndex) => studentIndex !== index && studentId === balance.studentId)
+                  )
+                  .map((balance) => (
+                    <option value={balance.studentId} key={balance.studentId}>
+                      {balance.fullName} · saldo {balance.availableCredits}
+                    </option>
+                  ))}
               </select>
             </div>
           ))}

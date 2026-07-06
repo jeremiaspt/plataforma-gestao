@@ -45,7 +45,18 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
-  let existingBookingsForEdit: Awaited<ReturnType<typeof prisma.personalTrainingBooking.findMany>> = [];
+  let existingBookingsForEdit: Array<{
+    bookingDate: Date;
+    bookingGroupId: string;
+    creditsUsed: number;
+    endMinutes: number;
+    paymentTypeId: string | null;
+    startMinutes: number;
+    studentId: string;
+    student: { fullName: string };
+    paymentType: { description: string } | null;
+    poolBlock: { laneNumber: number; title: string };
+  }> = [];
 
   const [block, paymentTypes] = await Promise.all([
     prisma.poolScheduleBlock.findUnique({ where: { id: poolBlockId } }),
@@ -61,7 +72,8 @@ export async function POST(request: Request) {
         bookingGroupId: existingBookingGroupId,
         teacherId: user.id,
         status: { not: "cancelled" }
-      }
+      },
+      include: { student: true, paymentType: true, poolBlock: true }
     });
 
     if (existingBookingsForEdit.length === 0 || existingBookingsForEdit.some((booking) => !isTodayOrFuture(booking.bookingDate))) {
@@ -146,6 +158,8 @@ export async function POST(request: Request) {
 
   await prisma.$transaction(async (tx) => {
     if (existingBookingGroupId) {
+      const existingBooking = existingBookingsForEdit[0];
+
       await tx.personalTrainingBooking.updateMany({
         where: {
           bookingGroupId: existingBookingGroupId,
@@ -154,6 +168,25 @@ export async function POST(request: Request) {
         },
         data: { status: "cancelled" }
       });
+
+      if (existingBooking) {
+        await tx.personalTrainingBookingLog.create({
+          data: {
+            action: "alteracao_cancelou_anterior",
+            bookingGroupId: existingBookingGroupId,
+            bookingDate: existingBooking.bookingDate,
+            teacherName: user.name,
+            studentNames: existingBookingsForEdit.map((booking) => booking.student.fullName).join(", "),
+            paymentType: existingBooking.paymentType?.description || null,
+            poolBlockTitle: existingBooking.poolBlock.title,
+            laneNumber: existingBooking.poolBlock.laneNumber,
+            startMinutes: existingBooking.startMinutes,
+            endMinutes: existingBooking.endMinutes,
+            createdById: user.id,
+            createdByName: user.name
+          }
+        });
+      }
     }
 
     await tx.personalTrainingBooking.createMany({
@@ -169,6 +202,28 @@ export async function POST(request: Request) {
         durationMinutes,
         creditsUsed: 1
       }))
+    });
+
+    const students = await tx.personalTrainingStudent.findMany({
+      where: { id: { in: studentIds } },
+      orderBy: { fullName: "asc" }
+    });
+
+    await tx.personalTrainingBookingLog.create({
+      data: {
+        action: existingBookingGroupId ? "alteracao_criou_nova" : "criacao",
+        bookingGroupId,
+        bookingDate: bookingDateValue,
+        teacherName: user.name,
+        studentNames: students.map((student) => student.fullName).join(", "),
+        paymentType: paymentType.description,
+        poolBlockTitle: block.title,
+        laneNumber: block.laneNumber,
+        startMinutes,
+        endMinutes,
+        createdById: user.id,
+        createdByName: user.name
+      }
     });
   });
 

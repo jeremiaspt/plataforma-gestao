@@ -546,6 +546,26 @@ h1 {
   margin: 4px 0 0;
 }
 
+.booking-log-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.booking-log-row {
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.booking-log-row p {
+  margin: 4px 0 0;
+}
+
 .type-aula {
   background: #dff3ff;
 }
@@ -1003,6 +1023,11 @@ h1 {
   }
 
   .teacher-booking-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .booking-log-row {
     align-items: flex-start;
     flex-direction: column;
   }

@@ -149,3 +149,23 @@ model PersonalTrainingBooking {
   @@index([teacherId, bookingDate])
   @@index([studentId, bookingDate])
 }
+
+model PersonalTrainingBookingLog {
+  id             String   @id @default(cuid())
+  action         String
+  bookingGroupId String
+  bookingDate    DateTime @db.Date
+  teacherName    String
+  studentNames   String
+  paymentType    String?
+  poolBlockTitle String
+  laneNumber     Int
+  startMinutes   Int
+  endMinutes     Int
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime @default(now())
+
+  @@index([bookingDate])
+  @@index([bookingGroupId])
+}
