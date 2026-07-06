@@ -42,9 +42,9 @@ export default async function PersonalTrainingPaymentsPage({
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
   const isAdmin = roleKeys.includes("admin");
   const isReception = roleKeys.includes("recepcao");
-  const isReceptionOnly = isReception && !isAdmin;
   const canCreate = roleKeys.includes("admin") || roleKeys.includes("recepcao");
   const canViewAsTeacher = roleKeys.includes("professor");
+  const isReceptionOnly = isReception && !isAdmin && !canViewAsTeacher;
 
   if (!canCreate && !canViewAsTeacher) {
     redirect("/dashboard");
@@ -58,7 +58,7 @@ export default async function PersonalTrainingPaymentsPage({
     orderBy: { name: "asc" }
   });
 
-  const selectedTeacherId = canCreate ? params.teacherId || teachers[0]?.id || "" : user.id;
+  const selectedTeacherId = canCreate ? params.teacherId || (canViewAsTeacher ? user.id : teachers[0]?.id) || "" : user.id;
   const selectedTeacher = teachers.find((teacher) => teacher.id === selectedTeacherId);
   const selectedBillingCycle = isReceptionOnly ? "calendar_month" : selectedTeacher?.billingCycle || user.billingCycle || "calendar_month";
   const selectedMonth = params.month || currentBillingMonthValue();
@@ -112,7 +112,7 @@ export default async function PersonalTrainingPaymentsPage({
           ? selectedTeacherId
             ? { teacherId: selectedTeacherId }
             : {}
-          : isReception
+          : isReceptionOnly
             ? { createdById: user.id }
             : { teacherId: user.id }),
         createdAt: {
