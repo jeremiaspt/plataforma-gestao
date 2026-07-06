@@ -515,27 +515,28 @@ h1 {
   border-radius: 8px;
   max-height: 74vh;
   overflow: auto;
+  background: #ffffff;
 }
 
 .pool-table {
   border-collapse: collapse;
-  min-width: 860px;
+  min-width: 980px;
   table-layout: fixed;
   width: 100%;
 }
 
 .pool-table .time-column {
-  width: 76px;
+  width: 72px;
 }
 
 .pool-table .lane-column {
-  width: calc((100% - 76px) / 6);
+  width: calc((100% - 72px) / 6);
 }
 
 .pool-table th,
 .pool-table td {
   border: 1px solid var(--line);
-  padding: 4px 6px;
+  padding: 5px 6px;
   text-align: left;
   vertical-align: top;
   width: auto;
@@ -544,22 +545,25 @@ h1 {
 .pool-table thead th,
 .pool-table tbody th {
   background: #f8fafc;
+  color: #334155;
+  font-weight: 800;
   position: sticky;
   z-index: 1;
 }
 
 .pool-table thead th {
+  box-shadow: inset 0 -1px 0 var(--line);
   top: 0;
 }
 
 .pool-table tbody th {
   left: 0;
-  min-width: 76px;
+  min-width: 72px;
 }
 
 .pool-cell {
   background: #ffffff;
-  height: 28px;
+  height: 30px;
 }
 
 .pool-cell.occupied {
@@ -578,6 +582,7 @@ h1 {
   gap: 3px;
   max-width: 100%;
   overflow: hidden;
+  min-height: 100%;
 }
 
 .pool-cell-content strong,
@@ -597,6 +602,7 @@ h1 {
   background: rgba(15, 118, 110, 0.12);
   border-radius: 5px;
   color: #0f766e !important;
+  display: block;
   font-weight: 700;
   overflow: hidden;
   padding: 2px 4px;
@@ -651,7 +657,7 @@ h1 {
 
 .modal-backdrop {
   align-items: center;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(15, 23, 42, 0.56);
   display: flex;
   inset: 0;
   justify-content: center;
@@ -663,17 +669,28 @@ h1 {
 .booking-modal {
   background: var(--panel);
   border-radius: 8px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
   max-height: min(88vh, 760px);
   overflow: auto;
-  padding: 16px;
+  padding: 18px;
   width: min(860px, 100%);
+}
+
+.booking-modal .topbar {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 14px;
+  padding-bottom: 14px;
 }
 
 .booking-popup-form {
   align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   display: grid;
-  gap: 10px;
-  grid-template-columns: 110px 110px minmax(240px, 1fr);
+  gap: 12px;
+  grid-template-columns: 120px 120px minmax(260px, 1fr);
+  padding: 14px;
 }
 
 .booking-popup-form .field {
@@ -740,15 +757,15 @@ h1 {
 }
 
 .type-aula {
-  background: #dff3ff;
+  background: #e0f2fe;
 }
 
 .type-treino {
-  background: #e7f8ec;
+  background: #e7f8ef;
 }
 
 .type-aluguer {
-  background: #fff4d6;
+  background: #fef3c7;
 }
 
 .type-manutencao {
@@ -760,7 +777,7 @@ h1 {
 }
 
 .type-outro {
-  background: #e2e8f0;
+  background: #eef2f7;
 }
 
 .schedule-list {
