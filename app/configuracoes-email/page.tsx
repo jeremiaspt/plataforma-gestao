@@ -28,7 +28,7 @@ export default async function EmailSettingsPage({
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
-      <section className="panel">
+      <section className="panel email-settings-panel">
         <div className="topbar">
           <div>
             <p className="eyebrow">Configuracao</p>
@@ -50,7 +50,7 @@ export default async function EmailSettingsPage({
         </div>
 
         {activeTab === "settings" ? (
-          <form className="email-settings-form" action="/api/email-settings" method="post">
+          <form className="email-settings-form email-settings-card" action="/api/email-settings" method="post">
             <label className="checkbox">
               <input type="checkbox" name="enabled" defaultChecked={settings.enabled} />
               Enviar emails ao professor quando e lancado um pagamento TP
