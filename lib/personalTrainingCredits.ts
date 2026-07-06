@@ -27,7 +27,7 @@ function durationFromDescription(description: string) {
 export async function getCreditBalancesForTeacher(teacherId: string): Promise<PersonalTrainingCreditBalance[]> {
   const [payments, bookings, adjustments] = await Promise.all([
     prisma.personalTrainingPayment.findMany({
-      where: { teacherId },
+      where: { teacherId, status: { not: "cancelled" } },
       include: { student: true, paymentType: true }
     }),
     prisma.personalTrainingBooking.findMany({

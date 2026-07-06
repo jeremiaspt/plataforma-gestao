@@ -31,6 +31,7 @@ export default async function PersonalTrainingPaymentsPage({
     error?: string;
     success?: string;
     creditSuccess?: string;
+    paymentCancelSuccess?: string;
     tab?: string;
     month?: string;
     globalMonth?: string;
@@ -84,7 +85,7 @@ export default async function PersonalTrainingPaymentsPage({
     return `/api/personal-training/reports/${type}?${query.toString()}`;
   };
 
-  const [paymentTypes, teacherStudents, payments, creditBalances, globalPayments] = await Promise.all([
+  const [paymentTypes, teacherStudents, payments, creditBalances, globalPayments, paymentCancelLogs] = await Promise.all([
     prisma.personalTrainingPaymentType.findMany({
       where: { active: true },
       orderBy: { description: "asc" }
@@ -128,10 +129,27 @@ export default async function PersonalTrainingPaymentsPage({
             createdBy: { select: { name: true } }
           }
         })
+      : Promise.resolve([]),
+    isAdmin && selectedTeacherId
+      ? prisma.personalTrainingPaymentLog.findMany({
+          where: {
+            teacherId: selectedTeacherId,
+            action: "cancelled",
+            createdAt: {
+              gte: billingPeriod.start,
+              lt: billingPeriod.endExclusive
+            }
+          },
+          orderBy: { createdAt: "desc" }
+        })
       : Promise.resolve([])
   ]);
 
-  const paymentStats = payments.reduce(
+  const activePayments = payments.filter((payment) => payment.status !== "cancelled");
+  const activeGlobalPayments = globalPayments.filter((payment) => payment.status !== "cancelled");
+  const canCancelPayments = isAdmin || roleKeys.includes("recepcao");
+
+  const paymentStats = activePayments.reduce(
     (stats, payment) => ({
       count: stats.count + 1,
       quantity: stats.quantity + payment.quantity,
@@ -142,7 +160,7 @@ export default async function PersonalTrainingPaymentsPage({
     { count: 0, quantity: 0, credits: 0, totalClient: 0, totalTeacher: 0 }
   );
   const trainingTypeStats = Array.from(
-    payments.reduce((map, payment) => {
+    activePayments.reduce((map, payment) => {
       const typeName = payment.paymentType.description;
       const current = map.get(typeName) || { typeName, quantity: 0, totalClient: 0, totalTeacher: 0 };
       current.quantity += payment.quantity;
@@ -155,7 +173,7 @@ export default async function PersonalTrainingPaymentsPage({
     .map(([, value]) => value)
     .sort((a, b) => b.totalTeacher - a.totalTeacher || b.quantity - a.quantity || a.typeName.localeCompare(b.typeName));
   const maxTrainingTypeQuantity = Math.max(...trainingTypeStats.map((item) => item.quantity), 0);
-  const globalStats = globalPayments.reduce(
+  const globalStats = activeGlobalPayments.reduce(
     (stats, payment) => ({
       count: stats.count + 1,
       quantity: stats.quantity + payment.quantity,
@@ -166,7 +184,7 @@ export default async function PersonalTrainingPaymentsPage({
     { count: 0, quantity: 0, credits: 0, totalClient: 0, totalTeacher: 0 }
   );
   const globalTeacherStats = Array.from(
-    globalPayments.reduce((map, payment) => {
+    activeGlobalPayments.reduce((map, payment) => {
       const current = map.get(payment.teacherId) || {
         teacherName: payment.teacher.name,
         count: 0,
@@ -185,7 +203,7 @@ export default async function PersonalTrainingPaymentsPage({
     .map(([, value]) => value)
     .sort((a, b) => b.totalTeacher - a.totalTeacher || a.teacherName.localeCompare(b.teacherName));
   const globalTrainingTypeStats = Array.from(
-    globalPayments.reduce((map, payment) => {
+    activeGlobalPayments.reduce((map, payment) => {
       const typeName = payment.paymentType.description;
       const current = map.get(typeName) || { typeName, quantity: 0, totalClient: 0, totalTeacher: 0 };
       current.quantity += payment.quantity;
@@ -225,6 +243,7 @@ export default async function PersonalTrainingPaymentsPage({
 
         {params.success ? <p className="success">Pagamento lancado com sucesso.</p> : null}
         {params.creditSuccess ? <p className="success">Creditos corrigidos com sucesso.</p> : null}
+        {params.paymentCancelSuccess ? <p className="success">Pagamento anulado com sucesso.</p> : null}
         {params.error ? <p className="error">Nao foi possivel lancar o pagamento. Confirma professor, aluno, tipo e quantidade.</p> : null}
 
         {canCreate ? (
@@ -401,7 +420,11 @@ export default async function PersonalTrainingPaymentsPage({
             ) : null}
 
             <div className="payments-table">
-              <div className={isAdmin ? "payments-header" : "payments-header teacher-values"}>
+              <div
+                className={`${isAdmin ? "payments-header" : "payments-header teacher-values"} ${
+                  canCancelPayments ? "with-actions" : ""
+                }`}
+              >
                 <span>Data</span>
                 {isAdmin ? <span>Professor</span> : null}
                 <span>Utente</span>
@@ -411,25 +434,93 @@ export default async function PersonalTrainingPaymentsPage({
                 <span>Creditos</span>
                 {isAdmin ? <span>Total utente</span> : null}
                 <span>Total professor</span>
+                <span>Estado</span>
+                {canCancelPayments ? <span>Acao</span> : null}
               </div>
               {payments.length === 0 ? <p className="muted">Nao existem pagamentos neste ciclo.</p> : null}
-              {payments.map((payment) => (
-                <div className={isAdmin ? "payments-row" : "payments-row teacher-values"} key={payment.id}>
-                  <span>{payment.createdAt.toLocaleDateString("pt-PT")}</span>
-                  {isAdmin ? <span>{payment.teacher.name}</span> : null}
-                  <span>
-                    {payment.student.fullName}
-                    <small>{payment.student.memberNumber}</small>
-                  </span>
-                  <span>{payment.createdBy?.name || "-"}</span>
-                  <span>{payment.paymentType.description}</span>
-                  <span>{payment.quantity}</span>
-                  <span>{payment.totalCredits}</span>
-                  {isAdmin ? <span>{formatCurrency(payment.totalPrice)}</span> : null}
-                  <span>{formatCurrency(payment.teacherTotal)}</span>
-                </div>
-              ))}
+              {payments.map((payment) => {
+                const isCancelled = payment.status === "cancelled";
+                const canCancelPayment = canCancelPayments && !isCancelled && (isAdmin || payment.createdById === user.id);
+
+                return (
+                  <div
+                    className={`${isAdmin ? "payments-row" : "payments-row teacher-values"} ${
+                      canCancelPayments ? "with-actions" : ""
+                    } ${isCancelled ? "cancelled-payment" : ""}`}
+                    key={payment.id}
+                  >
+                    <span>{payment.createdAt.toLocaleDateString("pt-PT")}</span>
+                    {isAdmin ? <span>{payment.teacher.name}</span> : null}
+                    <span>
+                      {payment.student.fullName}
+                      <small>{payment.student.memberNumber}</small>
+                    </span>
+                    <span>{payment.createdBy?.name || "-"}</span>
+                    <span>{payment.paymentType.description}</span>
+                    <span>{payment.quantity}</span>
+                    <span>{payment.totalCredits}</span>
+                    {isAdmin ? <span>{formatCurrency(payment.totalPrice)}</span> : null}
+                    <span>{formatCurrency(payment.teacherTotal)}</span>
+                    <span className={isCancelled ? "status inactive" : "status active"}>
+                      {isCancelled ? "Anulado" : "Ativo"}
+                      {isCancelled && payment.cancelledByName ? <small>por {payment.cancelledByName}</small> : null}
+                    </span>
+                    {canCancelPayments ? (
+                      <span>
+                        {canCancelPayment ? (
+                          <form className="payment-cancel-form" action="/api/personal-training/payments/cancel" method="post">
+                            <input type="hidden" name="paymentId" value={payment.id} />
+                            <input type="hidden" name="teacherId" value={selectedTeacherId} />
+                            <input type="hidden" name="month" value={selectedMonth} />
+                            <input name="reason" placeholder="Motivo" />
+                            <button className="button danger" type="submit">
+                              Anular
+                            </button>
+                          </form>
+                        ) : (
+                          <small className="muted">Sem permissao</small>
+                        )}
+                      </span>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
+
+            {isAdmin ? (
+              <div className="payment-logs-table">
+                <div className="section-heading">
+                  <div>
+                    <h2>Logs de anulacao</h2>
+                    <p className="muted">Pagamentos anulados no ciclo selecionado.</p>
+                  </div>
+                </div>
+                <div className="payment-logs-header">
+                  <span>Data</span>
+                  <span>Anulado por</span>
+                  <span>Utente</span>
+                  <span>Tipo</span>
+                  <span>Creditos</span>
+                  <span>Total professor</span>
+                  <span>Motivo</span>
+                </div>
+                {paymentCancelLogs.length === 0 ? <p className="muted">Nao existem anulacoes neste ciclo.</p> : null}
+                {paymentCancelLogs.map((log) => (
+                  <div className="payment-logs-row" key={log.id}>
+                    <span>{log.createdAt.toLocaleString("pt-PT")}</span>
+                    <span>{log.actionByName}</span>
+                    <span>
+                      {log.studentName}
+                      <small>{log.studentMemberNumber}</small>
+                    </span>
+                    <span>{log.paymentType}</span>
+                    <span>{log.totalCredits}</span>
+                    <span>{formatCurrency(log.teacherTotal)}</span>
+                    <span>{log.reason || "-"}</span>
+                  </div>
+                ))}
+              </div>
+            ) : null}
           </div>
         ) : null}
 

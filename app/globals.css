@@ -743,14 +743,26 @@ h1 {
   align-items: start;
   display: grid;
   gap: 10px;
-  grid-template-columns: 90px 170px 220px 150px minmax(360px, 1fr) 60px 80px 120px 140px;
-  min-width: 1390px;
+  grid-template-columns: 90px 150px 200px 130px minmax(300px, 1fr) 55px 70px 110px 125px 90px;
+  min-width: 1420px;
 }
 
 .payments-header.teacher-values,
 .payments-row.teacher-values {
-  grid-template-columns: 90px 220px 150px minmax(360px, 1fr) 60px 80px 140px;
-  min-width: 1100px;
+  grid-template-columns: 90px 210px 130px minmax(300px, 1fr) 55px 70px 125px 90px;
+  min-width: 1120px;
+}
+
+.payments-header.with-actions,
+.payments-row.with-actions {
+  grid-template-columns: 90px 150px 200px 130px minmax(280px, 1fr) 55px 70px 110px 125px 90px 240px;
+  min-width: 1660px;
+}
+
+.payments-header.teacher-values.with-actions,
+.payments-row.teacher-values.with-actions {
+  grid-template-columns: 90px 210px 130px minmax(280px, 1fr) 55px 70px 125px 90px 240px;
+  min-width: 1380px;
 }
 
 .payments-header {
@@ -767,6 +779,56 @@ h1 {
 }
 
 .payments-row small {
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
+}
+
+.payments-row.cancelled-payment {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.payment-cancel-form {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: minmax(120px, 1fr) auto;
+}
+
+.payment-cancel-form input {
+  min-width: 0;
+}
+
+.payment-logs-table {
+  display: grid;
+  gap: 8px;
+  margin-top: 22px;
+  overflow-x: auto;
+}
+
+.payment-logs-header,
+.payment-logs-row {
+  align-items: start;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 130px 170px 220px minmax(320px, 1fr) 80px 130px 180px;
+  min-width: 1240px;
+}
+
+.payment-logs-header {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.payment-logs-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.payment-logs-row small {
   color: var(--muted);
   display: block;
   margin-top: 3px;

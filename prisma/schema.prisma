@@ -117,10 +117,41 @@ model PersonalTrainingPayment {
   teacherTotal    Decimal                     @db.Decimal(10, 2)
   createdById     String?
   createdBy       User?                       @relation("PersonalTrainingCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  status          String                      @default("active")
+  cancelledAt     DateTime?
+  cancelledById   String?
+  cancelledByName String?
+  cancelReason    String?
   createdAt       DateTime                    @default(now())
   updatedAt       DateTime                    @updatedAt
 
   @@index([teacherId, studentId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PersonalTrainingPaymentLog {
+  id                  String   @id @default(cuid())
+  paymentId           String
+  teacherId           String
+  studentId           String
+  action              String
+  teacherName         String
+  studentName         String
+  studentMemberNumber String
+  paymentType         String
+  quantity            Int
+  totalCredits        Int
+  totalPrice          Decimal  @db.Decimal(10, 2)
+  teacherTotal        Decimal  @db.Decimal(10, 2)
+  createdByName       String?
+  actionById          String?
+  actionByName        String
+  reason              String?
+  createdAt           DateTime @default(now())
+
+  @@index([paymentId])
+  @@index([teacherId, createdAt])
   @@index([createdAt])
 }
 
