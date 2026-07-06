@@ -54,12 +54,15 @@ export default async function PoolMapPage({
   const activeTab =
     requestedTab === "my-bookings" && isProfessor
       ? "my-bookings"
+      : requestedTab === "future-bookings" && isProfessor
+        ? "future-bookings"
       : requestedTab === "weekly" && isAdmin
         ? "weekly"
         : requestedTab === "logs" && isAdmin
           ? "logs"
           : "map";
-  const tabHref = (tab: "map" | "my-bookings" | "weekly" | "logs") => `/piscina-25m?date=${selectedDateValue}&tab=${tab}`;
+  const tabHref = (tab: "map" | "my-bookings" | "future-bookings" | "weekly" | "logs") =>
+    `/piscina-25m?date=${selectedDateValue}&tab=${tab}`;
 
   const blocks = await prisma.poolScheduleBlock.findMany({
     where: { weekday },
@@ -87,6 +90,22 @@ export default async function PoolMapPage({
           bookingDate: new Date(`${selectedDateValue}T00:00:00`)
         },
         orderBy: { createdAt: "desc" }
+      })
+    : [];
+
+  const futureBookings = isProfessor
+    ? await prisma.personalTrainingBooking.findMany({
+        where: {
+          teacherId: user.id,
+          bookingDate: { gte: new Date(`${todayDate}T00:00:00`) },
+          status: { not: "cancelled" }
+        },
+        include: {
+          student: true,
+          paymentType: true,
+          poolBlock: true
+        },
+        orderBy: [{ bookingDate: "asc" }, { startMinutes: "asc" }]
       })
     : [];
 
@@ -159,6 +178,48 @@ export default async function PoolMapPage({
   }
 
   const teacherBookings = Array.from(teacherBookingGroups.values()).sort((a, b) => a.startMinutes - b.startMinutes);
+  const futureBookingGroups = new Map<
+    string,
+    {
+      groupId: string;
+      bookingDate: Date;
+      bookingDateValue: string;
+      laneNumber: number;
+      blockTitle: string;
+      startMinutes: number;
+      endMinutes: number;
+      durationMinutes: number;
+      trainingTypeName: string;
+      studentNames: string[];
+    }
+  >();
+
+  if (isProfessor) {
+    for (const booking of futureBookings) {
+      const bookingDateValue = dateToInputValue(booking.bookingDate);
+      const current =
+        futureBookingGroups.get(booking.bookingGroupId) ||
+        {
+          groupId: booking.bookingGroupId,
+          bookingDate: booking.bookingDate,
+          bookingDateValue,
+          laneNumber: booking.poolBlock.laneNumber,
+          blockTitle: booking.poolBlock.title,
+          startMinutes: booking.startMinutes,
+          endMinutes: booking.endMinutes,
+          durationMinutes: booking.durationMinutes,
+          trainingTypeName: booking.paymentType ? getTrainingTypeName(booking.paymentType.description) : "",
+          studentNames: []
+        };
+
+      current.studentNames.push(booking.student.fullName);
+      futureBookingGroups.set(booking.bookingGroupId, current);
+    }
+  }
+
+  const futureTeacherBookings = Array.from(futureBookingGroups.values()).sort(
+    (a, b) => a.bookingDate.getTime() - b.bookingDate.getTime() || a.startMinutes - b.startMinutes
+  );
   const editBookingGroup = params.bookingBlockId
     ? teacherBookings.find((booking) => booking.groupId === params.bookingBlockId)
     : null;
@@ -328,6 +389,11 @@ export default async function PoolMapPage({
               As minhas marcações
             </a>
           ) : null}
+          {isProfessor ? (
+            <a className={activeTab === "future-bookings" ? "tab active" : "tab"} href={tabHref("future-bookings")}>
+              Agenda futura
+            </a>
+          ) : null}
           {isAdmin ? (
             <a className={activeTab === "weekly" ? "tab active" : "tab"} href={tabHref("weekly")}>
               Ocupações semanais
@@ -475,6 +541,41 @@ export default async function PoolMapPage({
         </section>
       ) : null}
 
+
+      {activeTab === "future-bookings" && isProfessor ? (
+        <section className="panel">
+          <h2>Agenda futura</h2>
+          <p className="muted">Todas as tuas marcacoes de hoje em diante.</p>
+          <div className="teacher-bookings-list">
+            {futureTeacherBookings.length === 0 ? <p className="muted">Nao existem marcacoes futuras.</p> : null}
+            {futureTeacherBookings.map((booking) => (
+              <div className="teacher-booking-row" key={booking.groupId}>
+                <div>
+                  <strong>
+                    {booking.bookingDate.toLocaleDateString("pt-PT")} - {formatMinutes(booking.startMinutes)} -{" "}
+                    {formatMinutes(booking.endMinutes)} - {booking.blockTitle} - Pista {booking.laneNumber}
+                  </strong>
+                  <p className="muted">
+                    {booking.trainingTypeName} - {booking.studentNames.join(", ")}
+                  </p>
+                </div>
+                <div className="action-row compact-actions">
+                  <a className="button secondary" href={`/piscina-25m?date=${booking.bookingDateValue}&bookingBlockId=${booking.groupId}`}>
+                    Alterar
+                  </a>
+                  <form action="/api/personal-training/bookings/cancel" method="post">
+                    <input type="hidden" name="date" value={booking.bookingDateValue} />
+                    <input type="hidden" name="bookingGroupId" value={booking.groupId} />
+                    <button className="button danger" type="submit">
+                      Anular
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {activeTab === "weekly" && isAdmin ? (
         <section className="panel">
