@@ -124,6 +124,23 @@ model PersonalTrainingPayment {
   @@index([createdAt])
 }
 
+model PersonalTrainingCreditAdjustment {
+  id              String   @id @default(cuid())
+  teacherId       String
+  studentId       String
+  trainingTypeKey String
+  trainingTypeName String
+  deltaCredits    Int
+  reason          String?
+  createdById     String?
+  createdByName   String
+  createdAt       DateTime @default(now())
+
+  @@index([teacherId, studentId])
+  @@index([trainingTypeKey])
+  @@index([createdAt])
+}
+
 model PersonalTrainingBooking {
   id             String                  @id @default(cuid())
   bookingGroupId String                  @default(cuid())

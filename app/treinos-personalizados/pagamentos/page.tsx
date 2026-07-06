@@ -30,6 +30,7 @@ export default async function PersonalTrainingPaymentsPage({
     teacherId?: string;
     error?: string;
     success?: string;
+    creditSuccess?: string;
     tab?: string;
     month?: string;
     globalMonth?: string;
@@ -223,6 +224,7 @@ export default async function PersonalTrainingPaymentsPage({
         </div>
 
         {params.success ? <p className="success">Pagamento lancado com sucesso.</p> : null}
+        {params.creditSuccess ? <p className="success">Creditos corrigidos com sucesso.</p> : null}
         {params.error ? <p className="error">Nao foi possivel lancar o pagamento. Confirma professor, aluno, tipo e quantidade.</p> : null}
 
         {canCreate ? (
@@ -276,28 +278,43 @@ export default async function PersonalTrainingPaymentsPage({
 
         {activeTab === "credits" ? (
           <div className="credits-table">
-            <div className="credits-header">
+            <div className={isAdmin ? "credits-header admin-credits-row" : "credits-header"}>
               <span>Utente</span>
               <span>Tipo</span>
               <span>Comprados</span>
+              <span>Ajustes</span>
               <span>Usados</span>
               <span>Saldo</span>
               <span>Estado</span>
+              {isAdmin ? <span>Corrigir saldo</span> : null}
             </div>
             {creditBalances.length === 0 ? <p className="muted">Ainda nao existem saldos para este professor.</p> : null}
             {creditBalances.map((balance) => (
-              <div className="credits-row" key={`${balance.studentId}-${balance.trainingTypeName}`}>
+              <div className={isAdmin ? "credits-row admin-credits-row" : "credits-row"} key={`${balance.studentId}-${balance.trainingTypeName}`}>
                 <span>
                   {balance.fullName}
                   <small>{balance.memberNumber}</small>
                 </span>
                 <span>{balance.trainingTypeName}</span>
                 <span>{balance.purchasedCredits}</span>
+                <span className={balance.adjustedCredits < 0 ? "negative-balance" : ""}>{balance.adjustedCredits}</span>
                 <span>{balance.usedCredits}</span>
                 <span className={balance.availableCredits < 0 ? "negative-balance" : ""}>{balance.availableCredits}</span>
                 <span className={balance.canBook ? "status active" : "status inactive"}>
                   {balance.canBook ? "Pode marcar" : "Sem margem"}
                 </span>
+                {isAdmin ? (
+                  <form className="credit-adjust-form" action="/api/personal-training/credit-adjustments" method="post">
+                    <input type="hidden" name="teacherId" value={selectedTeacherId} />
+                    <input type="hidden" name="studentId" value={balance.studentId} />
+                    <input type="hidden" name="trainingTypeKey" value={balance.trainingTypeKey} />
+                    <input name="targetAvailableCredits" type="number" step="1" defaultValue={balance.availableCredits} title="Saldo pretendido" />
+                    <input name="reason" placeholder="Motivo" title="Motivo" />
+                    <button className="button secondary" type="submit">
+                      Guardar
+                    </button>
+                  </form>
+                ) : null}
               </div>
             ))}
           </div>

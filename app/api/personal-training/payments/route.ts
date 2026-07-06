@@ -114,29 +114,24 @@ export async function POST(request: Request) {
   });
   const studentsById = new Map(students.map((student) => [student.id, student]));
 
-  await Promise.all(
-    createdPayments.map((payment) => {
-      const student = studentsById.get(payment.studentId);
-
-      if (!student) {
-        return Promise.resolve();
-      }
-
-      return sendPaymentNotificationEmail({
-        paymentId: payment.id,
-        teacherEmail: teacher.email,
-        teacherName: teacher.name,
-        studentFullName: student.fullName,
-        studentMemberNumber: student.memberNumber,
-        paymentTypeDescription: paymentType.description,
-        quantity: payment.quantity,
-        totalCredits: payment.totalCredits,
-        teacherTotal: payment.teacherTotal,
-        createdByName: user.name,
-        createdAt: payment.createdAt
-      });
-    })
-  );
+  await sendPaymentNotificationEmail({
+    paymentIds: createdPayments.map((payment) => payment.id),
+    teacherEmail: teacher.email,
+    teacherName: teacher.name,
+    students: createdPayments
+      .map((payment) => studentsById.get(payment.studentId))
+      .filter((student): student is NonNullable<typeof student> => Boolean(student))
+      .map((student) => ({
+        fullName: student.fullName,
+        memberNumber: student.memberNumber
+      })),
+    paymentTypeDescription: paymentType.description,
+    quantity,
+    totalCredits: createdPayments.reduce((sum, payment) => sum + payment.totalCredits, 0),
+    teacherTotal: createdPayments.reduce((sum, payment) => sum + decimalToNumber(payment.teacherTotal), 0),
+    createdByName: user.name,
+    createdAt: createdPayments[0]?.createdAt || new Date()
+  });
 
   return NextResponse.redirect(appRedirectUrl(`${basePath}&success=1`, request));
 }

@@ -4,11 +4,13 @@ import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
 type PaymentEmailPayload = {
-  paymentId: string;
+  paymentIds: string[];
   teacherEmail: string;
   teacherName: string;
-  studentFullName: string;
-  studentMemberNumber: string;
+  students: Array<{
+    fullName: string;
+    memberNumber: string;
+  }>;
   paymentTypeDescription: string;
   quantity: number;
   totalCredits: number;
@@ -20,7 +22,9 @@ type PaymentEmailPayload = {
 export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload) {
   const settings = await getPaymentEmailSettings();
   const cc = parseEmailList(settings.ccEmails);
-  const subject = `Pagamento TP lancado - ${payload.studentFullName}`;
+  const studentSummary = payload.students.map((student) => student.fullName).join(", ");
+  const subject = `Pagamento TP lancado - ${studentSummary}`;
+  const paymentIdValue = payload.paymentIds.join(",");
 
   if (!settings.enabled) {
     await prisma.emailLog.create({
@@ -30,7 +34,7 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
         toEmail: payload.teacherEmail,
         ccEmails: cc.join(", "),
         subject,
-        paymentId: payload.paymentId,
+        paymentId: paymentIdValue,
         error: "Envio desativado nas configuracoes."
       }
     });
@@ -40,7 +44,7 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
   const text = [
     `Foi lancado um pagamento de treino personalizado.`,
     `Professor: ${payload.teacherName}`,
-    `Utente: ${payload.studentFullName} (${payload.studentMemberNumber})`,
+    `Utentes: ${payload.students.map((student) => `${student.fullName} (${student.memberNumber})`).join(", ")}`,
     `Tipo: ${payload.paymentTypeDescription}`,
     `Quantidade: ${payload.quantity}`,
     `Creditos: ${payload.totalCredits}`,
@@ -54,7 +58,9 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
       <p>Foi lancado um pagamento de treino personalizado.</p>
       <table style="border-collapse: collapse;">
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Professor</strong></td><td>${payload.teacherName}</td></tr>
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Utente</strong></td><td>${payload.studentFullName} (${payload.studentMemberNumber})</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Utentes</strong></td><td>${payload.students
+          .map((student) => `${student.fullName} (${student.memberNumber})`)
+          .join("<br />")}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Tipo</strong></td><td>${payload.paymentTypeDescription}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Quantidade</strong></td><td>${payload.quantity}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Creditos</strong></td><td>${payload.totalCredits}</td></tr>
@@ -82,7 +88,7 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
         ccEmails: cc.join(", "),
         subject,
         providerId,
-        paymentId: payload.paymentId
+        paymentId: paymentIdValue
       }
     });
   } catch (error) {
@@ -93,7 +99,7 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
         toEmail: payload.teacherEmail,
         ccEmails: cc.join(", "),
         subject,
-        paymentId: payload.paymentId,
+        paymentId: paymentIdValue,
         error: error instanceof Error ? error.message : "Erro desconhecido"
       }
     });

@@ -11,6 +11,7 @@ export type PersonalTrainingCreditBalance = {
   trainingTypeName: string;
   durationMinutes: number;
   purchasedCredits: number;
+  adjustedCredits: number;
   usedCredits: number;
   availableCredits: number;
   canBook: boolean;
@@ -24,7 +25,7 @@ function durationFromDescription(description: string) {
 }
 
 export async function getCreditBalancesForTeacher(teacherId: string): Promise<PersonalTrainingCreditBalance[]> {
-  const [payments, bookings] = await Promise.all([
+  const [payments, bookings, adjustments] = await Promise.all([
     prisma.personalTrainingPayment.findMany({
       where: { teacherId },
       include: { student: true, paymentType: true }
@@ -36,6 +37,9 @@ export async function getCreditBalancesForTeacher(teacherId: string): Promise<Pe
         paymentType: { isNot: null }
       },
       include: { student: true, paymentType: true }
+    }),
+    prisma.personalTrainingCreditAdjustment.findMany({
+      where: { teacherId }
     })
   ]);
 
@@ -54,6 +58,7 @@ export async function getCreditBalancesForTeacher(teacherId: string): Promise<Pe
         trainingTypeName: getTrainingTypeName(payment.paymentType.description),
         durationMinutes: durationFromDescription(payment.paymentType.description),
         purchasedCredits: 0,
+        adjustedCredits: 0,
         usedCredits: 0,
         availableCredits: 0,
         canBook: false
@@ -78,6 +83,7 @@ export async function getCreditBalancesForTeacher(teacherId: string): Promise<Pe
         trainingTypeName: getTrainingTypeName(booking.paymentType.description),
         durationMinutes: durationFromDescription(booking.paymentType.description),
         purchasedCredits: 0,
+        adjustedCredits: 0,
         usedCredits: 0,
         availableCredits: 0,
         canBook: false
@@ -87,9 +93,31 @@ export async function getCreditBalancesForTeacher(teacherId: string): Promise<Pe
     balances.set(key, current);
   }
 
+  for (const adjustment of adjustments) {
+    const key = `${adjustment.studentId}:${adjustment.trainingTypeKey}`;
+    const current =
+      balances.get(key) ||
+      {
+        studentId: adjustment.studentId,
+        memberNumber: "",
+        fullName: "",
+        trainingTypeKey: adjustment.trainingTypeKey,
+        trainingTypeName: adjustment.trainingTypeName,
+        durationMinutes: 0,
+        purchasedCredits: 0,
+        adjustedCredits: 0,
+        usedCredits: 0,
+        availableCredits: 0,
+        canBook: false
+      };
+
+    current.adjustedCredits += adjustment.deltaCredits;
+    balances.set(key, current);
+  }
+
   return Array.from(balances.values())
     .map((balance) => {
-      const availableCredits = balance.purchasedCredits - balance.usedCredits;
+      const availableCredits = balance.purchasedCredits + balance.adjustedCredits - balance.usedCredits;
       return {
         ...balance,
         availableCredits,
