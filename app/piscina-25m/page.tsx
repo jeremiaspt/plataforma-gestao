@@ -292,7 +292,7 @@ export default async function PoolMapPage({
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
-      <section className="panel">
+      <section className="panel pool-page-hero">
         <div className="topbar">
           <div>
             <p className="eyebrow">Piscina 25m</p>
@@ -379,7 +379,7 @@ export default async function PoolMapPage({
         ) : null}
       </section>
 
-      <section className="panel pool-panel">
+      <section className="panel pool-panel pool-workspace">
         <div className="tabs">
           <a className={activeTab === "map" ? "tab active" : "tab"} href={tabHref("map")}>
             Mapa
@@ -507,7 +507,7 @@ export default async function PoolMapPage({
       ) : null}
 
       {activeTab === "my-bookings" && isProfessor ? (
-        <section className="panel">
+        <section className="panel pool-list-panel">
           <h2>As minhas marcações</h2>
           <div className="teacher-bookings-list">
             {teacherBookings.length === 0 ? <p className="muted">Ainda não existem marcações para este dia.</p> : null}
@@ -543,7 +543,7 @@ export default async function PoolMapPage({
 
 
       {activeTab === "future-bookings" && isProfessor ? (
-        <section className="panel">
+        <section className="panel pool-list-panel">
           <h2>Agenda futura</h2>
           <p className="muted">Todas as tuas marcacoes de hoje em diante.</p>
           <div className="teacher-bookings-list">
@@ -578,7 +578,7 @@ export default async function PoolMapPage({
       ) : null}
 
       {activeTab === "weekly" && isAdmin ? (
-        <section className="panel">
+        <section className="panel pool-list-panel">
           <h2>Ocupações semanais de {selectedDayLabel}</h2>
           <form className="pool-form" action="/api/pool-schedule" method="post">
             <input type="hidden" name="weekday" value={weekday} />
@@ -644,7 +644,7 @@ export default async function PoolMapPage({
       ) : null}
 
       {activeTab === "logs" && isAdmin ? (
-        <section className="panel">
+        <section className="panel pool-list-panel">
           <h2>Logs de agendamentos PT</h2>
           <div className="booking-log-list">
             {bookingLogs.length === 0 ? <p className="muted">Ainda nao existem logs para este dia.</p> : null}

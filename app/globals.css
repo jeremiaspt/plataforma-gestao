@@ -440,10 +440,14 @@ h1 {
 
 .date-nav {
   align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   margin: 14px 0;
+  padding: 12px;
 }
 
 .date-picker {
@@ -482,7 +486,33 @@ h1 {
   margin-top: 16px;
 }
 
+.pool-page-hero {
+  display: grid;
+  gap: 12px;
+}
+
+.pool-page-hero > .topbar {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0;
+  padding-bottom: 14px;
+}
+
+.pool-workspace {
+  background: #ffffff;
+}
+
+.pool-list-panel {
+  margin-top: 16px;
+}
+
+.pool-list-panel > h2 {
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+
 .pool-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: 8px;
   max-height: 74vh;
   overflow: auto;
 }
@@ -665,10 +695,17 @@ h1 {
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: #ffffff;
   display: flex;
   gap: 14px;
   justify-content: space-between;
-  padding: 10px;
+  padding: 12px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.teacher-booking-row:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
 }
 
 .teacher-booking-row p {
@@ -685,10 +722,17 @@ h1 {
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: #ffffff;
   display: flex;
   gap: 14px;
   justify-content: space-between;
-  padding: 10px;
+  padding: 12px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.booking-log-row:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
 }
 
 .booking-log-row p {
@@ -729,10 +773,17 @@ h1 {
   align-items: center;
   border: 1px solid var(--line);
   border-radius: 8px;
+  background: #ffffff;
   display: flex;
   gap: 16px;
   justify-content: space-between;
   padding: 12px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.schedule-item:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
 }
 
 .schedule-item p {
