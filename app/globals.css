@@ -655,8 +655,48 @@ h1 {
   grid-template-columns: minmax(220px, 1fr) 150px minmax(220px, 1fr) minmax(320px, 1.4fr) 120px auto;
 }
 
+.payment-launch-form.stacked {
+  align-items: stretch;
+  grid-template-columns: 1fr;
+}
+
 .payment-launch-form .wide {
   min-width: 0;
+}
+
+.payment-main-fields {
+  align-items: flex-end;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(320px, 1fr) 130px;
+}
+
+.participant-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.participant-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  min-width: 0;
+  padding: 12px;
+}
+
+.participant-card:not(.required) {
+  background: #f8fafc;
+  opacity: 0.6;
+}
+
+.participant-card legend {
+  color: #334155;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 0 4px;
 }
 
 .payments-table {
@@ -949,6 +989,8 @@ h1 {
 
   .teacher-filter,
   .payment-launch-form,
+  .payment-main-fields,
+  .participant-grid,
   .period-filter,
   .stats-grid,
   .bar-row {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { decimalToNumber } from "@/lib/money";
+import { requiredParticipantsForType } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -13,9 +14,9 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const teacherId = String(formData.get("teacherId") || "");
-  const existingStudentId = String(formData.get("existingStudentId") || "");
-  const memberNumber = String(formData.get("memberNumber") || "").trim();
-  const fullName = String(formData.get("fullName") || "").trim();
+  const existingStudentIds = formData.getAll("existingStudentId").map((value) => String(value || ""));
+  const memberNumbers = formData.getAll("memberNumber").map((value) => String(value || "").trim());
+  const fullNames = formData.getAll("fullName").map((value) => String(value || "").trim());
   const paymentTypeId = String(formData.get("paymentTypeId") || "");
   const quantity = Number(formData.get("quantity"));
   const basePath = `/treinos-personalizados/pagamentos?teacherId=${teacherId}`;
@@ -42,29 +43,42 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
-  let studentId = existingStudentId;
+  const requiredParticipants = requiredParticipantsForType(paymentType.description);
+  const studentIds: string[] = [];
 
-  if (studentId) {
-    const student = await prisma.personalTrainingStudent.findUnique({ where: { id: studentId } });
+  for (let index = 0; index < requiredParticipants; index += 1) {
+    const existingStudentId = existingStudentIds[index] || "";
+    const memberNumber = memberNumbers[index] || "";
+    const fullName = fullNames[index] || "";
 
-    if (!student) {
-      return NextResponse.redirect(appRedirectUrl(errorPath, request));
-    }
-  } else {
-    if (!memberNumber || !fullName) {
-      return NextResponse.redirect(appRedirectUrl(errorPath, request));
-    }
+    if (existingStudentId) {
+      const student = await prisma.personalTrainingStudent.findUnique({ where: { id: existingStudentId } });
 
-    const student = await prisma.personalTrainingStudent.upsert({
-      where: { memberNumber },
-      update: { fullName },
-      create: {
-        memberNumber,
-        fullName
+      if (!student) {
+        return NextResponse.redirect(appRedirectUrl(errorPath, request));
       }
-    });
 
-    studentId = student.id;
+      studentIds.push(student.id);
+    } else {
+      if (!memberNumber || !fullName) {
+        return NextResponse.redirect(appRedirectUrl(errorPath, request));
+      }
+
+      const student = await prisma.personalTrainingStudent.upsert({
+        where: { memberNumber },
+        update: { fullName },
+        create: {
+          memberNumber,
+          fullName
+        }
+      });
+
+      studentIds.push(student.id);
+    }
+  }
+
+  if (new Set(studentIds).size !== studentIds.length) {
+    return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
   const creditsPerUnit = paymentType.credits;
@@ -74,21 +88,25 @@ export async function POST(request: Request) {
   const totalPrice = pricePerUnit * quantity;
   const teacherTotal = teacherPricePerUnit * quantity;
 
-  await prisma.personalTrainingPayment.create({
-    data: {
-      teacherId,
-      studentId,
-      paymentTypeId,
-      quantity,
-      creditsPerUnit,
-      totalCredits,
-      pricePerUnit,
-      totalPrice,
-      teacherPricePerUnit,
-      teacherTotal,
-      createdById: user.id
-    }
-  });
+  await prisma.$transaction(
+    studentIds.map((studentId) =>
+      prisma.personalTrainingPayment.create({
+        data: {
+          teacherId,
+          studentId,
+          paymentTypeId,
+          quantity,
+          creditsPerUnit,
+          totalCredits,
+          pricePerUnit,
+          totalPrice,
+          teacherPricePerUnit,
+          teacherTotal,
+          createdById: user.id
+        }
+      })
+    )
+  );
 
   return NextResponse.redirect(appRedirectUrl(`${basePath}&success=1`, request));
 }

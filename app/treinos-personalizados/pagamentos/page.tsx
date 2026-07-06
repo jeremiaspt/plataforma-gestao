@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { PaymentLaunchForm } from "@/components/PaymentLaunchForm";
 import { requireUser } from "@/lib/auth";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel, getBillingPeriod } from "@/lib/billingCycles";
 import { decimalToNumber, formatCurrency } from "@/lib/money";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
+import { requiredParticipantsForType } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 
 function getAdminGlobalPeriod(monthValue: string) {
@@ -195,6 +197,15 @@ export default async function PersonalTrainingPaymentsPage({
     .map(([, value]) => value)
     .sort((a, b) => b.totalTeacher - a.totalTeacher || b.quantity - a.quantity || a.typeName.localeCompare(b.typeName));
   const maxGlobalTrainingTypeTotal = Math.max(...globalTrainingTypeStats.map((type) => type.totalTeacher), 0);
+  const paymentTypeOptions = paymentTypes.map((type) => ({
+    id: type.id,
+    label: `${type.description} - ${type.credits} creditos - ${formatCurrency(type.price)}`,
+    requiredParticipants: requiredParticipantsForType(type.description)
+  }));
+  const teacherStudentOptions = teacherStudents.map((student) => ({
+    id: student.id,
+    label: `${student.fullName} - ${student.memberNumber}`
+  }));
 
   return (
     <AppShell userName={user.name}>
@@ -235,45 +246,7 @@ export default async function PersonalTrainingPaymentsPage({
               </button>
             </form>
 
-            <form className="payment-launch-form" action="/api/personal-training/payments" method="post">
-              <input type="hidden" name="teacherId" value={selectedTeacherId} />
-              <div className="field">
-                <label htmlFor="existingStudentId">Aluno do professor</label>
-                <select id="existingStudentId" name="existingStudentId" defaultValue="">
-                  <option value="">Adicionar novo aluno</option>
-                  {teacherStudents.map((student) => (
-                    <option value={student.id} key={student.id}>
-                      {student.fullName} - {student.memberNumber}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="memberNumber">N.º utente</label>
-                <input id="memberNumber" name="memberNumber" />
-              </div>
-              <div className="field">
-                <label htmlFor="fullName">Nome completo</label>
-                <input id="fullName" name="fullName" />
-              </div>
-              <div className="field wide">
-                <label htmlFor="paymentTypeId">Tipo de aula</label>
-                <select id="paymentTypeId" name="paymentTypeId" required>
-                  {paymentTypes.map((type) => (
-                    <option value={type.id} key={type.id}>
-                      {type.description} - {type.credits} creditos - {formatCurrency(type.price)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="quantity">Quantidade</label>
-                <input id="quantity" name="quantity" type="number" min="1" step="1" defaultValue="1" required />
-              </div>
-              <button className="button" type="submit" disabled={!selectedTeacherId || paymentTypes.length === 0}>
-                Lancar pagamento
-              </button>
-            </form>
+            <PaymentLaunchForm teacherId={selectedTeacherId} paymentTypes={paymentTypeOptions} students={teacherStudentOptions} />
           </>
         ) : null}
       </section>
