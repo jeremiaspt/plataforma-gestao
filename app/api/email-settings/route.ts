@@ -28,8 +28,8 @@ export async function POST(request: Request) {
       }
     });
 
-    return NextResponse.redirect(appRedirectUrl("/configuracoes-email?success=1", request));
+    return NextResponse.redirect(appRedirectUrl("/configuracoes-email?tab=settings&success=1", request));
   } catch {
-    return NextResponse.redirect(appRedirectUrl("/configuracoes-email?error=1", request));
+    return NextResponse.redirect(appRedirectUrl("/configuracoes-email?tab=settings&error=1", request));
   }
 }
