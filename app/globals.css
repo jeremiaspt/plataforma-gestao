@@ -1508,6 +1508,141 @@ h1 {
   text-overflow: ellipsis;
 }
 
+.activity-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.activity-panel > .topbar {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0;
+  padding-bottom: 14px;
+}
+
+.activity-filter {
+  align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 170px 170px auto;
+  padding: 12px;
+  width: fit-content;
+}
+
+.activity-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.activity-table {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px;
+}
+
+.activity-header,
+.activity-row,
+.payment-activity-header,
+.payment-activity-row,
+.booking-activity-header,
+.booking-activity-row,
+.credit-activity-header,
+.credit-activity-row,
+.email-activity-header,
+.email-activity-row {
+  align-items: start;
+  display: grid;
+  gap: 8px;
+}
+
+.activity-header,
+.payment-activity-header,
+.booking-activity-header,
+.credit-activity-header,
+.email-activity-header {
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 0 8px;
+  text-transform: uppercase;
+}
+
+.activity-row,
+.payment-activity-row,
+.booking-activity-row,
+.credit-activity-row,
+.email-activity-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.activity-row:hover,
+.payment-activity-row:hover,
+.booking-activity-row:hover,
+.credit-activity-row:hover,
+.email-activity-row:hover {
+  border-color: rgba(15, 118, 110, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+}
+
+.activity-row small,
+.payment-activity-row small,
+.booking-activity-row small,
+.credit-activity-row small,
+.email-activity-row small {
+  color: var(--muted);
+  display: block;
+  margin-top: 3px;
+}
+
+.activity-row > span,
+.payment-activity-row > span,
+.booking-activity-row > span,
+.credit-activity-row > span,
+.email-activity-row > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.activity-header,
+.activity-row {
+  grid-template-columns: 145px 105px 190px minmax(260px, 1fr) 190px;
+  min-width: 920px;
+}
+
+.payment-activity-header,
+.payment-activity-row {
+  grid-template-columns: 145px 160px 170px 220px minmax(280px, 1fr) 80px 110px 170px 200px;
+  min-width: 1540px;
+}
+
+.booking-activity-header,
+.booking-activity-row {
+  grid-template-columns: 145px 210px 130px 180px minmax(260px, 1fr) 80px 180px 170px;
+  min-width: 1370px;
+}
+
+.credit-activity-header,
+.credit-activity-row {
+  grid-template-columns: 145px 180px 240px minmax(280px, 1fr) 80px 170px 220px;
+  min-width: 1320px;
+}
+
+.email-activity-header,
+.email-activity-row {
+  grid-template-columns: 145px 90px 220px 220px minmax(280px, 1fr) minmax(240px, 1fr);
+  min-width: 1190px;
+}
+
 @media (max-width: 780px) {
   .app-shell {
     grid-template-columns: 1fr;
@@ -1567,9 +1702,15 @@ h1 {
   .payment-main-fields,
   .participant-grid,
   .period-filter,
+  .activity-filter,
+  .activity-stats,
   .stats-grid,
   .bar-row {
     grid-template-columns: 1fr;
+  }
+
+  .activity-filter {
+    width: 100%;
   }
 
   .schedule-item {

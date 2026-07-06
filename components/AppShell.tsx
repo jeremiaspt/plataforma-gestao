@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Dumbbell, LayoutDashboard, LogOut, Mail, UserRound, Users, Waves } from "lucide-react";
+import { Activity, Dumbbell, LayoutDashboard, LogOut, Mail, UserRound, Users, Waves } from "lucide-react";
 
 export function AppShell({
   children,
@@ -53,6 +53,12 @@ export function AppShell({
             <Link href="/utilizadores">
               <Users size={18} />
               Utilizadores
+            </Link>
+          ) : null}
+          {isAdmin ? (
+            <Link href="/atividade">
+              <Activity size={18} />
+              Atividade
             </Link>
           ) : null}
           {isAdmin ? (
