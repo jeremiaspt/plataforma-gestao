@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { UserSearchForm } from "@/components/UserSearchForm";
 import { hasRole, requireUser } from "@/lib/auth";
 import { billingCycleOptions, getBillingCycleLabel } from "@/lib/billingCycles";
 import { prisma } from "@/lib/prisma";
@@ -28,7 +29,7 @@ export default async function UsersPage({
           { name: { contains: query, mode: "insensitive" as const } },
           { email: { contains: query, mode: "insensitive" as const } },
           { phone: { contains: query, mode: "insensitive" as const } },
-          { roles: { some: { role: { label: { contains: query, mode: "insensitive" as const } } } } },
+          { roles: { some: { role: { name: { contains: query, mode: "insensitive" as const } } } } },
           { roles: { some: { role: { key: { contains: query, mode: "insensitive" as const } } } } }
         ]
       }
@@ -103,20 +104,7 @@ export default async function UsersPage({
           </div>
         </div>
 
-        <form className="user-search-form" action="/utilizadores" method="get">
-          <div className="field">
-            <label htmlFor="q">Pesquisar</label>
-            <input id="q" name="q" defaultValue={query} placeholder="Nome, email, contacto ou categoria" />
-          </div>
-          <button className="button secondary" type="submit">
-            Pesquisar
-          </button>
-          {query ? (
-            <a className="button secondary" href="/utilizadores">
-              Limpar
-            </a>
-          ) : null}
-        </form>
+        <UserSearchForm initialQuery={query} />
 
         <div className="users-table">
           <div className="users-header">
