@@ -11,8 +11,15 @@ export function AppShell({
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">Plataforma</div>
+        <div className="brand">
+          <span className="brand-mark">PG</span>
+          <span>
+            <strong>Plataforma</strong>
+            <small>Gestao operacional</small>
+          </span>
+        </div>
         <nav className="nav">
+          <span className="nav-label">Principal</span>
           <Link href="/dashboard">
             <LayoutDashboard size={18} />
             Dashboard
@@ -33,6 +40,7 @@ export function AppShell({
             <Dumbbell size={18} />
             Pagamentos TP
           </Link>
+          <span className="nav-label">Configuracao</span>
           <Link href="/configuracoes-email">
             <Mail size={18} />
             Emails
@@ -50,9 +58,9 @@ export function AppShell({
         </nav>
       </aside>
       <main className="main">
-        <div className="topbar">
+        <div className="app-topbar">
           <div>
-            <p className="eyebrow">Sessão iniciada</p>
+            <p className="eyebrow">Sessao iniciada</p>
             <h1>{userName}</h1>
           </div>
         </div>
