@@ -599,6 +599,44 @@ export default async function PoolMapPage({
       {activeTab === "weekly" && isAdmin ? (
         <section className="panel pool-list-panel">
           <h2>Ocupações semanais de {selectedDayLabel}</h2>
+          <div className="weekly-tools">
+            <form className="weekly-tool-card" action="/api/pool-schedule/import" method="post">
+              <input type="hidden" name="targetWeekday" value={weekday} />
+              <input type="hidden" name="date" value={selectedDateValue} />
+              <div className="field">
+                <label htmlFor="sourceWeekday">Importar de</label>
+                <select id="sourceWeekday" name="sourceWeekday" required>
+                  {poolWeekdays
+                    .filter((day) => day.key !== weekday)
+                    .map((day) => (
+                      <option value={day.key} key={day.key}>
+                        {day.label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+              <label className="checkbox compact-confirmation">
+                <input type="checkbox" name="confirmImportDay" required />
+                Confirmo que quero importar ocupações para este dia
+              </label>
+              <button className="button secondary" type="submit">
+                Importar ocupações
+              </button>
+            </form>
+
+            <form className="weekly-tool-card danger-zone" action="/api/pool-schedule/bulk-delete" method="post">
+              <input type="hidden" name="weekday" value={weekday} />
+              <input type="hidden" name="date" value={selectedDateValue} />
+              <label className="checkbox compact-confirmation">
+                <input type="checkbox" name="confirmDeleteDay" required />
+                Confirmo que quero apagar todas as ocupações deste dia
+              </label>
+              <button className="button danger" type="submit">
+                Apagar dia
+              </button>
+            </form>
+          </div>
+
           <form className="pool-form" action="/api/pool-schedule" method="post" data-pool-schedule-form>
             <PoolClassTeacherRequirement />
             <input type="hidden" name="weekday" value={weekday} />

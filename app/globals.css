@@ -894,6 +894,36 @@ h1 {
   margin-top: 14px;
 }
 
+.weekly-tools {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.8fr);
+  margin: 12px 0;
+}
+
+.weekly-tool-card {
+  align-items: end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 1fr) minmax(260px, 1.2fr) auto;
+  padding: 10px;
+}
+
+.weekly-tool-card.danger-zone {
+  border-color: #f4b8b1;
+  grid-template-columns: minmax(260px, 1fr) auto;
+}
+
+.compact-confirmation {
+  align-self: stretch;
+  font-size: 13px;
+  min-height: 38px;
+  padding: 8px 10px;
+}
+
 .schedule-item {
   align-items: center;
   border: 1px solid var(--line);
@@ -1716,6 +1746,12 @@ h1 {
   }
 
   .pool-form {
+    grid-template-columns: 1fr;
+  }
+
+  .weekly-tools,
+  .weekly-tool-card,
+  .weekly-tool-card.danger-zone {
     grid-template-columns: 1fr;
   }
 
