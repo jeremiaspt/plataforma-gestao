@@ -530,19 +530,24 @@ h1 {
   border-radius: 8px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin: 14px 0;
-  padding: 12px;
+  gap: 7px;
+  margin: 0;
+  padding: 8px;
 }
 
 .date-picker {
   align-items: flex-end;
   display: flex;
-  gap: 10px;
+  gap: 7px;
 }
 
 .date-picker .field {
-  min-width: 180px;
+  min-width: 150px;
+}
+
+.date-nav .button {
+  min-height: 34px;
+  padding: 6px 10px;
 }
 
 .day-tab {
@@ -568,18 +573,36 @@ h1 {
 }
 
 .pool-panel {
-  margin-top: 16px;
+  margin-top: 8px;
 }
 
 .pool-page-hero {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+  padding: 10px 12px;
 }
 
 .pool-page-hero > .topbar {
-  border-bottom: 1px solid var(--line);
+  border-bottom: 0;
   margin-bottom: 0;
-  padding-bottom: 14px;
+  padding-bottom: 0;
+}
+
+.pool-page-hero .topbar {
+  margin-bottom: 0;
+}
+
+.pool-page-hero h1 {
+  font-size: 21px;
+}
+
+.pool-page-hero .eyebrow {
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.pool-page-hero .muted {
+  margin: 3px 0 0;
 }
 
 .pool-workspace {
@@ -598,7 +621,7 @@ h1 {
 .pool-table-wrap {
   border: 1px solid var(--line);
   border-radius: 8px;
-  max-height: 74vh;
+  max-height: calc(100vh - 250px);
   overflow: auto;
   background: #ffffff;
 }
