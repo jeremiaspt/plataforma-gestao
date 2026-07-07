@@ -69,6 +69,7 @@ model PoolScheduleBlock {
   title        String
   type         String
   notes        String?
+  active       Boolean  @default(true)
   teacherId    String?
   teacher      User?    @relation("PoolClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
   createdById  String?

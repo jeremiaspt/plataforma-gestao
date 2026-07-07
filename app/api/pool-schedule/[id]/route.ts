@@ -17,8 +17,34 @@ export async function POST(
   const formData = await request.formData();
   const selectedDate = String(formData.get("date") || "");
   const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}` : ""}`;
+  const errorPath = `${redirectPath}${redirectPath.includes("?") ? "&" : "?"}error=1`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  await prisma.poolScheduleBlock.delete({ where: { id } });
+  const activeFutureBookings = await prisma.personalTrainingBooking.count({
+    where: {
+      poolBlockId: id,
+      bookingDate: { gte: today },
+      status: { not: "cancelled" }
+    }
+  });
+
+  if (activeFutureBookings > 0) {
+    return NextResponse.redirect(appRedirectUrl(errorPath, request));
+  }
+
+  const bookingCount = await prisma.personalTrainingBooking.count({
+    where: { poolBlockId: id }
+  });
+
+  if (bookingCount > 0) {
+    await prisma.poolScheduleBlock.update({
+      where: { id },
+      data: { active: false }
+    });
+  } else {
+    await prisma.poolScheduleBlock.delete({ where: { id } });
+  }
 
   return NextResponse.redirect(appRedirectUrl(redirectPath, request));
 }

@@ -68,7 +68,7 @@ export default async function PoolMapPage({
     `/piscina-25m?date=${selectedDateValue}&tab=${tab}`;
 
   const blocks = await prisma.poolScheduleBlock.findMany({
-    where: { weekday },
+    where: { weekday, active: true },
     orderBy: [{ laneNumber: "asc" }, { startMinutes: "asc" }],
     include: {
       createdBy: { select: { name: true } },

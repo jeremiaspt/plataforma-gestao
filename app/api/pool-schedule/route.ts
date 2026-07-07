@@ -64,6 +64,7 @@ export async function POST(request: Request) {
 
   const conflict = await prisma.poolScheduleBlock.findFirst({
     where: {
+      active: true,
       weekday,
       laneNumber,
       startMinutes: { lt: endMinutes },
