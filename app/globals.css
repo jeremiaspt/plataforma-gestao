@@ -892,6 +892,20 @@ h1 {
   margin: 4px 0 0;
 }
 
+.schedule-edit-form {
+  align-items: end;
+  display: grid;
+  grid-template-columns: minmax(170px, 1.2fr) 90px 105px 105px 120px minmax(180px, 1fr) minmax(150px, 0.8fr) auto;
+}
+
+.schedule-edit-form input,
+.schedule-edit-form select {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 8px 9px;
+}
+
 .payment-type-form,
 .payment-type-create {
   align-items: flex-end;
@@ -1716,6 +1730,11 @@ h1 {
   .schedule-item {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .schedule-edit-form {
+    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .teacher-booking-row {

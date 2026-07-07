@@ -599,7 +599,7 @@ export default async function PoolMapPage({
       {activeTab === "weekly" && isAdmin ? (
         <section className="panel pool-list-panel">
           <h2>Ocupações semanais de {selectedDayLabel}</h2>
-          <form className="pool-form" action="/api/pool-schedule" method="post">
+          <form className="pool-form" action="/api/pool-schedule" method="post" data-pool-schedule-form>
             <PoolClassTeacherRequirement />
             <input type="hidden" name="weekday" value={weekday} />
             <input type="hidden" name="date" value={selectedDateValue} />
@@ -657,18 +657,69 @@ export default async function PoolMapPage({
           <div className="schedule-list">
             {blocks.length === 0 ? <p className="muted">Ainda não existem ocupações para este dia da semana.</p> : null}
             {blocks.map((block) => (
-              <form className="schedule-item" action={`/api/pool-schedule/${block.id}`} method="post" key={block.id}>
+              <form
+                className="schedule-item schedule-edit-form"
+                action={`/api/pool-schedule/${block.id}`}
+                method="post"
+                key={block.id}
+                data-pool-schedule-form
+              >
                 <input type="hidden" name="date" value={selectedDateValue} />
-                <div>
-                  <strong>{block.title}</strong>
-                  <p className="muted">
-                    Pista {block.laneNumber}, {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
-                    {block.type === "aula" && block.teacher ? ` - ${block.teacher.name}` : ""}
-                  </p>
+                <div className="field">
+                  <label>Ocupação</label>
+                  <input name="title" defaultValue={block.title} required />
                 </div>
-                <button className="button danger" name="action" value="delete" type="submit">
-                  Remover
-                </button>
+                <div className="field">
+                  <label>Pista</label>
+                  <select name="laneNumber" defaultValue={block.laneNumber} required>
+                    {poolLanes.map((lane) => (
+                      <option value={lane} key={lane}>
+                        Pista {lane}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Início</label>
+                  <input name="startTime" type="time" step="300" defaultValue={formatMinutes(block.startMinutes)} required />
+                </div>
+                <div className="field">
+                  <label>Fim</label>
+                  <input name="endTime" type="time" step="300" defaultValue={formatMinutes(block.endMinutes)} required />
+                </div>
+                <div className="field">
+                  <label>Tipo</label>
+                  <select name="type" defaultValue={block.type} required>
+                    {poolBlockTypes.map((type) => (
+                      <option value={type.key} key={type.key}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Professor da aula</label>
+                  <select name="teacherId" defaultValue={block.teacherId || ""}>
+                    <option value="">Selecionar se for Aula</option>
+                    {classTeachers.map((teacher) => (
+                      <option value={teacher.id} key={teacher.id}>
+                        {teacher.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Notas</label>
+                  <input name="notes" defaultValue={block.notes || ""} />
+                </div>
+                <div className="action-row compact-actions">
+                  <button className="button secondary" name="action" value="save" type="submit">
+                    Guardar
+                  </button>
+                  <button className="button danger" name="action" value="delete" type="submit">
+                    Remover
+                  </button>
+                </div>
               </form>
             ))}
           </div>
