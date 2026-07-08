@@ -678,6 +678,7 @@ h1 {
   color: #102a43;
   font-size: 11px;
   line-height: 1.25;
+  padding: 4px;
 }
 
 .pool-cell.occupied strong,
@@ -691,6 +692,32 @@ h1 {
   max-width: 100%;
   overflow: hidden;
   min-height: 100%;
+}
+
+.pool-block-card {
+  align-content: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 7px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  height: 100%;
+  justify-items: center;
+  padding: 6px;
+  text-align: center;
+}
+
+.pool-block-main {
+  display: grid;
+  gap: 2px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.pool-booking-stack {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+  max-width: 100%;
+  width: 100%;
 }
 
 .pool-cell-content strong,
@@ -707,7 +734,8 @@ h1 {
 }
 
 .booking-chip {
-  background: rgba(15, 118, 110, 0.12);
+  background: rgba(15, 118, 110, 0.16);
+  border: 1px solid rgba(15, 118, 110, 0.22);
   border-radius: 5px;
   color: #0f766e !important;
   display: block;

@@ -448,28 +448,37 @@ export default async function PoolMapPage({
                   {poolLanes.map((lane) => {
                     const block = blockForSlot(lane, slot);
                     const isBlockStart = Boolean(block && slot === block.startMinutes);
-                    const slotBookings = block ? groupedBookingsStartingAt(block.id, slot) : [];
+                    const isInsideExistingBlock = Boolean(block && !isBlockStart);
+                    const blockBookings = block && isBlockStart ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes) : [];
                     const hasVacancy =
                       block && isBlockStart ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes) : false;
                     const canBookBlock = Boolean(
                       isProfessor && canBookSelectedDate && block?.type === "treino" && isBlockStart && hasVacancy
                     );
 
+                    if (isInsideExistingBlock) {
+                      return null;
+                    }
+
                     return (
-                      <td className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"} key={lane}>
+                      <td
+                        className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"}
+                        key={lane}
+                        rowSpan={block && isBlockStart ? Math.max(1, (block.endMinutes - block.startMinutes) / 5) : undefined}
+                      >
                         {block ? (
-                          <div className="pool-cell-content">
+                          <div className="pool-cell-content pool-block-card">
                             {isBlockStart ? (
-                              <>
+                              <div className="pool-block-main">
                                 <strong>{block.title}</strong>
                                 <small>
                                   {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
                                 </small>
                                 {block.type === "aula" && block.teacher ? <small>{block.teacher.name}</small> : null}
                                 {block.notes ? <small>{block.notes}</small> : null}
-                              </>
+                              </div>
                             ) : null}
-                            {slotBookings.map((booking, index) => (
+                            {blockBookings.map((booking, index) => (
                               <small className="booking-chip" key={`${booking.teacherName}-${index}`}>
                                 {formatMinutes(booking.startMinutes)} - {formatMinutes(booking.endMinutes)} · {booking.teacherName}:{" "}
                                 {booking.studentNames.join(", ")}
