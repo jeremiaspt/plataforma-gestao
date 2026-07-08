@@ -746,12 +746,27 @@ h1 {
   border: 1px solid rgba(15, 118, 110, 0.22);
   border-radius: 5px;
   color: #0f766e !important;
-  display: block;
+  display: grid;
+  font-size: 0;
+  gap: 1px;
   font-weight: 700;
   overflow: hidden;
-  padding: 2px 4px;
+  padding: 4px 5px;
+  text-align: center;
+}
+
+.booking-chip span,
+.booking-chip strong {
+  display: block;
+  font-size: 10px;
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.booking-chip strong {
+  color: #0b5f59;
 }
 
 .vacancy-chip,

@@ -480,10 +480,15 @@ export default async function PoolMapPage({
                               </div>
                             ) : null}
                             {blockBookings.map((booking, index) => (
-                              <small className="booking-chip" key={`${booking.teacherName}-${index}`}>
+                              <div className="booking-chip" key={`${booking.teacherName}-${index}`}>
+                                <span>{formatMinutes(booking.startMinutes)} - {formatMinutes(booking.endMinutes)}</span>
+                                <strong>{booking.teacherName}</strong>
+                                {booking.studentNames.map((studentName) => (
+                                  <span key={studentName}>{studentName}</span>
+                                ))}
                                 {formatMinutes(booking.startMinutes)} - {formatMinutes(booking.endMinutes)} · {booking.teacherName}:{" "}
                                 {booking.studentNames.join(", ")}
-                              </small>
+                              </div>
                             ))}
                             {block.type === "treino" && isBlockStart ? (
                               <small className={hasVacancy ? "vacancy-chip" : "full-chip"}>
