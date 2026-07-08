@@ -1082,6 +1082,11 @@ h1 {
   padding: 12px;
 }
 
+.compact-teacher-filter {
+  grid-template-columns: minmax(260px, 420px);
+  width: fit-content;
+}
+
 .payment-launch-form {
   align-items: flex-end;
   display: grid;

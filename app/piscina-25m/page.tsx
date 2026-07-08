@@ -466,6 +466,7 @@ export default async function PoolMapPage({
                                   {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
                                 </small>
                                 {block.type === "aula" && block.teacher ? <small>{block.teacher.name}</small> : null}
+                                {block.notes ? <small>{block.notes}</small> : null}
                               </>
                             ) : null}
                             {slotBookings.map((booking, index) => (

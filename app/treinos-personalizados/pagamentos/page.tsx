@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PaymentLaunchForm } from "@/components/PaymentLaunchForm";
+import { TeacherAutoSubmitFilter } from "@/components/TeacherAutoSubmitFilter";
 import { requireUser } from "@/lib/auth";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel, getBillingPeriod } from "@/lib/billingCycles";
 import { decimalToNumber, formatCurrency } from "@/lib/money";
@@ -264,24 +265,13 @@ export default async function PersonalTrainingPaymentsPage({
 
         {canCreate ? (
           <>
-            <form className="teacher-filter" method="get" action="/treinos-personalizados/pagamentos">
-              <input type="hidden" name="tab" value={activeTab} />
-              <input type="hidden" name="month" value={selectedMonth} />
-              <input type="hidden" name="globalMonth" value={selectedGlobalMonth} />
-              <div className="field">
-                <label htmlFor="teacherId">Professor</label>
-                <select id="teacherId" name="teacherId" defaultValue={selectedTeacherId}>
-                  {teachers.map((teacher) => (
-                    <option value={teacher.id} key={teacher.id}>
-                      {teacher.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button className="button secondary" type="submit">
-                Ver alunos
-              </button>
-            </form>
+            <TeacherAutoSubmitFilter
+              teachers={teachers.map((teacher) => ({ id: teacher.id, name: teacher.name }))}
+              selectedTeacherId={selectedTeacherId}
+              activeTab={activeTab}
+              selectedMonth={selectedMonth}
+              selectedGlobalMonth={selectedGlobalMonth}
+            />
 
             <PaymentLaunchForm teacherId={selectedTeacherId} paymentTypes={paymentTypeOptions} students={teacherStudentOptions} />
           </>
