@@ -449,6 +449,7 @@ export default async function PoolMapPage({
                     const block = blockForSlot(lane, slot);
                     const isBlockStart = Boolean(block && slot === block.startMinutes);
                     const isInsideExistingBlock = Boolean(block && !isBlockStart);
+                    const blockSlotSpan = block && isBlockStart ? Math.max(1, (block.endMinutes - block.startMinutes) / 5) : 1;
                     const blockBookings = block && isBlockStart ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes) : [];
                     const hasVacancy =
                       block && isBlockStart ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes) : false;
@@ -464,10 +465,10 @@ export default async function PoolMapPage({
                       <td
                         className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"}
                         key={lane}
-                        rowSpan={block && isBlockStart ? Math.max(1, (block.endMinutes - block.startMinutes) / 5) : undefined}
+                        rowSpan={block && isBlockStart ? blockSlotSpan : undefined}
                       >
                         {block ? (
-                          <div className="pool-cell-content pool-block-card">
+                          <div className="pool-cell-content pool-block-card" style={{ minHeight: `${Math.max(42, blockSlotSpan * 30 - 10)}px` }}>
                             {isBlockStart ? (
                               <div className="pool-block-main">
                                 <strong>{block.title}</strong>
