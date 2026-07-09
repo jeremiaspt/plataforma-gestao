@@ -4,7 +4,7 @@ import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
-type ActivityTab = "overview" | "payments" | "bookings" | "credits" | "emails";
+type ActivityTab = "overview" | "payments" | "bookings" | "credits" | "emails" | "maintenance";
 
 function startOfCurrentMonth() {
   const now = new Date();
@@ -56,7 +56,15 @@ function actionLabel(action: string) {
 export default async function ActivityPage({
   searchParams
 }: {
-  searchParams: Promise<{ tab?: string; from?: string; to?: string }>;
+  searchParams: Promise<{
+    tab?: string;
+    from?: string;
+    to?: string;
+    resetSuccess?: string;
+    resetError?: string;
+    restoreSuccess?: string;
+    restoreError?: string;
+  }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -67,7 +75,11 @@ export default async function ActivityPage({
   }
 
   const activeTab: ActivityTab =
-    params.tab === "payments" || params.tab === "bookings" || params.tab === "credits" || params.tab === "emails"
+    params.tab === "payments" ||
+    params.tab === "bookings" ||
+    params.tab === "credits" ||
+    params.tab === "emails" ||
+    params.tab === "maintenance"
       ? params.tab
       : "overview";
   const fromDate = parseDate(params.from, startOfCurrentMonth());
@@ -237,6 +249,9 @@ export default async function ActivityPage({
           <a className={activeTab === "emails" ? "tab active" : "tab"} href={tabHref("emails")}>
             Emails
           </a>
+          <a className={activeTab === "maintenance" ? "tab active" : "tab"} href={tabHref("maintenance")}>
+            Manutenção
+          </a>
         </div>
 
         {activeTab === "overview" ? (
@@ -379,6 +394,67 @@ export default async function ActivityPage({
                 <span>{log.error || "-"}</span>
               </div>
             ))}
+          </div>
+        ) : null}
+
+        {activeTab === "maintenance" ? (
+          <div className="maintenance-grid">
+            {params.resetSuccess ? <p className="success">Dados de treinos personalizados limpos com sucesso.</p> : null}
+            {params.resetError ? <p className="error">Não foi possível limpar. Confirma o backup e a frase de segurança.</p> : null}
+            {params.restoreSuccess ? <p className="success">Backup reposto com sucesso.</p> : null}
+            {params.restoreError ? <p className="error">Não foi possível repor o backup. Confirma o ficheiro e a frase de segurança.</p> : null}
+
+            <div className="maintenance-card">
+              <div>
+                <h2>Backup antes da limpeza</h2>
+                <p className="muted">
+                  Exporta pagamentos, ajustes de créditos, marcações PT e respetivos logs para um ficheiro JSON.
+                </p>
+              </div>
+              <a className="button secondary" href="/api/admin/training-data-backup">
+                Descarregar backup
+              </a>
+            </div>
+
+            <form className="maintenance-card danger-zone" action="/api/admin/training-data-reset" method="post">
+              <div>
+                <h2>Limpar dados TP</h2>
+                <p className="muted">
+                  Remove pagamentos, créditos manuais, marcações PT e logs. Mantém utilizadores, alunos, tipos e ocupações semanais.
+                </p>
+              </div>
+              <label className="checkbox">
+                <input type="checkbox" name="backupConfirmed" required />
+                Confirmo que descarreguei o backup antes de limpar
+              </label>
+              <div className="field">
+                <label htmlFor="typedConfirmation">Frase de segurança</label>
+                <input id="typedConfirmation" name="typedConfirmation" placeholder="LIMPAR TREINOS PERSONALIZADOS" required />
+              </div>
+              <button className="button danger" type="submit">
+                Limpar dados TP
+              </button>
+            </form>
+
+            <form className="maintenance-card" action="/api/admin/training-data-restore" method="post" encType="multipart/form-data">
+              <div>
+                <h2>Repor backup</h2>
+                <p className="muted">
+                  Carrega o ficheiro JSON exportado. A reposição substitui os dados TP operacionais atuais pelos dados do backup.
+                </p>
+              </div>
+              <div className="field">
+                <label htmlFor="backupFile">Ficheiro de backup</label>
+                <input id="backupFile" name="backupFile" type="file" accept="application/json,.json" required />
+              </div>
+              <div className="field">
+                <label htmlFor="restoreConfirmation">Frase de segurança</label>
+                <input id="restoreConfirmation" name="restoreConfirmation" placeholder="REPOR BACKUP TP" required />
+              </div>
+              <button className="button secondary" type="submit">
+                Repor backup
+              </button>
+            </form>
           </div>
         ) : null}
       </section>

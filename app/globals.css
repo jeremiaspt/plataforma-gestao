@@ -1631,6 +1631,35 @@ h1 {
   text-overflow: ellipsis;
 }
 
+.maintenance-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.maintenance-card {
+  align-items: end;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(280px, 1fr) minmax(220px, 0.7fr) auto;
+  padding: 14px;
+}
+
+.maintenance-card h2 {
+  margin-bottom: 4px;
+}
+
+.maintenance-card p {
+  margin: 0;
+}
+
+.maintenance-card.danger-zone {
+  border-color: #f4b8b1;
+  background: #fffafa;
+}
+
 .activity-panel {
   display: grid;
   gap: 14px;
@@ -1840,6 +1869,10 @@ h1 {
 
   .activity-filter {
     width: 100%;
+  }
+
+  .maintenance-card {
+    grid-template-columns: 1fr;
   }
 
   .schedule-item {
