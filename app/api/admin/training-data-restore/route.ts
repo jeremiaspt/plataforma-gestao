@@ -166,6 +166,7 @@ export async function POST(request: Request) {
     prisma.personalTrainingCreditAdjustment.deleteMany({}),
     prisma.personalTrainingPaymentLog.deleteMany({}),
     prisma.personalTrainingPayment.deleteMany({}),
+    prisma.personalTrainingStudent.deleteMany({}),
     ...(students.length ? [prisma.personalTrainingStudent.createMany({ data: students.map(studentData), skipDuplicates: true })] : []),
     ...(payments.length ? [prisma.personalTrainingPayment.createMany({ data: payments.map(paymentData) })] : []),
     ...(paymentLogs.length ? [prisma.personalTrainingPaymentLog.createMany({ data: paymentLogs.map(paymentLogData) })] : []),

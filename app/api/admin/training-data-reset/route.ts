@@ -26,7 +26,8 @@ export async function POST(request: Request) {
     prisma.personalTrainingBooking.deleteMany({}),
     prisma.personalTrainingCreditAdjustment.deleteMany({}),
     prisma.personalTrainingPaymentLog.deleteMany({}),
-    prisma.personalTrainingPayment.deleteMany({})
+    prisma.personalTrainingPayment.deleteMany({}),
+    prisma.personalTrainingStudent.deleteMany({})
   ]);
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&resetSuccess=1`, request));

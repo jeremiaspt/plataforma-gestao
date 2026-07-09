@@ -420,7 +420,7 @@ export default async function ActivityPage({
               <div>
                 <h2>Limpar dados TP</h2>
                 <p className="muted">
-                  Remove pagamentos, créditos manuais, marcações PT e logs. Mantém utilizadores, alunos, tipos e ocupações semanais.
+                  Remove alunos, pagamentos, créditos manuais, marcações PT e logs. Mantém utilizadores, tipos e ocupações semanais.
                 </p>
               </div>
               <label className="checkbox">

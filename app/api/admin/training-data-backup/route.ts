@@ -76,7 +76,7 @@ export async function GET() {
     exportedAt,
     exportedBy: { id: user.id, name: user.name, email: user.email },
     scope: "personal-training-operational-data",
-    note: "Backup dos dados antes da limpeza: pagamentos TP, créditos manuais, marcações PT e respetivos logs. Inclui alunos, tipos, professores e blocos como contexto.",
+    note: "Backup dos dados antes da limpeza: alunos, pagamentos TP, créditos manuais, marcações PT e respetivos logs. Inclui tipos, professores e blocos como contexto.",
     counts: {
       payments: payments.length,
       paymentLogs: paymentLogs.length,
