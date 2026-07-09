@@ -1150,8 +1150,9 @@ h1 {
   background: #ffffff;
   border: 1px solid var(--line);
   border-radius: 8px;
+  gap: 10px;
   grid-template-columns: 1fr;
-  padding: 14px;
+  padding: 12px 14px 14px;
 }
 
 .payment-launch-form .wide {
@@ -1167,19 +1168,21 @@ h1 {
 
 .participant-grid {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .participant-card {
+  align-items: end;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  grid-template-columns: minmax(130px, 1.2fr) minmax(90px, 0.65fr) minmax(130px, 1fr);
   margin: 0;
   min-width: 0;
-  padding: 12px;
+  padding: 8px 12px 10px;
 }
 
 .participant-card:not(.required) {
@@ -1189,14 +1192,24 @@ h1 {
 
 .participant-card.required {
   border-color: rgba(15, 118, 110, 0.32);
-  box-shadow: inset 0 3px 0 var(--primary);
+  box-shadow: inset 4px 0 0 var(--primary);
 }
 
 .participant-card legend {
   color: #334155;
   font-size: 13px;
   font-weight: 700;
-  padding: 0 4px;
+  line-height: 1;
+  padding: 0 5px;
+}
+
+.participant-card .field {
+  gap: 4px;
+}
+
+.participant-card .field input,
+.participant-card .field select {
+  padding: 8px 9px;
 }
 
 .payments-table {
@@ -1872,6 +1885,10 @@ h1 {
   }
 
   .maintenance-card {
+    grid-template-columns: 1fr;
+  }
+
+  .participant-card {
     grid-template-columns: 1fr;
   }
 
