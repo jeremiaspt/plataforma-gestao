@@ -375,24 +375,45 @@ h1 {
 
 .users-hero {
   display: grid;
-  gap: 14px;
+  gap: 12px;
+  max-width: 1180px;
 }
 
 .users-hero > .topbar {
   border-bottom: 1px solid var(--line);
   margin-bottom: 0;
-  padding-bottom: 14px;
+  padding-bottom: 12px;
 }
 
 .user-create-form {
   background: #f8fafc;
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 12px;
+  max-width: 980px;
+  padding: 10px 12px 12px;
+}
+
+.user-create-form .grid {
+  gap: 10px;
+}
+
+.user-create-form .checkbox-grid {
+  gap: 7px;
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+}
+
+.user-create-form .checkbox {
+  padding: 8px 10px;
+}
+
+.user-create-form .button {
+  justify-self: end;
+  min-width: 180px;
 }
 
 .users-list-panel {
   margin-top: 16px;
+  max-width: 1260px;
 }
 
 .user-search-form {
@@ -412,7 +433,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
-  gap: 8px;
+  gap: 7px;
   overflow-x: auto;
   padding: 10px;
 }
@@ -421,9 +442,9 @@ h1 {
 .users-row {
   align-items: start;
   display: grid;
-  gap: 8px;
-  grid-template-columns: minmax(260px, 1.2fr) 150px minmax(190px, 0.9fr) minmax(190px, 0.9fr) 84px 246px;
-  min-width: 1140px;
+  gap: 7px;
+  grid-template-columns: minmax(220px, 1.1fr) 120px minmax(150px, 0.8fr) minmax(170px, 0.8fr) 72px 242px;
+  min-width: 1016px;
 }
 
 .users-header {
@@ -438,7 +459,7 @@ h1 {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
-  padding: 8px;
+  padding: 7px;
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -449,7 +470,7 @@ h1 {
 
 .user-identity-fields {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .users-row input,
@@ -457,7 +478,31 @@ h1 {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   min-width: 0;
-  padding: 9px 10px;
+  padding: 7px 9px;
+}
+
+.users-row .checkbox-grid.compact {
+  gap: 5px;
+}
+
+.users-row .checkbox {
+  gap: 7px;
+  padding: 7px 8px;
+}
+
+.users-row .status {
+  padding: 6px 8px;
+}
+
+.users-row .action-row {
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.users-row .action-row .button {
+  font-size: 13px;
+  min-height: 34px;
+  padding: 7px 9px;
 }
 
 .pagination {
@@ -1853,6 +1898,19 @@ h1 {
 
   .grid {
     grid-template-columns: 1fr;
+  }
+
+  .user-create-form,
+  .users-hero {
+    max-width: none;
+  }
+
+  .user-create-form .checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .user-create-form .button {
+    justify-self: stretch;
   }
 
   .user-edit-grid {
