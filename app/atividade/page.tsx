@@ -408,7 +408,7 @@ export default async function ActivityPage({
               <div>
                 <h2>Backup antes da limpeza</h2>
                 <p className="muted">
-                  Exporta pagamentos, ajustes de créditos, marcações PT e respetivos logs para um ficheiro JSON.
+                  Exporta pagamentos, ajustes de créditos, marcações PT, histórico de emails e respetivos logs para um ficheiro JSON.
                 </p>
               </div>
               <a className="button secondary" href="/api/admin/training-data-backup">
@@ -420,7 +420,7 @@ export default async function ActivityPage({
               <div>
                 <h2>Limpar dados TP</h2>
                 <p className="muted">
-                  Remove alunos, pagamentos, créditos manuais, marcações PT e logs. Mantém utilizadores, tipos e ocupações semanais.
+                  Remove alunos, pagamentos, créditos manuais, marcações PT, histórico de emails e logs. Mantém utilizadores, tipos e ocupações semanais.
                 </p>
               </div>
               <label className="checkbox">

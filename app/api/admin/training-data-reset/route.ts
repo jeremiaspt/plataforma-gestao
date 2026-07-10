@@ -22,6 +22,7 @@ export async function POST(request: Request) {
   }
 
   await prisma.$transaction([
+    prisma.emailLog.deleteMany({}),
     prisma.personalTrainingBookingLog.deleteMany({}),
     prisma.personalTrainingBooking.deleteMany({}),
     prisma.personalTrainingCreditAdjustment.deleteMany({}),

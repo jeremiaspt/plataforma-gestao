@@ -473,8 +473,10 @@ export default async function PersonalTrainingPaymentsPage({
                       {formatCurrency(payment.teacherTotal)}
                       {isAdmin ? <small>{formatCurrency(payment.totalPrice)} utente</small> : null}
                     </span>
-                    <span className={isCancelled ? "status inactive" : "status active"}>
-                      {isCancelled ? "Anulado" : "Ativo"}
+                    <span className="payment-status-cell">
+                      <span className={isCancelled ? "status inactive" : "status active"}>
+                        {isCancelled ? "Anulado" : "Ativo"}
+                      </span>
                       {isCancelled && payment.cancelledByName ? <small>por {payment.cancelledByName}</small> : null}
                     </span>
                     {canCancelPayments ? (

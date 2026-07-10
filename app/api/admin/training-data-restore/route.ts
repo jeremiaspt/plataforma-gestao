@@ -13,6 +13,7 @@ type BackupPayload = {
     creditAdjustments?: Record<string, unknown>[];
     bookings?: Record<string, unknown>[];
     bookingLogs?: Record<string, unknown>[];
+    emailLogs?: Record<string, unknown>[];
     students?: Record<string, unknown>[];
   };
 };
@@ -131,6 +132,21 @@ function bookingLogData(log: Record<string, unknown>) {
   };
 }
 
+function emailLogData(log: Record<string, unknown>) {
+  return {
+    id: String(log.id),
+    type: String(log.type),
+    status: String(log.status),
+    toEmail: String(log.toEmail),
+    ccEmails: log.ccEmails ? String(log.ccEmails) : null,
+    subject: String(log.subject),
+    providerId: log.providerId ? String(log.providerId) : null,
+    error: log.error ? String(log.error) : null,
+    paymentId: log.paymentId ? String(log.paymentId) : null,
+    createdAt: dateValue(log.createdAt) || new Date()
+  };
+}
+
 export async function POST(request: Request) {
   const user = await requireUser();
 
@@ -159,8 +175,10 @@ export async function POST(request: Request) {
   const creditAdjustments = payload.data.creditAdjustments || [];
   const bookings = payload.data.bookings || [];
   const bookingLogs = payload.data.bookingLogs || [];
+  const emailLogs = payload.data.emailLogs || [];
 
   await prisma.$transaction([
+    prisma.emailLog.deleteMany({}),
     prisma.personalTrainingBookingLog.deleteMany({}),
     prisma.personalTrainingBooking.deleteMany({}),
     prisma.personalTrainingCreditAdjustment.deleteMany({}),
@@ -174,7 +192,8 @@ export async function POST(request: Request) {
       ? [prisma.personalTrainingCreditAdjustment.createMany({ data: creditAdjustments.map(creditAdjustmentData) })]
       : []),
     ...(bookings.length ? [prisma.personalTrainingBooking.createMany({ data: bookings.map(bookingData) })] : []),
-    ...(bookingLogs.length ? [prisma.personalTrainingBookingLog.createMany({ data: bookingLogs.map(bookingLogData) })] : [])
+    ...(bookingLogs.length ? [prisma.personalTrainingBookingLog.createMany({ data: bookingLogs.map(bookingLogData) })] : []),
+    ...(emailLogs.length ? [prisma.emailLog.createMany({ data: emailLogs.map(emailLogData) })] : [])
   ]);
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&restoreSuccess=1`, request));

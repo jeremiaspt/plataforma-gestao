@@ -1280,6 +1280,22 @@ h1 {
   color: #64748b;
 }
 
+.payment-status-cell {
+  align-items: flex-start;
+  display: grid;
+  gap: 4px;
+}
+
+.payment-status-cell .status {
+  white-space: nowrap;
+  width: fit-content;
+}
+
+.payment-status-cell small {
+  line-height: 1.2;
+  margin-top: 0;
+}
+
 .payment-cancel-form {
   display: grid;
   gap: 6px;
