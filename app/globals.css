@@ -376,7 +376,7 @@ h1 {
 .users-hero {
   display: grid;
   gap: 12px;
-  max-width: 1180px;
+  max-width: 1260px;
 }
 
 .users-hero > .topbar {
@@ -389,7 +389,6 @@ h1 {
   background: #f8fafc;
   border: 1px solid var(--line);
   border-radius: 8px;
-  max-width: 980px;
   padding: 10px 12px 12px;
 }
 
@@ -541,6 +540,43 @@ h1 {
 
 .danger:hover {
   background: #8f1d14;
+}
+
+@media (max-width: 1180px) {
+  .users-table {
+    overflow: visible;
+  }
+
+  .users-header {
+    display: none;
+  }
+
+  .users-row {
+    grid-template-columns: minmax(210px, 1fr) minmax(230px, 1fr) minmax(170px, 0.75fr);
+  }
+
+  .users-row > .user-identity-fields {
+    grid-column: 1;
+  }
+
+  .users-row > input[name="phone"] {
+    grid-column: 1;
+  }
+
+  .users-row > .checkbox-grid {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+
+  .users-row > select,
+  .users-row > .status,
+  .users-row > .action-row {
+    grid-column: 3;
+  }
+
+  .users-row > .status {
+    justify-self: start;
+  }
 }
 
 .status {
@@ -1920,12 +1956,30 @@ h1 {
   }
 
   .users-table {
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .users-header,
   .users-row {
-    min-width: 820px;
+    min-width: 0;
+  }
+
+  .users-row {
+    grid-template-columns: 1fr;
+  }
+
+  .users-row > .user-identity-fields,
+  .users-row > input[name="phone"],
+  .users-row > .checkbox-grid,
+  .users-row > select,
+  .users-row > .status,
+  .users-row > .action-row {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  .users-row .checkbox-grid.compact {
+    grid-template-columns: 1fr;
   }
 
   .user-edit-grid {
