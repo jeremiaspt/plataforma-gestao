@@ -376,7 +376,6 @@ h1 {
 .users-hero {
   display: grid;
   gap: 12px;
-  max-width: 1260px;
 }
 
 .users-hero > .topbar {
@@ -412,7 +411,6 @@ h1 {
 
 .users-list-panel {
   margin-top: 16px;
-  max-width: 1260px;
 }
 
 .user-search-form {
