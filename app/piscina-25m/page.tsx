@@ -689,11 +689,11 @@ export default async function PoolMapPage({
             <PoolClassTeacherRequirement />
             <input type="hidden" name="weekday" value={weekday} />
             <input type="hidden" name="date" value={selectedDateValue} />
-            <div className="field">
+            <div className="field schedule-title-field">
               <label htmlFor="title">Ocupação</label>
               <input id="title" name="title" required placeholder="Ex.: PT" />
             </div>
-            <div className="field">
+            <div className="field schedule-lane-field">
               <label htmlFor="laneNumber">Pista</label>
               <select id="laneNumber" name="laneNumber" required>
                 {poolLanes.map((lane) => (
@@ -703,15 +703,15 @@ export default async function PoolMapPage({
                 ))}
               </select>
             </div>
-            <div className="field">
+            <div className="field schedule-time-field">
               <label htmlFor="startTime">Início</label>
               <input id="startTime" name="startTime" type="time" step="300" required />
             </div>
-            <div className="field">
+            <div className="field schedule-time-field">
               <label htmlFor="endTime">Fim</label>
               <input id="endTime" name="endTime" type="time" step="300" required />
             </div>
-            <div className="field">
+            <div className="field schedule-type-field">
               <label htmlFor="type">Tipo</label>
               <select id="type" name="type" required>
                 {poolBlockTypes.map((type) => (
@@ -721,7 +721,7 @@ export default async function PoolMapPage({
                 ))}
               </select>
             </div>
-            <div className="field">
+            <div className="field schedule-teacher-field">
               <label htmlFor="teacherId">Professor da aula</label>
               <select id="teacherId" name="teacherId">
                 <option value="">Selecionar se for Aula</option>
@@ -732,11 +732,11 @@ export default async function PoolMapPage({
                 ))}
               </select>
             </div>
-            <div className="field">
+            <div className="field schedule-notes-field">
               <label htmlFor="notes">Notas</label>
               <input id="notes" name="notes" />
             </div>
-            <div className="field">
+            <div className="field schedule-recurrence-field">
               <label htmlFor="recurrenceType">Recorrência</label>
               <select id="recurrenceType" name="recurrenceType" defaultValue="recurring">
                 {poolRecurrenceOptions.map((option) => (
@@ -746,15 +746,15 @@ export default async function PoolMapPage({
                 ))}
               </select>
             </div>
-            <div className="field">
+            <div className="field schedule-date-field">
               <label htmlFor="validFrom">Desde</label>
               <input id="validFrom" name="validFrom" type="date" />
             </div>
-            <div className="field">
+            <div className="field schedule-date-field">
               <label htmlFor="validTo">Até</label>
               <input id="validTo" name="validTo" type="date" />
             </div>
-            <button className="button" type="submit">
+            <button className="button schedule-submit-button" type="submit">
               Adicionar
             </button>
           </form>
@@ -769,11 +769,11 @@ export default async function PoolMapPage({
                 data-pool-schedule-form
               >
                 <input type="hidden" name="date" value={selectedDateValue} />
-                <div className="field">
+                <div className="field schedule-title-field">
                   <label>Ocupação</label>
                   <input name="title" defaultValue={block.title} required />
                 </div>
-                <div className="field">
+                <div className="field schedule-lane-field">
                   <label>Pista</label>
                   <select name="laneNumber" defaultValue={block.laneNumber} required>
                     {poolLanes.map((lane) => (
@@ -783,15 +783,15 @@ export default async function PoolMapPage({
                     ))}
                   </select>
                 </div>
-                <div className="field">
+                <div className="field schedule-time-field">
                   <label>Início</label>
                   <input name="startTime" type="time" step="300" defaultValue={formatMinutes(block.startMinutes)} required />
                 </div>
-                <div className="field">
+                <div className="field schedule-time-field">
                   <label>Fim</label>
                   <input name="endTime" type="time" step="300" defaultValue={formatMinutes(block.endMinutes)} required />
                 </div>
-                <div className="field">
+                <div className="field schedule-type-field">
                   <label>Tipo</label>
                   <select name="type" defaultValue={block.type} required>
                     {poolBlockTypes.map((type) => (
@@ -801,7 +801,7 @@ export default async function PoolMapPage({
                     ))}
                   </select>
                 </div>
-                <div className="field">
+                <div className="field schedule-teacher-field">
                   <label>Professor da aula</label>
                   <select name="teacherId" defaultValue={block.teacherId || ""}>
                     <option value="">Selecionar se for Aula</option>
@@ -812,11 +812,11 @@ export default async function PoolMapPage({
                     ))}
                   </select>
                 </div>
-                <div className="field">
+                <div className="field schedule-notes-field">
                   <label>Notas</label>
                   <input name="notes" defaultValue={block.notes || ""} />
                 </div>
-                <div className="field">
+                <div className="field schedule-recurrence-field">
                   <label>Recorrência</label>
                   <select name="recurrenceType" defaultValue={block.recurrenceType}>
                     {poolRecurrenceOptions.map((option) => (
@@ -826,18 +826,18 @@ export default async function PoolMapPage({
                     ))}
                   </select>
                 </div>
-                <div className="field">
+                <div className="field schedule-date-field">
                   <label>Desde</label>
                   <input name="validFrom" type="date" defaultValue={block.validFrom ? dateToInputValue(block.validFrom) : ""} />
                 </div>
-                <div className="field">
+                <div className="field schedule-date-field">
                   <label>Até</label>
                   <input name="validTo" type="date" defaultValue={block.validTo ? dateToInputValue(block.validTo) : ""} />
                 </div>
-                <span className={poolBlockAppliesToDate(block, selectedDate) ? "status active" : "status inactive"}>
+                <span className={poolBlockAppliesToDate(block, selectedDate) ? "status active schedule-period-status" : "status inactive schedule-period-status"}>
                   {periodLabel(block)}
                 </span>
-                <div className="action-row compact-actions">
+                <div className="action-row compact-actions schedule-actions">
                   <button className="button secondary" name="action" value="save" type="submit">
                     Guardar
                   </button>

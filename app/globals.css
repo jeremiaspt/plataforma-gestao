@@ -652,9 +652,36 @@ h1 {
 
 .pool-form {
   align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
   display: grid;
-  gap: 12px;
-  grid-template-columns: minmax(170px, 1.2fr) 86px 102px 102px 118px minmax(170px, 1fr) minmax(140px, 0.8fr) 130px 120px 120px auto;
+  gap: 10px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  margin-top: 12px;
+  padding: 10px;
+}
+
+.schedule-title-field {
+  grid-column: span 2;
+}
+
+.schedule-lane-field,
+.schedule-time-field,
+.schedule-type-field {
+  grid-column: span 1;
+}
+
+.schedule-teacher-field,
+.schedule-notes-field,
+.schedule-recurrence-field,
+.schedule-date-field {
+  grid-column: span 2;
+}
+
+.schedule-submit-button {
+  grid-column: span 2;
+  justify-self: stretch;
 }
 
 .pool-panel {
@@ -1049,7 +1076,7 @@ h1 {
 .weekly-tools {
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(320px, 1fr) minmax(280px, 0.8fr);
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 0.8fr);
   margin: 12px 0;
 }
 
@@ -1077,14 +1104,11 @@ h1 {
 }
 
 .schedule-item {
-  align-items: center;
+  align-items: stretch;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #ffffff;
-  display: flex;
-  gap: 16px;
-  justify-content: space-between;
-  padding: 12px;
+  padding: 10px;
   transition: border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
@@ -1100,7 +1124,8 @@ h1 {
 .schedule-edit-form {
   align-items: end;
   display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) 82px 96px 96px 112px minmax(160px, 1fr) minmax(140px, 0.8fr) 124px 118px 118px 150px auto;
+  gap: 10px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
 }
 
 .schedule-edit-form input,
@@ -1108,6 +1133,25 @@ h1 {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
   min-width: 0;
+  padding: 8px 9px;
+}
+
+.schedule-period-status {
+  align-self: end;
+  grid-column: span 2;
+  min-height: 36px;
+}
+
+.schedule-actions {
+  align-self: end;
+  display: grid;
+  gap: 6px;
+  grid-column: span 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.schedule-actions .button {
+  min-height: 36px;
   padding: 8px 9px;
 }
 
@@ -2057,6 +2101,20 @@ h1 {
   .schedule-edit-form {
     display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .schedule-title-field,
+  .schedule-lane-field,
+  .schedule-time-field,
+  .schedule-type-field,
+  .schedule-teacher-field,
+  .schedule-notes-field,
+  .schedule-recurrence-field,
+  .schedule-date-field,
+  .schedule-submit-button,
+  .schedule-period-status,
+  .schedule-actions {
+    grid-column: 1 / -1;
   }
 
   .teacher-booking-row {
