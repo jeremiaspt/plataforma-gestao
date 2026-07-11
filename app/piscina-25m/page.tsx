@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { BookingModal } from "@/components/BookingModal";
 import { PoolClassTeacherRequirement } from "@/components/PoolClassTeacherRequirement";
 import { PoolCurrentTimeScroller } from "@/components/PoolCurrentTimeScroller";
+import { PoolDatePicker } from "@/components/PoolDatePicker";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
 import {
@@ -22,8 +23,10 @@ import {
   formatMinutes,
   isTodayOrFuture,
   parseDateParam,
+  poolBlockAppliesToDate,
   poolBlockTypes,
   poolLanes,
+  poolRecurrenceOptions,
   poolWeekdays
 } from "@/lib/pool";
 
@@ -244,13 +247,33 @@ export default async function PoolMapPage({
     ? blocks.find((block) => block.id === editBookingGroup.poolBlockId)
     : null;
   const selectedBookingBlock = params.bookingBlockId
-    ? blocks.find((block) => block.id === params.bookingBlockId && block.type === "treino") || selectedEditBlock || null
+    ? blocks.find(
+        (block) =>
+          block.id === params.bookingBlockId &&
+          block.type === "treino" &&
+          poolBlockAppliesToDate(block, selectedDate)
+      ) ||
+      selectedEditBlock ||
+      null
     : null;
 
   function blockForSlot(laneNumber: number, slot: number) {
-    return blocks.find(
+    const candidates = blocks.filter(
       (block) => block.laneNumber === laneNumber && slot >= block.startMinutes && slot < block.endMinutes
     );
+    return (
+      candidates.find((block) => poolBlockAppliesToDate(block, selectedDate)) ||
+      candidates[0] ||
+      null
+    );
+  }
+
+  function periodLabel(block: { recurrenceType: string; validFrom: Date | null; validTo: Date | null }) {
+    if (block.recurrenceType !== "period" || !block.validFrom || !block.validTo) {
+      return "Recorrente";
+    }
+
+    return `${block.validFrom.toLocaleDateString("pt-PT")} - ${block.validTo.toLocaleDateString("pt-PT")}`;
   }
 
   function bookingsForBlock(blockId: string, slot: number) {
@@ -330,16 +353,9 @@ export default async function PoolMapPage({
           <a className="button secondary" href={`/piscina-25m?date=${nextDate}&tab=${activeTab}`}>
             Dia seguinte
           </a>
-          <form className="date-picker" action="/piscina-25m" method="get">
-            <input type="hidden" name="tab" value={activeTab} />
-            <label className="field" htmlFor="date">
-              <span>Data</span>
-              <input id="date" name="date" type="date" defaultValue={selectedDateValue} />
-            </label>
-            <button className="button" type="submit">
-              Ver
-            </button>
-          </form>
+          <div className="date-picker">
+            <PoolDatePicker activeTab={activeTab} selectedDateValue={selectedDateValue} />
+          </div>
         </div>
 
         {!canBookSelectedDate ? (
@@ -449,12 +465,23 @@ export default async function PoolMapPage({
                     const block = blockForSlot(lane, slot);
                     const isBlockStart = Boolean(block && slot === block.startMinutes);
                     const isInsideExistingBlock = Boolean(block && !isBlockStart);
+                    const blockAppliesToSelectedDate = block ? poolBlockAppliesToDate(block, selectedDate) : false;
                     const blockSlotSpan = block && isBlockStart ? Math.max(1, (block.endMinutes - block.startMinutes) / 5) : 1;
-                    const blockBookings = block && isBlockStart ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes) : [];
+                    const blockBookings =
+                      block && isBlockStart && blockAppliesToSelectedDate
+                        ? blockBookingGroups(block.id, block.startMinutes, block.endMinutes)
+                        : [];
                     const hasVacancy =
-                      block && isBlockStart ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes) : false;
+                      block && isBlockStart && blockAppliesToSelectedDate
+                        ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes)
+                        : false;
                     const canBookBlock = Boolean(
-                      isProfessor && canBookSelectedDate && block?.type === "treino" && isBlockStart && hasVacancy
+                      isProfessor &&
+                        canBookSelectedDate &&
+                        block?.type === "treino" &&
+                        isBlockStart &&
+                        blockAppliesToSelectedDate &&
+                        hasVacancy
                     );
 
                     if (isInsideExistingBlock) {
@@ -463,7 +490,11 @@ export default async function PoolMapPage({
 
                     return (
                       <td
-                        className={block ? `pool-cell occupied type-${block.type}` : "pool-cell"}
+                        className={
+                          block
+                            ? `pool-cell occupied type-${block.type}${blockAppliesToSelectedDate ? "" : " ghost-occupation"}`
+                            : "pool-cell"
+                        }
                         key={lane}
                         rowSpan={block && isBlockStart ? blockSlotSpan : undefined}
                       >
@@ -477,6 +508,7 @@ export default async function PoolMapPage({
                                 </small>
                                 {block.type === "aula" && block.teacher ? <small>{block.teacher.name}</small> : null}
                                 {block.notes ? <small>{block.notes}</small> : null}
+                                {!blockAppliesToSelectedDate ? <small>Fora do período</small> : null}
                               </div>
                             ) : null}
                             {blockBookings.map((booking, index) => (
@@ -490,7 +522,7 @@ export default async function PoolMapPage({
                                 {booking.studentNames.join(", ")}
                               </div>
                             ))}
-                            {block.type === "treino" && isBlockStart ? (
+                            {block.type === "treino" && isBlockStart && blockAppliesToSelectedDate ? (
                               <small className={hasVacancy ? "vacancy-chip" : "full-chip"}>
                                 {hasVacancy ? "Vaga" : "Sem vaga"}
                               </small>
@@ -704,6 +736,24 @@ export default async function PoolMapPage({
               <label htmlFor="notes">Notas</label>
               <input id="notes" name="notes" />
             </div>
+            <div className="field">
+              <label htmlFor="recurrenceType">Recorrência</label>
+              <select id="recurrenceType" name="recurrenceType" defaultValue="recurring">
+                {poolRecurrenceOptions.map((option) => (
+                  <option value={option.key} key={option.key}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="validFrom">Desde</label>
+              <input id="validFrom" name="validFrom" type="date" />
+            </div>
+            <div className="field">
+              <label htmlFor="validTo">Até</label>
+              <input id="validTo" name="validTo" type="date" />
+            </div>
             <button className="button" type="submit">
               Adicionar
             </button>
@@ -766,6 +816,27 @@ export default async function PoolMapPage({
                   <label>Notas</label>
                   <input name="notes" defaultValue={block.notes || ""} />
                 </div>
+                <div className="field">
+                  <label>Recorrência</label>
+                  <select name="recurrenceType" defaultValue={block.recurrenceType}>
+                    {poolRecurrenceOptions.map((option) => (
+                      <option value={option.key} key={option.key}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label>Desde</label>
+                  <input name="validFrom" type="date" defaultValue={block.validFrom ? dateToInputValue(block.validFrom) : ""} />
+                </div>
+                <div className="field">
+                  <label>Até</label>
+                  <input name="validTo" type="date" defaultValue={block.validTo ? dateToInputValue(block.validTo) : ""} />
+                </div>
+                <span className={poolBlockAppliesToDate(block, selectedDate) ? "status active" : "status inactive"}>
+                  {periodLabel(block)}
+                </span>
                 <div className="action-row compact-actions">
                   <button className="button secondary" name="action" value="save" type="submit">
                     Guardar

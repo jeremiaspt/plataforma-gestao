@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { dayBounds, parseTimeToMinutes, poolBlockTypes, poolLanes } from "@/lib/pool";
+import {
+  dayBounds,
+  parseDateInput,
+  parseTimeToMinutes,
+  poolBlockPeriodsOverlap,
+  poolBlockTypes,
+  poolLanes,
+  poolRecurrenceOptions
+} from "@/lib/pool";
 import { appRedirectUrl } from "@/lib/url";
 
 export async function POST(
@@ -47,6 +55,12 @@ export async function POST(
     const type = String(formData.get("type") || "outro");
     const notes = String(formData.get("notes") || "").trim();
     const teacherId = String(formData.get("teacherId") || "");
+    const recurrenceTypeValue = String(formData.get("recurrenceType") || "recurring");
+    const recurrenceType = poolRecurrenceOptions.some((option) => option.key === recurrenceTypeValue)
+      ? recurrenceTypeValue
+      : "recurring";
+    const validFrom = recurrenceType === "period" ? parseDateInput(String(formData.get("validFrom") || "")) : null;
+    const validTo = recurrenceType === "period" ? parseDateInput(String(formData.get("validTo") || "")) : null;
     const startMinutes = parseTimeToMinutes(String(formData.get("startTime") || ""));
     const endMinutes = parseTimeToMinutes(String(formData.get("endTime") || ""));
 
@@ -72,6 +86,10 @@ export async function POST(
       return NextResponse.redirect(appRedirectUrl(errorPath, request));
     }
 
+    if (recurrenceType === "period" && (!validFrom || !validTo || validFrom > validTo)) {
+      return NextResponse.redirect(appRedirectUrl(errorPath, request));
+    }
+
     const selectedTeacher = teacherId
       ? await prisma.user.findFirst({
           where: {
@@ -87,7 +105,7 @@ export async function POST(
       return NextResponse.redirect(appRedirectUrl(errorPath, request));
     }
 
-    const conflict = await prisma.poolScheduleBlock.findFirst({
+    const conflictCandidates = await prisma.poolScheduleBlock.findMany({
       where: {
         id: { not: id },
         active: true,
@@ -97,6 +115,9 @@ export async function POST(
         endMinutes: { gt: startMinutes }
       }
     });
+    const conflict = conflictCandidates.find((block) =>
+      poolBlockPeriodsOverlap({ recurrenceType, validFrom, validTo }, block)
+    );
 
     if (conflict) {
       return NextResponse.redirect(appRedirectUrl(errorPath, request));
@@ -121,6 +142,9 @@ export async function POST(
             title,
             type,
             notes,
+            recurrenceType,
+            validFrom,
+            validTo,
             teacherId: selectedTeacher?.id || null,
             createdById: user.id
           }
@@ -136,6 +160,9 @@ export async function POST(
           title,
           type,
           notes,
+          recurrenceType,
+          validFrom,
+          validTo,
           teacherId: selectedTeacher?.id || null
         }
       });

@@ -74,6 +74,9 @@ export async function POST(request: Request) {
       type: block.type,
       notes: block.notes,
       active: true,
+      recurrenceType: block.recurrenceType,
+      validFrom: block.validFrom,
+      validTo: block.validTo,
       teacherId: block.teacherId,
       createdById: user.id
     }))

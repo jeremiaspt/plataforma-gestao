@@ -19,6 +19,11 @@ export const poolBlockTypes = [
   { key: "outro", label: "Outro" }
 ];
 
+export const poolRecurrenceOptions = [
+  { key: "recurring", label: "Recorrente" },
+  { key: "period", label: "Período" }
+];
+
 export function dayBounds(weekday: number) {
   if (weekday === 0 || weekday === 6) {
     return { start: 8 * 60 + 45, end: 13 * 60 + 30 };
@@ -58,6 +63,68 @@ export function parseDateParam(value?: string) {
   }
 
   return parsed;
+}
+
+export function parseDateInput(value: string) {
+  if (!value) {
+    return null;
+  }
+
+  const parsed = new Date(`${value}T00:00:00`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function normalizedDateValue(value: Date | string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? new Date(value) : new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  date.setHours(0, 0, 0, 0);
+  return date.getTime();
+}
+
+export function poolBlockAppliesToDate(
+  block: { recurrenceType?: string | null; validFrom?: Date | string | null; validTo?: Date | string | null },
+  date: Date
+) {
+  if (block.recurrenceType !== "period") {
+    return true;
+  }
+
+  const selected = normalizedDateValue(date);
+  const validFrom = normalizedDateValue(block.validFrom);
+  const validTo = normalizedDateValue(block.validTo);
+
+  if (selected === null || validFrom === null || validTo === null) {
+    return false;
+  }
+
+  return selected >= validFrom && selected <= validTo;
+}
+
+export function poolBlockPeriodsOverlap(
+  first: { recurrenceType?: string | null; validFrom?: Date | string | null; validTo?: Date | string | null },
+  second: { recurrenceType?: string | null; validFrom?: Date | string | null; validTo?: Date | string | null }
+) {
+  if (first.recurrenceType !== "period" || second.recurrenceType !== "period") {
+    return true;
+  }
+
+  const firstFrom = normalizedDateValue(first.validFrom);
+  const firstTo = normalizedDateValue(first.validTo);
+  const secondFrom = normalizedDateValue(second.validFrom);
+  const secondTo = normalizedDateValue(second.validTo);
+
+  if (firstFrom === null || firstTo === null || secondFrom === null || secondTo === null) {
+    return true;
+  }
+
+  return firstFrom <= secondTo && secondFrom <= firstTo;
 }
 
 export function dateToWeekday(date: Date) {

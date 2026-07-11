@@ -654,7 +654,7 @@ h1 {
   align-items: flex-end;
   display: grid;
   gap: 12px;
-  grid-template-columns: minmax(180px, 1.3fr) 96px 110px 110px 130px minmax(190px, 1fr) minmax(160px, 1fr) auto;
+  grid-template-columns: minmax(170px, 1.2fr) 86px 102px 102px 118px minmax(170px, 1fr) minmax(140px, 0.8fr) 130px 120px 120px auto;
 }
 
 .pool-panel {
@@ -824,6 +824,22 @@ h1 {
 .pool-cell.occupied small {
   color: #475569;
   margin-top: 2px;
+}
+
+.pool-cell.ghost-occupation {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.pool-cell.ghost-occupation .pool-block-card {
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.72;
+}
+
+.pool-cell.ghost-occupation strong,
+.pool-cell.ghost-occupation small {
+  color: #64748b;
 }
 
 .booking-chip {
@@ -1084,7 +1100,7 @@ h1 {
 .schedule-edit-form {
   align-items: end;
   display: grid;
-  grid-template-columns: minmax(170px, 1.2fr) 90px 105px 105px 120px minmax(180px, 1fr) minmax(150px, 0.8fr) auto;
+  grid-template-columns: minmax(160px, 1.2fr) 82px 96px 96px 112px minmax(160px, 1fr) minmax(140px, 0.8fr) 124px 118px 118px 150px auto;
 }
 
 .schedule-edit-form input,
