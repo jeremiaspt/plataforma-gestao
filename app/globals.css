@@ -255,6 +255,18 @@ h1 {
   padding: 28px;
 }
 
+.auth-link {
+  color: var(--primary);
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 14px;
+}
+
+.auth-link:hover {
+  color: var(--primary-dark);
+}
+
 .form {
   display: grid;
   gap: 14px;

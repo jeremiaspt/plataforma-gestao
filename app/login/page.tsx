@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSessionUser } from "@/lib/auth";
 
 export default async function LoginPage({
@@ -31,6 +32,9 @@ export default async function LoginPage({
             Entrar
           </button>
         </form>
+        <Link className="auth-link" href="/recuperar-password">
+          Esqueci-me da password
+        </Link>
       </section>
     </main>
   );
