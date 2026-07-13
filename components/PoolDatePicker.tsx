@@ -2,7 +2,15 @@
 
 import { useRouter } from "next/navigation";
 
-export function PoolDatePicker({ activeTab, selectedDateValue }: { activeTab: string; selectedDateValue: string }) {
+export function PoolDatePicker({
+  activeTab,
+  basePath,
+  selectedDateValue
+}: {
+  activeTab: string;
+  basePath: string;
+  selectedDateValue: string;
+}) {
   const router = useRouter();
 
   function handleDateChange(value: string) {
@@ -10,7 +18,7 @@ export function PoolDatePicker({ activeTab, selectedDateValue }: { activeTab: st
       return;
     }
 
-    router.replace(`/piscina-25m?date=${encodeURIComponent(value)}&tab=${encodeURIComponent(activeTab)}`);
+    router.replace(`${basePath}?date=${encodeURIComponent(value)}&tab=${encodeURIComponent(activeTab)}`);
   }
 
   return (

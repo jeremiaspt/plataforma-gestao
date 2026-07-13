@@ -45,6 +45,20 @@ const toolCards = [
     href: "/piscina-25m",
     icon: Waves
   },
+  {
+    title: "Tanque de aprendizagem",
+    description: "Mapa de disponibilidade por espaço e dia.",
+    role: "professor",
+    href: "/tanque-aprendizagem",
+    icon: Waves
+  },
+  {
+    title: "Tanque de aprendizagem",
+    description: "Mapa de disponibilidade por espaço e dia.",
+    role: "recepcao",
+    href: "/tanque-aprendizagem",
+    icon: Waves
+  },
   { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#", icon: Brush },
   { title: "Manutenção", description: "Pedidos, prioridades e resolução.", role: "manutencao", href: "#", icon: Settings }
 ];

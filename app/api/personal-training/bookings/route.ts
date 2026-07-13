@@ -10,7 +10,7 @@ import {
   requiredParticipantsForType,
   trainingDurationOptions
 } from "@/lib/personalTrainingRules";
-import { dateToWeekday, isTodayOrFuture, parseDateParam } from "@/lib/pool";
+import { dateToWeekday, getPoolMapByKey, isTodayOrFuture, parseDateParam, poolBlockAppliesToDate } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -23,13 +23,14 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const dateValue = String(formData.get("date") || "");
+  const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
   const poolBlockId = String(formData.get("poolBlockId") || "");
   const existingBookingGroupId = String(formData.get("bookingGroupId") || "");
   const studentIds = Array.from(new Set(formData.getAll("studentIds").map(String).filter(Boolean)));
   const trainingTypeKey = String(formData.get("trainingTypeKey") || "");
   const durationMinutes = Number(formData.get("durationMinutes"));
   const requestedStartMinutes = Number(formData.get("startMinutes"));
-  const redirectPath = `/piscina-25m?date=${dateValue || ""}`;
+  const redirectPath = `${poolMap.basePath}?date=${dateValue || ""}`;
   const errorPath = `${redirectPath}&error=1`;
   const bookingDate = parseDateParam(dateValue);
 
@@ -91,8 +92,10 @@ export async function POST(request: Request) {
 
   if (
     !block ||
+    block.poolKey !== poolMap.key ||
     block.type !== "treino" ||
     block.weekday !== dateToWeekday(bookingDate) ||
+    !poolBlockAppliesToDate(block, bookingDate) ||
     requestedStartMinutes < block.startMinutes ||
     requestedStartMinutes + durationMinutes > block.endMinutes ||
     requestedStartMinutes % 5 !== 0 ||

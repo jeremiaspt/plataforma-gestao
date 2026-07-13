@@ -7,7 +7,7 @@ import {
   parseTimeToMinutes,
   poolBlockPeriodsOverlap,
   poolBlockTypes,
-  poolLanes,
+  getPoolMapByKey,
   poolRecurrenceOptions,
   poolWeekdays
 } from "@/lib/pool";
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const weekday = Number(formData.get("weekday"));
+  const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
   const laneNumber = Number(formData.get("laneNumber"));
   const selectedDate = String(formData.get("date") || "");
   const title = String(formData.get("title") || "").trim();
@@ -36,12 +37,12 @@ export async function POST(request: Request) {
   const validTo = recurrenceType === "period" ? parseDateInput(String(formData.get("validTo") || "")) : null;
   const startMinutes = parseTimeToMinutes(String(formData.get("startTime") || ""));
   const endMinutes = parseTimeToMinutes(String(formData.get("endTime") || ""));
-  const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}` : ""}`;
+  const redirectPath = `${poolMap.basePath}${selectedDate ? `?date=${selectedDate}` : ""}`;
   const errorPath = `${redirectPath}${redirectPath.includes("?") ? "&" : "?"}error=1`;
 
   if (
     !poolWeekdays.some((day) => day.key === weekday) ||
-    !poolLanes.includes(laneNumber) ||
+    !poolMap.lanes.some((lane) => lane.number === laneNumber) ||
     !title ||
     !poolBlockTypes.some((blockType) => blockType.key === type) ||
     startMinutes === null ||
@@ -85,6 +86,7 @@ export async function POST(request: Request) {
     where: {
       active: true,
       weekday,
+      poolKey: poolMap.key,
       laneNumber,
       startMinutes: { lt: endMinutes },
       endMinutes: { gt: startMinutes }
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
   await prisma.poolScheduleBlock.create({
     data: {
       weekday,
+      poolKey: poolMap.key,
       laneNumber,
       startMinutes,
       endMinutes,

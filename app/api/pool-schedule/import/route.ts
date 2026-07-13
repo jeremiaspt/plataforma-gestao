@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { dayBounds, poolWeekdays } from "@/lib/pool";
+import { dayBounds, getPoolMapByKey, poolWeekdays } from "@/lib/pool";
 import { appRedirectUrl } from "@/lib/url";
 
 export async function POST(request: Request) {
@@ -14,9 +14,10 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const targetWeekday = Number(formData.get("targetWeekday"));
   const sourceWeekday = Number(formData.get("sourceWeekday"));
+  const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
   const selectedDate = String(formData.get("date") || "");
   const confirmed = formData.get("confirmImportDay") === "on";
-  const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}&tab=weekly` : "?tab=weekly"}`;
+  const redirectPath = `${poolMap.basePath}${selectedDate ? `?date=${selectedDate}&tab=weekly` : "?tab=weekly"}`;
   const errorPath = `${redirectPath}&error=1`;
 
   if (
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
   }
 
   const sourceBlocks = await prisma.poolScheduleBlock.findMany({
-    where: { weekday: sourceWeekday, active: true },
+    where: { poolKey: poolMap.key, weekday: sourceWeekday, active: true },
     orderBy: [{ laneNumber: "asc" }, { startMinutes: "asc" }]
   });
 
@@ -47,7 +48,7 @@ export async function POST(request: Request) {
   }
 
   const targetBlocks = await prisma.poolScheduleBlock.findMany({
-    where: { weekday: targetWeekday, active: true },
+    where: { poolKey: poolMap.key, weekday: targetWeekday, active: true },
     select: { laneNumber: true, startMinutes: true, endMinutes: true }
   });
 
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
   await prisma.poolScheduleBlock.createMany({
     data: sourceBlocks.map((block) => ({
       weekday: targetWeekday,
+      poolKey: poolMap.key,
       laneNumber: block.laneNumber,
       startMinutes: block.startMinutes,
       endMinutes: block.endMinutes,

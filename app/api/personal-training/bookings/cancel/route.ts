@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
-import { isTodayOrFuture } from "@/lib/pool";
+import { getPoolMapByKey, isTodayOrFuture } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -14,7 +14,8 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const bookingGroupId = String(formData.get("bookingGroupId") || "");
   const dateValue = String(formData.get("date") || "");
-  const redirectPath = `/piscina-25m?date=${dateValue || ""}`;
+  const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
+  const redirectPath = `${poolMap.basePath}?date=${dateValue || ""}`;
 
   if (!bookingGroupId) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&error=1`, request));
@@ -29,7 +30,10 @@ export async function POST(request: Request) {
     include: { student: true, paymentType: true, poolBlock: true }
   });
 
-  if (bookings.length === 0 || bookings.some((booking) => !isTodayOrFuture(booking.bookingDate))) {
+  if (
+    bookings.length === 0 ||
+    bookings.some((booking) => !isTodayOrFuture(booking.bookingDate) || booking.poolBlock.poolKey !== poolMap.key)
+  ) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&error=1`, request));
   }
 

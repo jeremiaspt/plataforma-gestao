@@ -8,7 +8,45 @@ export const poolWeekdays = [
   { key: 0, label: "Domingo", shortLabel: "Dom" }
 ];
 
-export const poolLanes = [1, 2, 3, 4, 5, 6];
+export type PoolMapConfig = {
+  basePath: string;
+  eyebrow: string;
+  key: string;
+  laneFieldLabel: string;
+  lanes: Array<{ number: number; label: string }>;
+  title: string;
+};
+
+export const poolMaps = {
+  piscina25m: {
+    basePath: "/piscina-25m",
+    eyebrow: "Piscina 25m",
+    key: "piscina_25m",
+    laneFieldLabel: "Pista",
+    lanes: [1, 2, 3, 4, 5, 6].map((lane) => ({ number: lane, label: `Pista ${lane}` })),
+    title: "Mapa de disponibilidade"
+  },
+  tanqueAprendizagem: {
+    basePath: "/tanque-aprendizagem",
+    eyebrow: "Tanque de aprendizagem",
+    key: "tanque_aprendizagem",
+    laneFieldLabel: "Espaço",
+    lanes: [
+      { number: 1, label: "E1" },
+      { number: 2, label: "E2" },
+      { number: 3, label: "E3" },
+      { number: 4, label: "E4" },
+      { number: 5, label: "E5 rampa" }
+    ],
+    title: "Mapa de disponibilidade"
+  }
+} satisfies Record<string, PoolMapConfig>;
+
+export const poolLanes = poolMaps.piscina25m.lanes.map((lane) => lane.number);
+
+export function getPoolMapByKey(poolKey: string) {
+  return Object.values(poolMaps).find((poolMap) => poolMap.key === poolKey) || poolMaps.piscina25m;
+}
 
 export const poolBlockTypes = [
   { key: "aula", label: "Aula" },

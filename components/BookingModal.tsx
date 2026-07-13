@@ -21,8 +21,9 @@ type CreditBalanceOption = {
 export function BookingModal({
   date,
   poolBlockId,
+  poolKey,
   blockTitle,
-  laneNumber,
+  laneLabel,
   startLabel,
   endLabel,
   blockStartMinutes,
@@ -35,8 +36,9 @@ export function BookingModal({
 }: {
   date: string;
   poolBlockId: string;
+  poolKey: string;
   blockTitle: string;
-  laneNumber: number;
+  laneLabel: string;
   startLabel: string;
   endLabel: string;
   blockStartMinutes: number;
@@ -116,7 +118,7 @@ export function BookingModal({
           <div>
             <p className="eyebrow">Marcação PT</p>
             <h1>
-              {blockTitle} · Pista {laneNumber}
+              {blockTitle} · {laneLabel}
             </h1>
             <p className="muted">
               {startLabel} - {endLabel}
@@ -130,6 +132,7 @@ export function BookingModal({
         <form className="booking-popup-form" action="/api/personal-training/bookings" method="post">
           {editBooking ? <input type="hidden" name="bookingGroupId" value={editBooking.groupId} /> : null}
           <input type="hidden" name="date" value={date} />
+          <input type="hidden" name="poolKey" value={poolKey} />
           <input type="hidden" name="poolBlockId" value={poolBlockId} />
           <input type="hidden" name="durationMinutes" value={durationMinutes} />
           <input type="hidden" name="trainingTypeKey" value={selectedTypeKey} />

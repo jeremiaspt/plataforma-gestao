@@ -36,6 +36,12 @@ export function AppShell({
               Piscina 25m
             </Link>
           ) : null}
+          {canUsePool ? (
+            <Link href="/tanque-aprendizagem">
+              <Waves size={18} />
+              Tanque aprendizagem
+            </Link>
+          ) : null}
           {isAdmin ? (
             <Link href="/treinos-personalizados/tipos">
               <Dumbbell size={18} />

@@ -63,6 +63,7 @@ model RolePermission {
 
 model PoolScheduleBlock {
   id             String                    @id @default(cuid())
+  poolKey        String                    @default("piscina_25m")
   weekday        Int
   laneNumber     Int
   startMinutes   Int
@@ -82,7 +83,7 @@ model PoolScheduleBlock {
   createdAt      DateTime                  @default(now())
   updatedAt      DateTime                  @updatedAt
 
-  @@index([weekday, laneNumber, startMinutes, endMinutes])
+  @@index([poolKey, weekday, laneNumber, startMinutes, endMinutes])
 }
 
 model PasswordResetToken {

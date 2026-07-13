@@ -3,11 +3,11 @@ import { hasRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   dayBounds,
+  getPoolMapByKey,
   parseDateInput,
   parseTimeToMinutes,
   poolBlockPeriodsOverlap,
   poolBlockTypes,
-  poolLanes,
   poolRecurrenceOptions
 } from "@/lib/pool";
 import { appRedirectUrl } from "@/lib/url";
@@ -25,7 +25,8 @@ export async function POST(
   const { id } = await params;
   const formData = await request.formData();
   const selectedDate = String(formData.get("date") || "");
-  const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}&tab=weekly` : "?tab=weekly"}`;
+  const requestedPoolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
+  const redirectPath = `${requestedPoolMap.basePath}${selectedDate ? `?date=${selectedDate}&tab=weekly` : "?tab=weekly"}`;
   const errorPath = `${redirectPath}${redirectPath.includes("?") ? "&" : "?"}error=1`;
   const action = String(formData.get("action") || "save");
   const today = new Date();
@@ -65,7 +66,7 @@ export async function POST(
     const endMinutes = parseTimeToMinutes(String(formData.get("endTime") || ""));
 
     if (
-      !poolLanes.includes(laneNumber) ||
+      !getPoolMapByKey(existingBlock.poolKey).lanes.some((lane) => lane.number === laneNumber) ||
       !title ||
       !poolBlockTypes.some((blockType) => blockType.key === type) ||
       startMinutes === null ||
@@ -109,6 +110,7 @@ export async function POST(
       where: {
         id: { not: id },
         active: true,
+        poolKey: existingBlock.poolKey,
         weekday: existingBlock.weekday,
         laneNumber,
         startMinutes: { lt: endMinutes },
@@ -136,6 +138,7 @@ export async function POST(
         prisma.poolScheduleBlock.create({
           data: {
             weekday: existingBlock.weekday,
+            poolKey: existingBlock.poolKey,
             laneNumber,
             startMinutes,
             endMinutes,

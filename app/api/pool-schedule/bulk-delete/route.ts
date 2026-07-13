@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { poolWeekdays } from "@/lib/pool";
+import { getPoolMapByKey, poolWeekdays } from "@/lib/pool";
 import { appRedirectUrl } from "@/lib/url";
 
 export async function POST(request: Request) {
@@ -13,9 +13,10 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const weekday = Number(formData.get("weekday"));
+  const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
   const selectedDate = String(formData.get("date") || "");
   const confirmed = formData.get("confirmDeleteDay") === "on";
-  const redirectPath = `/piscina-25m${selectedDate ? `?date=${selectedDate}&tab=weekly` : "?tab=weekly"}`;
+  const redirectPath = `${poolMap.basePath}${selectedDate ? `?date=${selectedDate}&tab=weekly` : "?tab=weekly"}`;
   const errorPath = `${redirectPath}&error=1`;
 
   if (!confirmed || !poolWeekdays.some((day) => day.key === weekday)) {
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
   }
 
   const blocks = await prisma.poolScheduleBlock.findMany({
-    where: { weekday, active: true },
+    where: { poolKey: poolMap.key, weekday, active: true },
     select: { id: true }
   });
   const blockIds = blocks.map((block) => block.id);
