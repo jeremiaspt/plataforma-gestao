@@ -42,6 +42,7 @@ export async function PoolMapView({
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
   const isAdmin = hasRole(user, "admin");
   const isProfessor = hasRole(user, "professor");
+  const isTeacherOnlySchedule = mapConfig.scheduleMode === "teacherOnly";
 
   if (!canAccessPoolMap(roleKeys)) {
     redirect("/dashboard");
@@ -698,14 +699,19 @@ export async function PoolMapView({
             </form>
           </div>
 
-          <form className="pool-form" action="/api/pool-schedule" method="post" data-pool-schedule-form>
+          <form
+            className={isTeacherOnlySchedule ? "pool-form teacher-only-schedule-form" : "pool-form"}
+            action="/api/pool-schedule"
+            method="post"
+            data-pool-schedule-form
+          >
             <PoolClassTeacherRequirement />
             <input type="hidden" name="weekday" value={weekday} />
             <input type="hidden" name="date" value={selectedDateValue} />
             <input type="hidden" name="poolKey" value={mapConfig.key} />
             <div className="field schedule-title-field">
               <label htmlFor="title">Ocupação</label>
-              <input id="title" name="title" required placeholder="Ex.: PT" />
+              <input id="title" name="title" required placeholder="Ex.: PT" defaultValue={isTeacherOnlySchedule ? mapConfig.eyebrow : ""} />
             </div>
             <div className="field schedule-lane-field">
               <label htmlFor="laneNumber">{mapConfig.laneFieldLabel}</label>
@@ -727,7 +733,7 @@ export async function PoolMapView({
             </div>
             <div className="field schedule-type-field">
               <label htmlFor="type">Tipo</label>
-              <select id="type" name="type" required>
+              <select id="type" name="type" required defaultValue={isTeacherOnlySchedule ? "aula" : undefined}>
                 {poolBlockTypes.map((type) => (
                   <option value={type.key} key={type.key}>
                     {type.label}
@@ -736,9 +742,9 @@ export async function PoolMapView({
               </select>
             </div>
             <div className="field schedule-teacher-field">
-              <label htmlFor="teacherId">Professor da aula</label>
-              <select id="teacherId" name="teacherId">
-                <option value="">Selecionar se for Aula</option>
+              <label htmlFor="teacherId">{isTeacherOnlySchedule ? "Professor" : "Professor da aula"}</label>
+              <select id="teacherId" name="teacherId" required={isTeacherOnlySchedule ? true : undefined}>
+                <option value="">{isTeacherOnlySchedule ? "Selecionar professor" : "Selecionar se for Aula"}</option>
                 {classTeachers.map((teacher) => (
                   <option value={teacher.id} key={teacher.id}>
                     {teacher.name}
@@ -776,7 +782,11 @@ export async function PoolMapView({
             {blocks.length === 0 ? <p className="muted">Ainda não existem ocupações para este dia da semana.</p> : null}
             {blocks.map((block) => (
               <form
-                className="schedule-item schedule-edit-form"
+                className={
+                  isTeacherOnlySchedule
+                    ? "schedule-item schedule-edit-form teacher-only-schedule-edit-form"
+                    : "schedule-item schedule-edit-form"
+                }
                 action={`/api/pool-schedule/${block.id}`}
                 method="post"
                 key={block.id}
@@ -817,9 +827,9 @@ export async function PoolMapView({
                   </select>
                 </div>
                 <div className="field schedule-teacher-field">
-                  <label>Professor da aula</label>
-                  <select name="teacherId" defaultValue={block.teacherId || ""}>
-                    <option value="">Selecionar se for Aula</option>
+                  <label>{isTeacherOnlySchedule ? "Professor" : "Professor da aula"}</label>
+                  <select name="teacherId" defaultValue={block.teacherId || ""} required={isTeacherOnlySchedule ? true : undefined}>
+                    <option value="">{isTeacherOnlySchedule ? "Selecionar professor" : "Selecionar se for Aula"}</option>
                     {classTeachers.map((teacher) => (
                       <option value={teacher.id} key={teacher.id}>
                         {teacher.name}

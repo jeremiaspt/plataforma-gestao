@@ -59,6 +59,20 @@ const toolCards = [
     href: "/tanque-aprendizagem",
     icon: Waves
   },
+  {
+    title: "Apoio ao Cais",
+    description: "Mapa de disponibilidade por professor e horário.",
+    role: "professor",
+    href: "/apoio-ao-cais",
+    icon: Waves
+  },
+  {
+    title: "Apoio ao Cais",
+    description: "Mapa de disponibilidade por professor e horário.",
+    role: "recepcao",
+    href: "/apoio-ao-cais",
+    icon: Waves
+  },
   { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#", icon: Brush },
   { title: "Manutenção", description: "Pedidos, prioridades e resolução.", role: "manutencao", href: "#", icon: Settings }
 ];
@@ -75,7 +89,7 @@ export default async function DashboardPage() {
     <AppShell userName={user.name} roles={roles}>
       <section className="dashboard-hero">
         <div>
-          <p className="eyebrow">Area de trabalho</p>
+          <p className="eyebrow">Área de trabalho</p>
           <h1>Ferramentas disponíveis</h1>
           <p className="muted">Acede rapidamente às áreas autorizadas para o teu utilizador.</p>
         </div>

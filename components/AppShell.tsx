@@ -42,6 +42,12 @@ export function AppShell({
               Tanque aprendizagem
             </Link>
           ) : null}
+          {canUsePool ? (
+            <Link href="/apoio-ao-cais">
+              <Waves size={18} />
+              Apoio ao Cais
+            </Link>
+          ) : null}
           {isAdmin ? (
             <Link href="/treinos-personalizados/tipos">
               <Dumbbell size={18} />

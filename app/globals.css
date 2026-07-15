@@ -696,6 +696,37 @@ h1 {
   justify-self: stretch;
 }
 
+.teacher-only-schedule-form .schedule-title-field,
+.teacher-only-schedule-form .schedule-lane-field,
+.teacher-only-schedule-form .schedule-type-field,
+.teacher-only-schedule-form .schedule-notes-field,
+.teacher-only-schedule-form .schedule-recurrence-field,
+.teacher-only-schedule-form .schedule-date-field,
+.teacher-only-schedule-edit-form .schedule-title-field,
+.teacher-only-schedule-edit-form .schedule-lane-field,
+.teacher-only-schedule-edit-form .schedule-type-field,
+.teacher-only-schedule-edit-form .schedule-notes-field,
+.teacher-only-schedule-edit-form .schedule-recurrence-field,
+.teacher-only-schedule-edit-form .schedule-date-field,
+.teacher-only-schedule-edit-form .schedule-period-status {
+  display: none;
+}
+
+.teacher-only-schedule-form .schedule-teacher-field,
+.teacher-only-schedule-edit-form .schedule-teacher-field {
+  grid-column: span 6;
+}
+
+.teacher-only-schedule-form .schedule-time-field,
+.teacher-only-schedule-edit-form .schedule-time-field {
+  grid-column: span 2;
+}
+
+.teacher-only-schedule-form .schedule-submit-button,
+.teacher-only-schedule-edit-form .schedule-actions {
+  grid-column: span 2;
+}
+
 .pool-panel {
   margin-top: 8px;
 }

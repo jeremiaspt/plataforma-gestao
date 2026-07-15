@@ -14,6 +14,7 @@ export type PoolMapConfig = {
   key: string;
   laneFieldLabel: string;
   lanes: Array<{ number: number; label: string }>;
+  scheduleMode?: "standard" | "teacherOnly";
   title: string;
 };
 
@@ -38,6 +39,15 @@ export const poolMaps = {
       { number: 4, label: "E4" },
       { number: 5, label: "E5 rampa" }
     ],
+    title: "Mapa de disponibilidade"
+  },
+  apoioCais: {
+    basePath: "/apoio-ao-cais",
+    eyebrow: "Apoio ao Cais",
+    key: "apoio_cais",
+    laneFieldLabel: "Espaço",
+    lanes: [{ number: 1, label: "Apoio" }],
+    scheduleMode: "teacherOnly",
     title: "Mapa de disponibilidade"
   }
 } satisfies Record<string, PoolMapConfig>;
