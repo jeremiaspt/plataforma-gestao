@@ -6,6 +6,7 @@ import { PoolCurrentTimeScroller } from "@/components/PoolCurrentTimeScroller";
 import { PoolDatePicker } from "@/components/PoolDatePicker";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
+import { getSystemSettings } from "@/lib/maintenance";
 import {
   getTrainingTypeKey,
   getTrainingTypeName,
@@ -43,6 +44,8 @@ export async function PoolMapView({
   const isAdmin = hasRole(user, "admin");
   const isProfessor = hasRole(user, "professor");
   const isTeacherOnlySchedule = mapConfig.scheduleMode === "teacherOnly";
+  const systemSettings = await getSystemSettings();
+  const canSubmitChanges = !systemSettings.maintenanceMode || isAdmin;
 
   if (!canAccessPoolMap(roleKeys)) {
     redirect("/dashboard");
@@ -486,6 +489,7 @@ export async function PoolMapView({
                         : false;
                     const canBookBlock = Boolean(
                       isProfessor &&
+                        canSubmitChanges &&
                         canBookSelectedDate &&
                         block?.type === "treino" &&
                         isBlockStart &&
@@ -554,7 +558,7 @@ export async function PoolMapView({
         ) : null}
       </section>
 
-      {isProfessor && canBookSelectedDate && selectedBookingBlock ? (
+      {isProfessor && canSubmitChanges && canBookSelectedDate && selectedBookingBlock ? (
         <BookingModal
           date={selectedDateValue}
           poolBlockId={selectedBookingBlock.id}
@@ -598,7 +602,7 @@ export async function PoolMapView({
                     {booking.trainingTypeName} · {booking.studentNames.join(", ")}
                   </p>
                 </div>
-                {canBookSelectedDate ? (
+                {canBookSelectedDate && canSubmitChanges ? (
                   <div className="action-row compact-actions">
                     <a className="button secondary" href={`${mapConfig.basePath}?date=${selectedDateValue}&bookingBlockId=${booking.groupId}`}>
                       Alterar
@@ -637,6 +641,7 @@ export async function PoolMapView({
                     {booking.trainingTypeName} - {booking.studentNames.join(", ")}
                   </p>
                 </div>
+                {canSubmitChanges ? (
                 <div className="action-row compact-actions">
                   <a className="button secondary" href={`${mapConfig.basePath}?date=${booking.bookingDateValue}&bookingBlockId=${booking.groupId}`}>
                     Alterar
@@ -650,6 +655,7 @@ export async function PoolMapView({
                     </button>
                   </form>
                 </div>
+                ) : null}
               </div>
             ))}
           </div>

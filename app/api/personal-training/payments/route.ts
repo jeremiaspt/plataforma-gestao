@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { decimalToNumber } from "@/lib/money";
+import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { sendPaymentNotificationEmail } from "@/lib/paymentEmail";
 import { requiredParticipantsForType } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
@@ -22,6 +23,11 @@ export async function POST(request: Request) {
   const quantity = Number(formData.get("quantity"));
   const basePath = `/treinos-personalizados/pagamentos?teacherId=${teacherId}`;
   const errorPath = `${basePath}&error=1`;
+  const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: basePath });
+
+  if (maintenanceBlock) {
+    return maintenanceBlock;
+  }
 
   if (!teacherId || !paymentTypeId || !Number.isInteger(quantity) || quantity < 1) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { getPoolMapByKey, isTodayOrFuture } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
@@ -16,6 +17,11 @@ export async function POST(request: Request) {
   const dateValue = String(formData.get("date") || "");
   const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
   const redirectPath = `${poolMap.basePath}?date=${dateValue || ""}`;
+  const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath });
+
+  if (maintenanceBlock) {
+    return maintenanceBlock;
+  }
 
   if (!bookingGroupId) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&error=1`, request));

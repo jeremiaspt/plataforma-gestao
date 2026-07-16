@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -18,6 +19,11 @@ export async function POST(request: Request) {
   const month = String(formData.get("month") || "");
   const reason = String(formData.get("reason") || "").trim();
   const basePath = `/treinos-personalizados/pagamentos?teacherId=${teacherId}&tab=payments${month ? `&month=${month}` : ""}`;
+  const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: basePath });
+
+  if (maintenanceBlock) {
+    return maintenanceBlock;
+  }
 
   if (!paymentId) {
     return NextResponse.redirect(appRedirectUrl(`${basePath}&error=cancel`, request));

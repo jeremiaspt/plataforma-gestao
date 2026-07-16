@@ -18,6 +18,13 @@ const toolCards = [
     icon: Settings
   },
   {
+    title: "Sistema",
+    description: "Ativar ou desativar o modo manutenção.",
+    role: "admin",
+    href: "/configuracoes-sistema",
+    icon: Settings
+  },
+  {
     title: "Pagamentos TP",
     description: "Lançar pagamentos de treinos personalizados.",
     role: "recepcao",

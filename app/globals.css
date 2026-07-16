@@ -146,6 +146,36 @@ select {
   padding: 14px 16px;
 }
 
+.maintenance-banner {
+  align-items: center;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #9a3412;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding: 11px 14px;
+}
+
+.maintenance-banner strong {
+  white-space: nowrap;
+}
+
+.system-settings-panel {
+  max-width: 820px;
+}
+
+.system-settings-card {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 14px;
+  padding: 14px;
+}
+
 .eyebrow {
   color: var(--muted);
   font-size: 14px;

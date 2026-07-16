@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Activity, Dumbbell, LayoutDashboard, LogOut, Mail, UserRound, Users, Waves } from "lucide-react";
+import { Activity, Dumbbell, LayoutDashboard, LogOut, Mail, Settings, UserRound, Users, Waves } from "lucide-react";
+import { getSystemSettings } from "@/lib/maintenance";
 
-export function AppShell({
+export async function AppShell({
   children,
   userName,
   roles
@@ -13,6 +14,7 @@ export function AppShell({
   const isAdmin = roles.includes("admin");
   const canUsePool = isAdmin || roles.includes("professor") || roles.includes("recepcao");
   const canUsePayments = isAdmin || roles.includes("professor") || roles.includes("recepcao");
+  const systemSettings = await getSystemSettings();
 
   return (
     <div className="app-shell">
@@ -79,6 +81,12 @@ export function AppShell({
               Emails
             </Link>
           ) : null}
+          {isAdmin ? (
+            <Link href="/configuracoes-sistema">
+              <Settings size={18} />
+              Sistema
+            </Link>
+          ) : null}
           <Link href="/conta">
             <UserRound size={18} />
             A minha conta
@@ -92,6 +100,14 @@ export function AppShell({
         </nav>
       </aside>
       <main className="main">
+        {systemSettings.maintenanceMode ? (
+          <div className="maintenance-banner">
+            <strong>Plataforma em manutenção.</strong>
+            <span>
+              Os utilizadores podem consultar informação já registada, mas apenas administradores conseguem lançar ou alterar registos.
+            </span>
+          </div>
+        ) : null}
         <div className="app-topbar">
           <div>
             <p className="eyebrow">Sessao iniciada</p>

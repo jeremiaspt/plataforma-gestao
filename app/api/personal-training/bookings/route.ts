@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { getCreditBalanceForTeacherStudentTrainingType } from "@/lib/personalTrainingCredits";
 import {
   getTrainingTypeKey,
@@ -33,6 +34,11 @@ export async function POST(request: Request) {
   const redirectPath = `${poolMap.basePath}?date=${dateValue || ""}`;
   const errorPath = `${redirectPath}&error=1`;
   const bookingDate = parseDateParam(dateValue);
+  const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath });
+
+  if (maintenanceBlock) {
+    return maintenanceBlock;
+  }
 
   if (
     !dateValue ||
