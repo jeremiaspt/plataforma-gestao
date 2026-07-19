@@ -279,6 +279,23 @@ select {
   overflow-wrap: anywhere;
 }
 
+.group-class-items {
+  display: grid;
+  gap: 5px;
+}
+
+.group-class-item {
+  border-top: 1px solid #e2e8f0;
+  display: grid;
+  gap: 2px;
+  padding-top: 5px;
+}
+
+.group-class-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
 .group-class-time {
   color: var(--primary-dark) !important;
   font-weight: 800;

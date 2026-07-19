@@ -83,11 +83,13 @@ export default async function GroupClassesPage({
     Array<{
       id: string;
       poolKey: string;
-      title: string;
       startMinutes: number;
       endMinutes: number;
-      notes: string | null;
-      laneNumbers: number[];
+      classes: Array<{
+        title: string;
+        notes: string | null;
+        laneNumbers: number[];
+      }>;
     }>
   >();
 
@@ -98,37 +100,55 @@ export default async function GroupClassesPage({
       {
         id: string;
         poolKey: string;
-        title: string;
         startMinutes: number;
         endMinutes: number;
-        notes: string | null;
-        laneNumbers: number[];
+        classes: Map<
+          string,
+          {
+            title: string;
+            notes: string | null;
+            laneNumbers: number[];
+          }
+        >;
       }
     >();
 
     for (const block of blocks.filter((item) => item.weekday === weekday.key && poolBlockAppliesToDate(item, date))) {
-      const groupKey = [block.poolKey, block.title, block.startMinutes, block.endMinutes, block.notes || ""].join("|");
+      const groupKey = [block.poolKey, block.startMinutes, block.endMinutes].join("|");
       const current =
         grouped.get(groupKey) ||
         {
           id: block.id,
           poolKey: block.poolKey,
-          title: block.title,
           startMinutes: block.startMinutes,
           endMinutes: block.endMinutes,
+          classes: new Map()
+        };
+      const classKey = [block.title, block.notes || ""].join("|");
+      const currentClass =
+        current.classes.get(classKey) ||
+        {
+          title: block.title,
           notes: block.notes,
           laneNumbers: []
         };
 
-      current.laneNumbers.push(block.laneNumber);
+      currentClass.laneNumbers.push(block.laneNumber);
+      current.classes.set(classKey, currentClass);
       grouped.set(groupKey, current);
     }
 
     classesByWeekday.set(
       weekday.key,
       Array.from(grouped.values()).map((group) => ({
-        ...group,
-        laneNumbers: Array.from(new Set(group.laneNumbers)).sort((a, b) => a - b)
+        id: group.id,
+        poolKey: group.poolKey,
+        startMinutes: group.startMinutes,
+        endMinutes: group.endMinutes,
+        classes: Array.from(group.classes.values()).map((classItem) => ({
+          ...classItem,
+          laneNumbers: Array.from(new Set(classItem.laneNumbers)).sort((a, b) => a - b)
+        }))
       }))
     );
   }
@@ -212,18 +232,26 @@ export default async function GroupClassesPage({
                     const poolMap = Object.values(poolMaps).find((map) => map.key === group.poolKey);
                     const dateValue = dateToInputValue(dayDate);
                     const href = poolMap ? `${poolMap.basePath}?date=${dateValue}` : "#";
-                    const lanes = group.laneNumbers.map((laneNumber) => laneLabel(group.poolKey, laneNumber)).join(", ");
 
                     return (
                       <a className="group-class-card" href={href} key={group.id}>
                         <span className="group-class-time">
                           {formatMinutes(group.startMinutes)} - {formatMinutes(group.endMinutes)}
                         </span>
-                        <strong>{group.title}</strong>
-                        <span>
-                          {poolLabel(group.poolKey)} · {lanes}
-                        </span>
-                        {group.notes ? <small>{group.notes}</small> : null}
+                        <span>{poolLabel(group.poolKey)}</span>
+                        <div className="group-class-items">
+                          {group.classes.map((classItem) => {
+                            const lanes = classItem.laneNumbers.map((laneNumber) => laneLabel(group.poolKey, laneNumber)).join(", ");
+
+                            return (
+                              <div className="group-class-item" key={`${classItem.title}-${classItem.notes || ""}`}>
+                                <strong>{classItem.title}</strong>
+                                <span>{lanes}</span>
+                                {classItem.notes ? <small>{classItem.notes}</small> : null}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </a>
                     );
                   })}
