@@ -1,4 +1,4 @@
-import { ArrowRight, Brush, Dumbbell, Settings, Users, Waves } from "lucide-react";
+import { ArrowRight, Brush, CalendarDays, Dumbbell, Settings, Users, Waves } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/auth";
 
@@ -79,6 +79,20 @@ const toolCards = [
     role: "recepcao",
     href: "/apoio-ao-cais",
     icon: Waves
+  },
+  {
+    title: "Aulas de grupo",
+    description: "Consultar horário semanal por professor.",
+    role: "admin",
+    href: "/aulas-grupo",
+    icon: CalendarDays
+  },
+  {
+    title: "Aulas de grupo",
+    description: "Horário semanal das aulas associadas ao professor.",
+    role: "professor",
+    href: "/aulas-grupo",
+    icon: CalendarDays
   },
   { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#", icon: Brush },
   { title: "Manutenção", description: "Pedidos, prioridades e resolução.", role: "manutencao", href: "#", icon: Settings }

@@ -176,6 +176,110 @@ select {
   padding: 14px;
 }
 
+.group-classes-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.group-classes-toolbar {
+  align-items: flex-end;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.group-week-nav {
+  margin: 0;
+}
+
+.group-teacher-filter {
+  align-items: end;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(240px, 340px) auto;
+}
+
+.group-week-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(7, minmax(180px, 1fr));
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.group-day-card {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  min-width: 180px;
+  overflow: hidden;
+}
+
+.group-day-header {
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+}
+
+.group-day-header strong {
+  color: #0f172a;
+}
+
+.group-day-header span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.group-class-list {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+}
+
+.group-class-list > .muted {
+  font-size: 13px;
+  margin: 4px 2px;
+}
+
+.group-class-card {
+  background: #ffffff;
+  border: 1px solid #cfe0eb;
+  border-left: 4px solid var(--primary);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 9px;
+  transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.group-class-card:hover {
+  border-color: rgba(15, 118, 110, 0.45);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+  transform: translateY(-1px);
+}
+
+.group-class-card strong {
+  color: #0f172a;
+  font-size: 14px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.group-class-card span,
+.group-class-card small {
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.group-class-time {
+  color: var(--primary-dark) !important;
+  font-weight: 800;
+}
+
 .eyebrow {
   color: var(--muted);
   font-size: 14px;

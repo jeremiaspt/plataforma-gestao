@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, Dumbbell, LayoutDashboard, LogOut, Mail, Settings, UserRound, Users, Waves } from "lucide-react";
+import { Activity, CalendarDays, Dumbbell, LayoutDashboard, LogOut, Mail, Settings, UserRound, Users, Waves } from "lucide-react";
 import { getSystemSettings } from "@/lib/maintenance";
 
 export async function AppShell({
@@ -12,6 +12,7 @@ export async function AppShell({
   roles: string[];
 }) {
   const isAdmin = roles.includes("admin");
+  const canUseGroupClasses = isAdmin || roles.includes("professor");
   const canUsePool = isAdmin || roles.includes("professor") || roles.includes("recepcao");
   const canUsePayments = isAdmin || roles.includes("professor") || roles.includes("recepcao");
   const systemSettings = await getSystemSettings();
@@ -48,6 +49,12 @@ export async function AppShell({
             <Link href="/apoio-ao-cais">
               <Waves size={18} />
               Apoio ao Cais
+            </Link>
+          ) : null}
+          {canUseGroupClasses ? (
+            <Link href="/aulas-grupo">
+              <CalendarDays size={18} />
+              Aulas de grupo
             </Link>
           ) : null}
           {isAdmin ? (
