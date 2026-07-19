@@ -163,6 +163,46 @@ select {
   white-space: nowrap;
 }
 
+.holiday-alert,
+.holiday-inline {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-weight: 800;
+  margin: 0;
+  padding: 9px 11px;
+}
+
+.holiday-panel {
+  border-color: #fca5a5;
+  box-shadow: 0 12px 28px rgba(153, 27, 27, 0.08);
+}
+
+.holiday-map {
+  border-color: #fca5a5;
+}
+
+.holiday-map .pool-table thead th,
+.holiday-map .pool-table tbody th,
+.holiday-map .pool-cell {
+  background: #fff1f2;
+}
+
+.holiday-map .pool-cell.occupied {
+  background: #fee2e2;
+}
+
+.holiday-day-card {
+  background: #fff1f2;
+  border-color: #fca5a5;
+}
+
+.holiday-day-card .group-day-header {
+  background: #fee2e2;
+  border-color: #fca5a5;
+}
+
 .system-settings-panel {
   max-width: 820px;
 }

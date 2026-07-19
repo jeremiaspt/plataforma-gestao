@@ -5,6 +5,7 @@ import { PoolClassTeacherRequirement } from "@/components/PoolClassTeacherRequir
 import { PoolCurrentTimeScroller } from "@/components/PoolCurrentTimeScroller";
 import { PoolDatePicker } from "@/components/PoolDatePicker";
 import { hasRole, requireUser } from "@/lib/auth";
+import { getHolidayForDate } from "@/lib/holidays";
 import { getCreditBalancesForTeacher } from "@/lib/personalTrainingCredits";
 import { getSystemSettings } from "@/lib/maintenance";
 import {
@@ -53,12 +54,14 @@ export async function PoolMapView({
 
   const selectedDate = parseDateParam(params.date);
   const selectedDateValue = dateToInputValue(selectedDate);
+  const selectedHoliday = getHolidayForDate(selectedDate, systemSettings.includeLisbonMunicipalHolidays);
   const weekday = dateToWeekday(selectedDate);
   const selectedDayLabel = poolWeekdays.find((day) => day.key === weekday)?.label || "Dia";
   const previousDate = dateToInputValue(addDays(selectedDate, -1));
   const nextDate = dateToInputValue(addDays(selectedDate, 1));
   const todayDate = dateToInputValue(new Date());
-  const canBookSelectedDate = isTodayOrFuture(selectedDate);
+  const isSelectedDateTodayOrFuture = isTodayOrFuture(selectedDate);
+  const canBookSelectedDate = isSelectedDateTodayOrFuture && !selectedHoliday;
   const isSelectedDateToday = selectedDateValue === dateToInputValue(new Date());
   const slots = buildTimeSlots(weekday);
   const bounds = dayBounds(weekday);
@@ -344,7 +347,7 @@ export async function PoolMapView({
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
-      <section className="panel pool-page-hero">
+      <section className={selectedHoliday ? "panel pool-page-hero holiday-panel" : "panel pool-page-hero"}>
         <div className="topbar">
           <div>
             <p className="eyebrow">{mapConfig.eyebrow}</p>
@@ -370,8 +373,13 @@ export async function PoolMapView({
           </div>
         </div>
 
-        {!canBookSelectedDate ? (
+        {!isSelectedDateTodayOrFuture ? (
           <p className="muted">Esta data está no passado. Pode ser consultada, mas não vai permitir novas marcações.</p>
+        ) : null}
+        {selectedHoliday ? (
+          <p className="holiday-alert">
+            {selectedHoliday.name}. Este dia está marcado como feriado e não permite marcações de PT.
+          </p>
         ) : null}
 
         {params.success ? <p className="success">Marcação criada com sucesso.</p> : null}
@@ -452,7 +460,7 @@ export async function PoolMapView({
         </div>
 
         {activeTab === "map" ? (
-        <div className="pool-table-wrap">
+        <div className={selectedHoliday ? "pool-table-wrap holiday-map" : "pool-table-wrap"}>
           <PoolCurrentTimeScroller enabled={isSelectedDateToday} startMinutes={bounds.start} endMinutes={bounds.end} />
           <table className="pool-table">
             <colgroup>

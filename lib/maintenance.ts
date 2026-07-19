@@ -17,18 +17,26 @@ export async function getSystemSettings() {
   return prisma.systemSettings.create({
     data: {
       key: settingsKey,
-      maintenanceMode: true
+      maintenanceMode: true,
+      includeLisbonMunicipalHolidays: false
     }
   });
 }
 
-export async function setMaintenanceMode(enabled: boolean) {
+export async function setSystemSettings({
+  includeLisbonMunicipalHolidays,
+  maintenanceMode
+}: {
+  includeLisbonMunicipalHolidays: boolean;
+  maintenanceMode: boolean;
+}) {
   return prisma.systemSettings.upsert({
     where: { key: settingsKey },
-    update: { maintenanceMode: enabled },
+    update: { includeLisbonMunicipalHolidays, maintenanceMode },
     create: {
       key: settingsKey,
-      maintenanceMode: enabled
+      includeLisbonMunicipalHolidays,
+      maintenanceMode
     }
   });
 }

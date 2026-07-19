@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
-import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
+import { getHolidayForDate } from "@/lib/holidays";
+import { blockNonAdminDuringMaintenance, getSystemSettings } from "@/lib/maintenance";
 import { getCreditBalanceForTeacherStudentTrainingType } from "@/lib/personalTrainingCredits";
 import {
   getTrainingTypeKey,
@@ -35,9 +36,15 @@ export async function POST(request: Request) {
   const errorPath = `${redirectPath}&error=1`;
   const bookingDate = parseDateParam(dateValue);
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath });
+  const systemSettings = await getSystemSettings();
+  const holiday = getHolidayForDate(bookingDate, systemSettings.includeLisbonMunicipalHolidays);
 
   if (maintenanceBlock) {
     return maintenanceBlock;
+  }
+
+  if (holiday) {
+    return NextResponse.redirect(appRedirectUrl(`${redirectPath}&holiday=1`, request));
   }
 
   if (

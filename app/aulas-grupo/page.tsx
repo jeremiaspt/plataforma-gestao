@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
+import { getHolidayForDate } from "@/lib/holidays";
+import { getSystemSettings } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
 import { dateToInputValue, formatMinutes, parseDateParam, poolBlockAppliesToDate, poolMaps, poolWeekdays } from "@/lib/pool";
 
@@ -57,6 +59,7 @@ export default async function GroupClassesPage({
         select: { id: true, name: true }
       })
     : [];
+  const systemSettings = await getSystemSettings();
 
   const activeTab = isAdmin && params.tab === "professor" ? "professor" : "mine";
   const selectedTeacherId = activeTab === "professor" ? params.teacherId || teachers[0]?.id || user.id : user.id;
@@ -95,6 +98,13 @@ export default async function GroupClassesPage({
 
   for (const weekday of poolWeekdays) {
     const date = weekdayDate(selectedWeekStart, weekday.key);
+    const holiday = getHolidayForDate(date, systemSettings.includeLisbonMunicipalHolidays);
+
+    if (holiday) {
+      classesByWeekday.set(weekday.key, []);
+      continue;
+    }
+
     const grouped = new Map<
       string,
       {
@@ -218,15 +228,17 @@ export default async function GroupClassesPage({
         <div className="group-week-grid">
           {poolWeekdays.map((weekday) => {
             const dayDate = weekdayDate(selectedWeekStart, weekday.key);
+            const holiday = getHolidayForDate(dayDate, systemSettings.includeLisbonMunicipalHolidays);
             const dayBlocks = classesByWeekday.get(weekday.key) || [];
 
             return (
-              <section className="group-day-card" key={weekday.key}>
+              <section className={holiday ? "group-day-card holiday-day-card" : "group-day-card"} key={weekday.key}>
                 <div className="group-day-header">
                   <strong>{weekday.label}</strong>
                   <span>{dayDate.toLocaleDateString("pt-PT")}</span>
                 </div>
                 <div className="group-class-list">
+                  {holiday ? <p className="holiday-inline">{holiday.name}</p> : null}
                   {dayBlocks.length === 0 ? <p className="muted">Sem aulas.</p> : null}
                   {dayBlocks.map((group) => {
                     const poolMap = Object.values(poolMaps).find((map) => map.key === group.poolKey);

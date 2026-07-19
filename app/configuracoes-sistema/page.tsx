@@ -44,6 +44,17 @@ export default async function SystemSettingsPage({
             Quando ativo, professores e receção conseguem consultar dados já registados, mas não conseguem lançar pagamentos,
             marcações ou anulações. Administradores continuam com acesso total.
           </p>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              name="includeLisbonMunicipalHolidays"
+              defaultChecked={settings.includeLisbonMunicipalHolidays}
+            />
+            Considerar feriado municipal de Lisboa, Santo António, 13 de junho
+          </label>
+          <p className="muted">
+            Os feriados nacionais portugueses são sempre considerados. Esta opção acrescenta o feriado municipal de Lisboa.
+          </p>
           <button className="button" type="submit">
             Guardar configuração
           </button>
