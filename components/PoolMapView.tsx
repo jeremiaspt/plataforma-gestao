@@ -54,7 +54,12 @@ export async function PoolMapView({
 
   const selectedDate = parseDateParam(params.date);
   const selectedDateValue = dateToInputValue(selectedDate);
-  const selectedHoliday = getHolidayForDate(selectedDate, systemSettings.includeLisbonMunicipalHolidays);
+  const holidayOptions = {
+    includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
+    includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
+    includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
+  };
+  const selectedHoliday = getHolidayForDate(selectedDate, holidayOptions);
   const weekday = dateToWeekday(selectedDate);
   const selectedDayLabel = poolWeekdays.find((day) => day.key === weekday)?.label || "Dia";
   const previousDate = dateToInputValue(addDays(selectedDate, -1));

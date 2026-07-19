@@ -254,6 +254,8 @@ model SystemSettings {
   key                            String   @unique
   maintenanceMode                Boolean  @default(true)
   includeLisbonMunicipalHolidays Boolean  @default(false)
+  includeChristmasEveHoliday     Boolean  @default(false)
+  includeNewYearsEveHoliday      Boolean  @default(false)
   updatedAt                      DateTime @updatedAt
   createdAt                      DateTime @default(now())
 }

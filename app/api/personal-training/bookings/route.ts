@@ -37,7 +37,11 @@ export async function POST(request: Request) {
   const bookingDate = parseDateParam(dateValue);
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath });
   const systemSettings = await getSystemSettings();
-  const holiday = getHolidayForDate(bookingDate, systemSettings.includeLisbonMunicipalHolidays);
+  const holiday = getHolidayForDate(bookingDate, {
+    includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
+    includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
+    includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
+  });
 
   if (maintenanceBlock) {
     return maintenanceBlock;

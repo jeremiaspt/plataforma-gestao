@@ -80,6 +80,11 @@ export default async function GroupClassesPage({
     },
     orderBy: [{ weekday: "asc" }, { startMinutes: "asc" }, { poolKey: "asc" }, { laneNumber: "asc" }]
   });
+  const holidayOptions = {
+    includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
+    includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
+    includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
+  };
 
   const classesByWeekday = new Map<
     number,
@@ -98,7 +103,7 @@ export default async function GroupClassesPage({
 
   for (const weekday of poolWeekdays) {
     const date = weekdayDate(selectedWeekStart, weekday.key);
-    const holiday = getHolidayForDate(date, systemSettings.includeLisbonMunicipalHolidays);
+    const holiday = getHolidayForDate(date, holidayOptions);
 
     if (holiday) {
       classesByWeekday.set(weekday.key, []);
@@ -228,7 +233,7 @@ export default async function GroupClassesPage({
         <div className="group-week-grid">
           {poolWeekdays.map((weekday) => {
             const dayDate = weekdayDate(selectedWeekStart, weekday.key);
-            const holiday = getHolidayForDate(dayDate, systemSettings.includeLisbonMunicipalHolidays);
+            const holiday = getHolidayForDate(dayDate, holidayOptions);
             const dayBlocks = classesByWeekday.get(weekday.key) || [];
 
             return (

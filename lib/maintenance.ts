@@ -18,24 +18,32 @@ export async function getSystemSettings() {
     data: {
       key: settingsKey,
       maintenanceMode: true,
-      includeLisbonMunicipalHolidays: false
+      includeLisbonMunicipalHolidays: false,
+      includeChristmasEveHoliday: false,
+      includeNewYearsEveHoliday: false
     }
   });
 }
 
 export async function setSystemSettings({
+  includeChristmasEveHoliday,
   includeLisbonMunicipalHolidays,
+  includeNewYearsEveHoliday,
   maintenanceMode
 }: {
+  includeChristmasEveHoliday: boolean;
   includeLisbonMunicipalHolidays: boolean;
+  includeNewYearsEveHoliday: boolean;
   maintenanceMode: boolean;
 }) {
   return prisma.systemSettings.upsert({
     where: { key: settingsKey },
-    update: { includeLisbonMunicipalHolidays, maintenanceMode },
+    update: { includeChristmasEveHoliday, includeLisbonMunicipalHolidays, includeNewYearsEveHoliday, maintenanceMode },
     create: {
       key: settingsKey,
+      includeChristmasEveHoliday,
       includeLisbonMunicipalHolidays,
+      includeNewYearsEveHoliday,
       maintenanceMode
     }
   });

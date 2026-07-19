@@ -55,6 +55,17 @@ export default async function SystemSettingsPage({
           <p className="muted">
             Os feriados nacionais portugueses são sempre considerados. Esta opção acrescenta o feriado municipal de Lisboa.
           </p>
+          <label className="checkbox">
+            <input type="checkbox" name="includeChristmasEveHoliday" defaultChecked={settings.includeChristmasEveHoliday} />
+            Considerar ponto na véspera de Natal, 24 de dezembro
+          </label>
+          <label className="checkbox">
+            <input type="checkbox" name="includeNewYearsEveHoliday" defaultChecked={settings.includeNewYearsEveHoliday} />
+            Considerar ponto na véspera de Ano Novo, 31 de dezembro
+          </label>
+          <p className="muted">
+            Quando estas opções estão ativas, esses dias ficam assinalados como ponto, não permitem marcações PT e não contam nas aulas de grupo.
+          </p>
           <button className="button" type="submit">
             Guardar configuração
           </button>

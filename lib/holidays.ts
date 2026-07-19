@@ -3,7 +3,13 @@ import { dateToInputValue } from "@/lib/pool";
 export type HolidayInfo = {
   date: string;
   name: string;
-  scope: "national" | "municipal";
+  scope: "national" | "municipal" | "tolerance";
+};
+
+export type HolidayOptions = {
+  includeChristmasEveHoliday?: boolean;
+  includeLisbonMunicipalHolidays?: boolean;
+  includeNewYearsEveHoliday?: boolean;
 };
 
 function addDays(date: Date, days: number) {
@@ -31,7 +37,7 @@ function easterSunday(year: number) {
   return new Date(year, month - 1, day);
 }
 
-export function getPortugueseHolidays(year: number, includeLisbonMunicipalHolidays = false) {
+export function getPortugueseHolidays(year: number, options: HolidayOptions = {}) {
   const easter = easterSunday(year);
   const holidays: HolidayInfo[] = [
     { date: `${year}-01-01`, name: "Ano Novo", scope: "national" },
@@ -49,14 +55,22 @@ export function getPortugueseHolidays(year: number, includeLisbonMunicipalHolida
     { date: `${year}-12-25`, name: "Natal", scope: "national" }
   ];
 
-  if (includeLisbonMunicipalHolidays) {
+  if (options.includeLisbonMunicipalHolidays) {
     holidays.push({ date: `${year}-06-13`, name: "Santo António - Feriado Municipal de Lisboa", scope: "municipal" });
+  }
+
+  if (options.includeChristmasEveHoliday) {
+    holidays.push({ date: `${year}-12-24`, name: "Ponto - Véspera de Natal", scope: "tolerance" });
+  }
+
+  if (options.includeNewYearsEveHoliday) {
+    holidays.push({ date: `${year}-12-31`, name: "Ponto - Véspera de Ano Novo", scope: "tolerance" });
   }
 
   return holidays.sort((a, b) => a.date.localeCompare(b.date));
 }
 
-export function getHolidayForDate(date: Date, includeLisbonMunicipalHolidays = false) {
+export function getHolidayForDate(date: Date, options: HolidayOptions = {}) {
   const dateValue = dateToInputValue(date);
-  return getPortugueseHolidays(date.getFullYear(), includeLisbonMunicipalHolidays).find((holiday) => holiday.date === dateValue) || null;
+  return getPortugueseHolidays(date.getFullYear(), options).find((holiday) => holiday.date === dateValue) || null;
 }
