@@ -78,13 +78,58 @@ export default async function GroupClassesPage({
     orderBy: [{ weekday: "asc" }, { startMinutes: "asc" }, { poolKey: "asc" }, { laneNumber: "asc" }]
   });
 
-  const classesByWeekday = new Map<number, typeof blocks>();
+  const classesByWeekday = new Map<
+    number,
+    Array<{
+      id: string;
+      poolKey: string;
+      title: string;
+      startMinutes: number;
+      endMinutes: number;
+      notes: string | null;
+      laneNumbers: number[];
+    }>
+  >();
 
   for (const weekday of poolWeekdays) {
     const date = weekdayDate(selectedWeekStart, weekday.key);
+    const grouped = new Map<
+      string,
+      {
+        id: string;
+        poolKey: string;
+        title: string;
+        startMinutes: number;
+        endMinutes: number;
+        notes: string | null;
+        laneNumbers: number[];
+      }
+    >();
+
+    for (const block of blocks.filter((item) => item.weekday === weekday.key && poolBlockAppliesToDate(item, date))) {
+      const groupKey = [block.poolKey, block.title, block.startMinutes, block.endMinutes, block.notes || ""].join("|");
+      const current =
+        grouped.get(groupKey) ||
+        {
+          id: block.id,
+          poolKey: block.poolKey,
+          title: block.title,
+          startMinutes: block.startMinutes,
+          endMinutes: block.endMinutes,
+          notes: block.notes,
+          laneNumbers: []
+        };
+
+      current.laneNumbers.push(block.laneNumber);
+      grouped.set(groupKey, current);
+    }
+
     classesByWeekday.set(
       weekday.key,
-      blocks.filter((block) => block.weekday === weekday.key && poolBlockAppliesToDate(block, date))
+      Array.from(grouped.values()).map((group) => ({
+        ...group,
+        laneNumbers: Array.from(new Set(group.laneNumbers)).sort((a, b) => a - b)
+      }))
     );
   }
 
@@ -163,21 +208,22 @@ export default async function GroupClassesPage({
                 </div>
                 <div className="group-class-list">
                   {dayBlocks.length === 0 ? <p className="muted">Sem aulas.</p> : null}
-                  {dayBlocks.map((block) => {
-                    const poolMap = Object.values(poolMaps).find((map) => map.key === block.poolKey);
+                  {dayBlocks.map((group) => {
+                    const poolMap = Object.values(poolMaps).find((map) => map.key === group.poolKey);
                     const dateValue = dateToInputValue(dayDate);
                     const href = poolMap ? `${poolMap.basePath}?date=${dateValue}` : "#";
+                    const lanes = group.laneNumbers.map((laneNumber) => laneLabel(group.poolKey, laneNumber)).join(", ");
 
                     return (
-                      <a className="group-class-card" href={href} key={block.id}>
+                      <a className="group-class-card" href={href} key={group.id}>
                         <span className="group-class-time">
-                          {formatMinutes(block.startMinutes)} - {formatMinutes(block.endMinutes)}
+                          {formatMinutes(group.startMinutes)} - {formatMinutes(group.endMinutes)}
                         </span>
-                        <strong>{block.title}</strong>
+                        <strong>{group.title}</strong>
                         <span>
-                          {poolLabel(block.poolKey)} · {laneLabel(block.poolKey, block.laneNumber)}
+                          {poolLabel(group.poolKey)} · {lanes}
                         </span>
-                        {block.notes ? <small>{block.notes}</small> : null}
+                        {group.notes ? <small>{group.notes}</small> : null}
                       </a>
                     );
                   })}
