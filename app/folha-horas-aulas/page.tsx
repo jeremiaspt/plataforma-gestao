@@ -22,6 +22,10 @@ function eachDate(start: Date, endExclusive: Date) {
   return dates;
 }
 
+function weekdayShortLabel(date: Date) {
+  return ["D", "2ª", "3ª", "4ª", "5ª", "6ª", "S"][date.getDay()];
+}
+
 export default async function GroupClassTimesheetPage({
   searchParams
 }: {
@@ -124,7 +128,7 @@ export default async function GroupClassTimesheetPage({
                 {periodDates.map((date) => (
                   <th key={dateToInputValue(date)}>
                     <span>{date.getDate()}</span>
-                    <small>{date.toLocaleDateString("pt-PT", { weekday: "short" }).replace(".", "")}</small>
+                    <small>{weekdayShortLabel(date)}</small>
                   </th>
                 ))}
                 <th>Total horas</th>
