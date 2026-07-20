@@ -26,6 +26,18 @@ function weekdayShortLabel(date: Date) {
   return ["D", "2ª", "3ª", "4ª", "5ª", "6ª", "S"][date.getDay()];
 }
 
+function formatDayHours(value: number) {
+  if (!value) {
+    return "";
+  }
+
+  if (Number.isInteger(value)) {
+    return value.toString();
+  }
+
+  return value.toFixed(2).replace(".", ",");
+}
+
 export default async function GroupClassTimesheetPage({
   searchParams
 }: {
@@ -143,7 +155,9 @@ export default async function GroupClassTimesheetPage({
                   {periodDates.map((date) => {
                     const dateValue = dateToInputValue(date);
                     const count = row.dayCounts.get(dateValue) || 0;
-                    return <td key={dateValue}>{count || ""}</td>;
+                    const hours = row.dayHours.get(dateValue) || 0;
+                    const value = row.calculationMode === "minutes" ? formatDayHours(hours) : count || "";
+                    return <td key={dateValue}>{value}</td>;
                   })}
                   <td>{row.totalHours.toFixed(2).replace(".", ",")}</td>
                   <td>{formatCurrency(row.totalValue)}</td>

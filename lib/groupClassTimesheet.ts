@@ -114,6 +114,7 @@ export async function calculateGroupClassTimesheet({
     id: rule.id,
     name: rule.name,
     hourlyRate: decimalToNumber(rule.hourlyRate),
+    calculationMode: rule.calculationMode,
     dayCounts: new Map<string, number>(),
     dayHours: new Map<string, number>(),
     totalHours: 0,
