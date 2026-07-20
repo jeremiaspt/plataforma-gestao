@@ -6,7 +6,15 @@ import { prisma } from "@/lib/prisma";
 const cookieName = "plataforma_session";
 
 function getSecret() {
-  return process.env.SESSION_SECRET || "dev-secret-change-me";
+  if (process.env.SESSION_SECRET) {
+    return process.env.SESSION_SECRET;
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("SESSION_SECRET em falta.");
+  }
+
+  return "dev-secret-change-me";
 }
 
 function sign(value: string) {
@@ -41,7 +49,18 @@ export async function getSessionUser() {
   if (!token) return null;
 
   const [payload, signature] = token.split(".");
-  if (!payload || !signature || sign(payload) !== signature) return null;
+  if (!payload || !signature) return null;
+
+  const expectedSignature = sign(payload);
+  const providedSignature = Buffer.from(signature, "hex");
+  const expectedSignatureBuffer = Buffer.from(expectedSignature, "hex");
+
+  if (
+    providedSignature.length !== expectedSignatureBuffer.length ||
+    !crypto.timingSafeEqual(providedSignature, expectedSignatureBuffer)
+  ) {
+    return null;
+  }
 
   try {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as {

@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { createPasswordResetToken, sendPasswordResetEmail } from "@/lib/passwordResetEmail";
 import { prisma } from "@/lib/prisma";
+import { getClientIp, isRateLimited } from "@/lib/rateLimit";
 import { appRedirectUrl } from "@/lib/url";
 
 export async function POST(request: Request) {
   const formData = await request.formData();
   const email = String(formData.get("email") || "").toLowerCase().trim();
   const successPath = "/recuperar-password?sent=1";
+  const rateLimitKey = `password-reset:${getClientIp(request)}:${email || "unknown"}`;
+
+  if (isRateLimited(rateLimitKey, 5, 60 * 60 * 1000)) {
+    return NextResponse.redirect(appRedirectUrl(successPath, request));
+  }
 
   const user = email ? await prisma.user.findUnique({ where: { email } }) : null;
 
