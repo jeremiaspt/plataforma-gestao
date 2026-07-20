@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Activity, CalendarDays, Dumbbell, LayoutDashboard, LogOut, Mail, Settings, UserRound, Users, Waves } from "lucide-react";
+import { Activity, CalendarDays, Dumbbell, FileSpreadsheet, LayoutDashboard, LogOut, Mail, Settings, UserRound, Users, Waves } from "lucide-react";
 import { getSystemSettings } from "@/lib/maintenance";
 
 export async function AppShell({
@@ -57,6 +57,12 @@ export async function AppShell({
               Aulas de grupo
             </Link>
           ) : null}
+          {canUseGroupClasses ? (
+            <Link href="/folha-horas-aulas">
+              <FileSpreadsheet size={18} />
+              Folha de horas
+            </Link>
+          ) : null}
           {isAdmin ? (
             <Link href="/treinos-personalizados/tipos">
               <Dumbbell size={18} />
@@ -92,6 +98,12 @@ export async function AppShell({
             <Link href="/configuracoes-sistema">
               <Settings size={18} />
               Sistema
+            </Link>
+          ) : null}
+          {isAdmin ? (
+            <Link href="/valor-hora-aulas">
+              <FileSpreadsheet size={18} />
+              Valor hora aulas
             </Link>
           ) : null}
           <Link href="/conta">

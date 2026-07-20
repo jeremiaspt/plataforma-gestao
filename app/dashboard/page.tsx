@@ -1,4 +1,4 @@
-import { ArrowRight, Brush, CalendarDays, Dumbbell, Settings, Users, Waves } from "lucide-react";
+import { ArrowRight, Brush, CalendarDays, Dumbbell, FileSpreadsheet, Settings, Users, Waves } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/auth";
 
@@ -23,6 +23,13 @@ const toolCards = [
     role: "admin",
     href: "/configuracoes-sistema",
     icon: Settings
+  },
+  {
+    title: "Valor hora aulas",
+    description: "Configurar características e valores da folha.",
+    role: "admin",
+    href: "/valor-hora-aulas",
+    icon: FileSpreadsheet
   },
   {
     title: "Pagamentos TP",
@@ -93,6 +100,20 @@ const toolCards = [
     role: "professor",
     href: "/aulas-grupo",
     icon: CalendarDays
+  },
+  {
+    title: "Folha de horas",
+    description: "Consultar a folha de horas das aulas de grupo.",
+    role: "admin",
+    href: "/folha-horas-aulas",
+    icon: FileSpreadsheet
+  },
+  {
+    title: "Folha de horas",
+    description: "Consultar a folha de horas das tuas aulas.",
+    role: "professor",
+    href: "/folha-horas-aulas",
+    icon: FileSpreadsheet
   },
   { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#", icon: Brush },
   { title: "Manutenção", description: "Pedidos, prioridades e resolução.", role: "manutencao", href: "#", icon: Settings }

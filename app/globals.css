@@ -341,6 +341,126 @@ select {
   font-weight: 800;
 }
 
+.hourly-rates-panel,
+.timesheet-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.hourly-rate-form,
+.hourly-rate-row {
+  align-items: end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(190px, 1.2fr) 110px 80px 150px 160px minmax(240px, 1.5fr) auto;
+  padding: 10px;
+}
+
+.hourly-rate-row {
+  background: #ffffff;
+  grid-template-columns: minmax(180px, 1fr) 110px 80px 150px 160px minmax(220px, 1.4fr) 95px 170px;
+}
+
+.hourly-rate-list {
+  display: grid;
+  gap: 10px;
+}
+
+.compact-number-field small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.patterns-field textarea {
+  min-height: 42px;
+  resize: vertical;
+}
+
+.compact-checkbox {
+  min-height: 40px;
+}
+
+.timesheet-filter {
+  align-items: end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(220px, 320px) 160px auto;
+  padding: 10px;
+  width: fit-content;
+}
+
+.timesheet-table-wrap {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.timesheet-table {
+  border-collapse: collapse;
+  min-width: 1180px;
+  width: 100%;
+}
+
+.timesheet-table th,
+.timesheet-table td {
+  border: 1px dashed #94a3b8;
+  font-size: 12px;
+  padding: 6px 7px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.timesheet-table thead th {
+  background: #0f3d73;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.timesheet-table thead th:first-child,
+.timesheet-table thead th:nth-child(2) {
+  background: #eef2f7;
+  color: #0f172a;
+}
+
+.timesheet-table thead small {
+  display: block;
+  font-size: 10px;
+  margin-top: 2px;
+}
+
+.timesheet-table tbody th {
+  background: #f8fafc;
+  color: #0f3d73;
+  min-width: 170px;
+  text-align: left;
+}
+
+.timesheet-table tbody td:nth-last-child(-n + 2),
+.timesheet-table tfoot th {
+  background: #475569;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.timesheet-unmatched {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.timesheet-unmatched h2 {
+  margin-bottom: 4px;
+}
+
 @media (max-width: 1320px) {
   .group-week-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2347,6 +2467,13 @@ h1 {
 
   .maintenance-card {
     grid-template-columns: 1fr;
+  }
+
+  .hourly-rate-form,
+  .hourly-rate-row,
+  .timesheet-filter {
+    grid-template-columns: 1fr;
+    width: 100%;
   }
 
   .group-week-grid,

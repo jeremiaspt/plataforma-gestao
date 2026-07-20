@@ -86,6 +86,21 @@ model PoolScheduleBlock {
   @@index([poolKey, weekday, laneNumber, startMinutes, endMinutes])
 }
 
+model GroupClassHourlyRate {
+  id              String   @id @default(cuid())
+  name            String
+  hourlyRate      Decimal  @db.Decimal(10, 2)
+  matchSource     String   @default("title")
+  matchPatterns   String?
+  calculationMode String   @default("class_duration")
+  displayOrder    Int      @default(0)
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([active, displayOrder])
+}
+
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String
