@@ -12,6 +12,7 @@ type RateRule = {
   matchSource: string;
   matchPatterns: string | null;
   calculationMode: string;
+  durationFilter: number | null;
   displayOrder: number;
 };
 
@@ -58,6 +59,10 @@ function rulePatterns(rule: RateRule) {
 }
 
 function blockMatchesRule(block: Block, rule: RateRule) {
+  if (rule.durationFilter && block.endMinutes - block.startMinutes !== rule.durationFilter) {
+    return false;
+  }
+
   if (rule.matchSource === "apoio_cais") {
     return block.poolKey === "apoio_cais";
   }

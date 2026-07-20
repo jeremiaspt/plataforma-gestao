@@ -20,6 +20,8 @@ export async function POST(request: Request) {
   const matchSource = String(formData.get("matchSource") || "title");
   const matchPatterns = String(formData.get("matchPatterns") || "").trim();
   const calculationMode = String(formData.get("calculationMode") || "class_duration");
+  const durationFilterValue = String(formData.get("durationFilter") || "");
+  const durationFilter = durationFilterValue ? Number(durationFilterValue) : null;
   const displayOrder = Number(formData.get("displayOrder"));
 
   if (
@@ -28,6 +30,7 @@ export async function POST(request: Request) {
     hourlyRate < 0 ||
     !["title", "apoio_cais"].includes(matchSource) ||
     !["class_duration", "minutes"].includes(calculationMode) ||
+    (durationFilter !== null && ![30, 45, 60].includes(durationFilter)) ||
     !Number.isInteger(displayOrder)
   ) {
     return redirectPath(request, "error");
@@ -40,6 +43,7 @@ export async function POST(request: Request) {
       matchSource,
       matchPatterns: matchSource === "title" ? matchPatterns : null,
       calculationMode,
+      durationFilter,
       displayOrder
     }
   });

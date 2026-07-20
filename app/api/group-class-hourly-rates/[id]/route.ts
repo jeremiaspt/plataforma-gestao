@@ -28,6 +28,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const matchSource = String(formData.get("matchSource") || "title");
   const matchPatterns = String(formData.get("matchPatterns") || "").trim();
   const calculationMode = String(formData.get("calculationMode") || "class_duration");
+  const durationFilterValue = String(formData.get("durationFilter") || "");
+  const durationFilter = durationFilterValue ? Number(durationFilterValue) : null;
   const displayOrder = Number(formData.get("displayOrder"));
   const active = formData.get("active") === "on";
 
@@ -37,6 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     hourlyRate < 0 ||
     !["title", "apoio_cais"].includes(matchSource) ||
     !["class_duration", "minutes"].includes(calculationMode) ||
+    (durationFilter !== null && ![30, 45, 60].includes(durationFilter)) ||
     !Number.isInteger(displayOrder)
   ) {
     return redirectPath(request, "error");
@@ -48,6 +51,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       active,
       calculationMode,
       displayOrder,
+      durationFilter,
       hourlyRate,
       matchPatterns: matchSource === "title" ? matchPatterns : null,
       matchSource,

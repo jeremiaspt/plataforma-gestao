@@ -63,6 +63,15 @@ export default async function GroupClassHourlyRatesPage({
               <option value="minutes">Por minutos</option>
             </select>
           </div>
+          <div className="field compact-number-field">
+            <label htmlFor="durationFilter">Duração</label>
+            <select id="durationFilter" name="durationFilter" defaultValue="">
+              <option value="">Todas</option>
+              <option value="30">30 min</option>
+              <option value="45">45 min</option>
+              <option value="60">60 min</option>
+            </select>
+          </div>
           <div className="field patterns-field">
             <label htmlFor="matchPatterns">Aulas tipo</label>
             <textarea id="matchPatterns" name="matchPatterns" rows={2} placeholder="Ex.: N1/N2/N3/N4/AMA2/AMA3/AMA4" />
@@ -101,6 +110,15 @@ export default async function GroupClassHourlyRatesPage({
                 <select name="calculationMode" defaultValue={rate.calculationMode}>
                   <option value="class_duration">Por aula/duração</option>
                   <option value="minutes">Por minutos</option>
+                </select>
+              </div>
+              <div className="field compact-number-field">
+                <label>Duração</label>
+                <select name="durationFilter" defaultValue={rate.durationFilter || ""}>
+                  <option value="">Todas</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">60 min</option>
                 </select>
               </div>
               <div className="field patterns-field">
