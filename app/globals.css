@@ -430,6 +430,11 @@ select {
   font-weight: 800;
 }
 
+.timesheet-table thead th.timesheet-holiday-cell {
+  background: #b91c1c;
+  color: #ffffff;
+}
+
 .timesheet-table thead th:first-child,
 .timesheet-table thead th:nth-child(2) {
   background: #eef2f7;
@@ -471,6 +476,12 @@ select {
 .timesheet-table tfoot th {
   background: #475569;
   color: #ffffff;
+  font-weight: 800;
+}
+
+.timesheet-table tbody td.timesheet-holiday-cell {
+  background: #fee2e2;
+  color: #991b1b;
   font-weight: 800;
 }
 

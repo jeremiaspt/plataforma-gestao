@@ -3,6 +3,7 @@ import { AppShell } from "@/components/AppShell";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel } from "@/lib/billingCycles";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { hasRole, requireUser } from "@/lib/auth";
+import { getHolidayForDate } from "@/lib/holidays";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
 import { dateToInputValue } from "@/lib/pool";
@@ -79,6 +80,16 @@ export default async function GroupClassTimesheetPage({
   }
 
   const periodDates = eachDate(timesheet.period.start, timesheet.period.endExclusive);
+  const holidayOptions = {
+    includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
+    includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
+    includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
+  };
+  const holidayByDate = new Map(
+    periodDates
+      .map((date) => [dateToInputValue(date), getHolidayForDate(date, holidayOptions)] as const)
+      .filter(([, holiday]) => holiday)
+  );
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
   const tabHref = (tab: "mine" | "professor") => `/folha-horas-aulas?tab=${tab}&month=${selectedMonth}`;
 
@@ -137,12 +148,17 @@ export default async function GroupClassTimesheetPage({
               <tr>
                 <th>Caract.</th>
                 <th>Valor/hora</th>
-                {periodDates.map((date) => (
-                  <th key={dateToInputValue(date)}>
-                    <span>{date.getDate()}</span>
-                    <small>{weekdayShortLabel(date)}</small>
-                  </th>
-                ))}
+                {periodDates.map((date) => {
+                  const dateValue = dateToInputValue(date);
+                  const holiday = holidayByDate.get(dateValue);
+
+                  return (
+                    <th className={holiday ? "timesheet-holiday-cell" : undefined} key={dateValue} title={holiday?.name}>
+                      <span>{date.getDate()}</span>
+                      <small>{weekdayShortLabel(date)}</small>
+                    </th>
+                  );
+                })}
                 <th>Total horas</th>
                 <th>Parcial</th>
               </tr>
@@ -157,7 +173,11 @@ export default async function GroupClassTimesheetPage({
                     const count = row.dayCounts.get(dateValue) || 0;
                     const hours = row.dayHours.get(dateValue) || 0;
                     const value = row.calculationMode === "minutes" ? formatDayHours(hours) : count || "";
-                    return <td key={dateValue}>{value}</td>;
+                    return (
+                      <td className={holidayByDate.has(dateValue) ? "timesheet-holiday-cell" : undefined} key={dateValue}>
+                        {value}
+                      </td>
+                    );
                   })}
                   <td>{row.totalHours.toFixed(2).replace(".", ",")}</td>
                   <td>{formatCurrency(row.totalValue)}</td>
