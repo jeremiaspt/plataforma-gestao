@@ -24,6 +24,7 @@ export async function POST(request: Request) {
   const durationFilter = durationFilterValue ? Number(durationFilterValue) : null;
   const displayOrder = Number(formData.get("displayOrder"));
   const weekendOnly = formData.get("weekendOnly") === "on";
+  const countByFortyFiveMinutes = formData.get("countByFortyFiveMinutes") === "on";
 
   if (
     !name ||
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       matchSource,
       matchPatterns: matchSource === "title" ? matchPatterns : null,
       calculationMode,
+      countByFortyFiveMinutes,
       durationFilter,
       weekendOnly,
       displayOrder

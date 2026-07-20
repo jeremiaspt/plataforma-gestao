@@ -80,6 +80,10 @@ export default async function GroupClassHourlyRatesPage({
             <input type="checkbox" name="weekendOnly" />
             Fim de semana
           </label>
+          <label className="checkbox compact-checkbox">
+            <input type="checkbox" name="countByFortyFiveMinutes" />
+            Contar blocos de 45 min
+          </label>
           <button className="button" type="submit">
             Criar regra
           </button>
@@ -132,6 +136,10 @@ export default async function GroupClassHourlyRatesPage({
               <label className="checkbox compact-checkbox">
                 <input type="checkbox" name="weekendOnly" defaultChecked={rate.weekendOnly} />
                 Fim de semana
+              </label>
+              <label className="checkbox compact-checkbox">
+                <input type="checkbox" name="countByFortyFiveMinutes" defaultChecked={rate.countByFortyFiveMinutes} />
+                Contar blocos de 45 min
               </label>
               <label className="checkbox compact-checkbox">
                 <input type="checkbox" name="active" defaultChecked={rate.active} />

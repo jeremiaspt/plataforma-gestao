@@ -173,7 +173,7 @@ export default async function GroupClassTimesheetPage({
                     const dateValue = dateToInputValue(date);
                     const count = row.dayCounts.get(dateValue) || 0;
                     const hours = row.dayHours.get(dateValue) || 0;
-                    const value = row.calculationMode === "minutes" ? formatDayHours(hours) : count || "";
+                    const value = row.calculationMode === "minutes" ? formatDayHours(hours) : formatDayHours(count);
                     return (
                       <td className={holidayByDate.has(dateValue) ? "timesheet-holiday-cell" : undefined} key={dateValue}>
                         {value}

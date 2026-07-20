@@ -32,6 +32,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const durationFilter = durationFilterValue ? Number(durationFilterValue) : null;
   const displayOrder = Number(formData.get("displayOrder"));
   const weekendOnly = formData.get("weekendOnly") === "on";
+  const countByFortyFiveMinutes = formData.get("countByFortyFiveMinutes") === "on";
   const active = formData.get("active") === "on";
 
   if (
@@ -51,6 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     data: {
       active,
       calculationMode,
+      countByFortyFiveMinutes,
       displayOrder,
       durationFilter,
       hourlyRate,

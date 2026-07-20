@@ -14,6 +14,7 @@ type RateRule = {
   calculationMode: string;
   durationFilter: number | null;
   weekendOnly: boolean;
+  countByFortyFiveMinutes: boolean;
   displayOrder: number;
 };
 
@@ -173,6 +174,7 @@ export async function calculateGroupClassTimesheet({
     name: rule.name,
     hourlyRate: decimalToNumber(rule.hourlyRate),
     calculationMode: rule.calculationMode,
+    countByFortyFiveMinutes: rule.countByFortyFiveMinutes,
     dayCounts: new Map<string, number>(),
     dayHours: new Map<string, number>(),
     totalHours: 0,
@@ -229,7 +231,9 @@ export async function calculateGroupClassTimesheet({
       }
 
       row.dayHours.set(dateValue, (row.dayHours.get(dateValue) || 0) + countedHours);
-      row.dayCounts.set(dateValue, (row.dayCounts.get(dateValue) || 0) + 1);
+      const countValue = matchingRule.countByFortyFiveMinutes ? countedMinutes / 45 : 1;
+
+      row.dayCounts.set(dateValue, (row.dayCounts.get(dateValue) || 0) + countValue);
       row.totalHours += countedHours;
     }
   }

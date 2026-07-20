@@ -87,18 +87,19 @@ model PoolScheduleBlock {
 }
 
 model GroupClassHourlyRate {
-  id              String   @id @default(cuid())
-  name            String
-  hourlyRate      Decimal  @db.Decimal(10, 2)
-  matchSource     String   @default("title")
-  matchPatterns   String?
-  calculationMode String   @default("class_duration")
-  durationFilter  Int?
-  weekendOnly     Boolean  @default(false)
-  displayOrder    Int      @default(0)
-  active          Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id                      String   @id @default(cuid())
+  name                    String
+  hourlyRate              Decimal  @db.Decimal(10, 2)
+  matchSource             String   @default("title")
+  matchPatterns           String?
+  calculationMode         String   @default("class_duration")
+  durationFilter          Int?
+  weekendOnly             Boolean  @default(false)
+  countByFortyFiveMinutes Boolean  @default(false)
+  displayOrder            Int      @default(0)
+  active                  Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
 
   @@index([active, displayOrder])
 }
