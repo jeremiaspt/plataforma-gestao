@@ -217,7 +217,7 @@ export async function calculateGroupClassTimesheet({
       recurrenceType: "substitution",
       validFrom: item.request.substitutionDate,
       validTo: item.request.substitutionDate,
-      groupKeySuffix: item.accumulation ? item.id : undefined
+      groupKeySuffix: item.accumulation ? "accumulation" : undefined
     });
     incomingSubstitutionsByDate.set(dateValue, dayBlocks);
   }
