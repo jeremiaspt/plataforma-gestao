@@ -342,6 +342,99 @@ select {
   font-weight: 800;
 }
 
+.substitutions-panel,
+.substitution-create,
+.substitution-request-list {
+  display: grid;
+  gap: 12px;
+}
+
+.substitution-filter {
+  align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 240px) minmax(220px, 320px) auto;
+  padding: 12px;
+}
+
+.substitution-create {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.substitution-list-header h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.substitution-class-row {
+  align-items: center;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 120px minmax(240px, 1fr) minmax(220px, 320px) 130px;
+  padding: 10px;
+}
+
+.substitution-class-main {
+  display: grid;
+  gap: 3px;
+}
+
+.substitution-class-main strong,
+.substitution-request-head strong {
+  color: #0f172a;
+}
+
+.substitution-class-main span,
+.substitution-class-main small,
+.substitution-request-head span,
+.substitution-request-item small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.substitution-request-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.substitution-request-head {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.substitution-request-head > div,
+.substitution-request-item {
+  display: grid;
+  gap: 3px;
+}
+
+.substitution-request-items {
+  display: grid;
+  gap: 7px;
+}
+
+.substitution-request-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 7px;
+  padding: 8px;
+}
+
 .hourly-rates-panel,
 .timesheet-panel {
   display: grid;
@@ -978,6 +1071,11 @@ h1 {
 .status.inactive {
   background: #fee4e2;
   color: var(--danger);
+}
+
+.status.pending {
+  background: #fff7ed;
+  color: #9a3412;
 }
 
 .account-form {

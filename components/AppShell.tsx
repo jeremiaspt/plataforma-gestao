@@ -1,5 +1,18 @@
 import Link from "next/link";
-import { Activity, CalendarDays, Dumbbell, FileSpreadsheet, LayoutDashboard, LogOut, Mail, Settings, UserRound, Users, Waves } from "lucide-react";
+import {
+  Activity,
+  CalendarCheck,
+  CalendarDays,
+  Dumbbell,
+  FileSpreadsheet,
+  LayoutDashboard,
+  LogOut,
+  Mail,
+  Settings,
+  UserRound,
+  Users,
+  Waves
+} from "lucide-react";
 import { getSystemSettings } from "@/lib/maintenance";
 
 export async function AppShell({
@@ -55,6 +68,12 @@ export async function AppShell({
             <Link href="/aulas-grupo">
               <CalendarDays size={18} />
               Aulas de grupo
+            </Link>
+          ) : null}
+          {canUseGroupClasses ? (
+            <Link href="/substituicoes">
+              <CalendarCheck size={18} />
+              Substituições
             </Link>
           ) : null}
           {canUseGroupClasses ? (

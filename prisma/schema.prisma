@@ -8,22 +8,25 @@ datasource db {
 }
 
 model User {
-  id                                String                    @id @default(cuid())
+  id                                String                          @id @default(cuid())
   name                              String
-  email                             String                    @unique
+  email                             String                          @unique
   phone                             String?
   passwordHash                      String
-  active                            Boolean                   @default(true)
-  billingCycle                      String                    @default("calendar_month")
+  active                            Boolean                         @default(true)
+  billingCycle                      String                          @default("calendar_month")
   roles                             UserRole[]
   poolScheduleBlocks                PoolScheduleBlock[]
-  poolClassesAsTeacher              PoolScheduleBlock[]       @relation("PoolClassTeacher")
+  poolClassesAsTeacher              PoolScheduleBlock[]             @relation("PoolClassTeacher")
   passwordResetTokens               PasswordResetToken[]
-  personalTrainingPaymentsAsTeacher PersonalTrainingPayment[] @relation("PersonalTrainingTeacher")
-  personalTrainingPaymentsCreated   PersonalTrainingPayment[] @relation("PersonalTrainingCreatedBy")
-  personalTrainingBookingsAsTeacher PersonalTrainingBooking[] @relation("PersonalTrainingBookingTeacher")
-  createdAt                         DateTime                  @default(now())
-  updatedAt                         DateTime                  @updatedAt
+  personalTrainingPaymentsAsTeacher PersonalTrainingPayment[]       @relation("PersonalTrainingTeacher")
+  personalTrainingPaymentsCreated   PersonalTrainingPayment[]       @relation("PersonalTrainingCreatedBy")
+  personalTrainingBookingsAsTeacher PersonalTrainingBooking[]       @relation("PersonalTrainingBookingTeacher")
+  substitutionRequestsAsAbsent      GroupClassSubstitutionRequest[] @relation("SubstitutionAbsentTeacher")
+  substitutionRequestsCreated       GroupClassSubstitutionRequest[] @relation("SubstitutionRequestedBy")
+  substitutionItemsAsSubstitute     GroupClassSubstitutionItem[]    @relation("SubstitutionSubstituteTeacher")
+  createdAt                         DateTime                        @default(now())
+  updatedAt                         DateTime                        @updatedAt
 }
 
 model Role {
@@ -62,28 +65,68 @@ model RolePermission {
 }
 
 model PoolScheduleBlock {
-  id             String                    @id @default(cuid())
-  poolKey        String                    @default("piscina_25m")
-  weekday        Int
-  laneNumber     Int
-  startMinutes   Int
-  endMinutes     Int
-  title          String
-  type           String
-  notes          String?
-  active         Boolean                   @default(true)
-  recurrenceType String                    @default("recurring")
-  validFrom      DateTime?                 @db.Date
-  validTo        DateTime?                 @db.Date
-  teacherId      String?
-  teacher        User?                     @relation("PoolClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
-  createdById    String?
-  createdBy      User?                     @relation(fields: [createdById], references: [id], onDelete: SetNull)
-  bookings       PersonalTrainingBooking[]
-  createdAt      DateTime                  @default(now())
-  updatedAt      DateTime                  @updatedAt
+  id                String                       @id @default(cuid())
+  poolKey           String                       @default("piscina_25m")
+  weekday           Int
+  laneNumber        Int
+  startMinutes      Int
+  endMinutes        Int
+  title             String
+  type              String
+  notes             String?
+  active            Boolean                      @default(true)
+  recurrenceType    String                       @default("recurring")
+  validFrom         DateTime?                    @db.Date
+  validTo           DateTime?                    @db.Date
+  teacherId         String?
+  teacher           User?                        @relation("PoolClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
+  createdById       String?
+  createdBy         User?                        @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  bookings          PersonalTrainingBooking[]
+  substitutionItems GroupClassSubstitutionItem[]
+  createdAt         DateTime                     @default(now())
+  updatedAt         DateTime                     @updatedAt
 
   @@index([poolKey, weekday, laneNumber, startMinutes, endMinutes])
+}
+
+model GroupClassSubstitutionRequest {
+  id               String                       @id @default(cuid())
+  absentTeacherId  String
+  absentTeacher    User                         @relation("SubstitutionAbsentTeacher", fields: [absentTeacherId], references: [id], onDelete: Restrict)
+  requestedById    String?
+  requestedBy      User?                        @relation("SubstitutionRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
+  substitutionDate DateTime                     @db.Date
+  status           String                       @default("pending")
+  items            GroupClassSubstitutionItem[]
+  createdAt        DateTime                     @default(now())
+  updatedAt        DateTime                     @updatedAt
+
+  @@index([absentTeacherId, substitutionDate])
+  @@index([status, substitutionDate])
+}
+
+model GroupClassSubstitutionItem {
+  id                  String                        @id @default(cuid())
+  requestId           String
+  request             GroupClassSubstitutionRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  poolScheduleBlockId String
+  poolScheduleBlock   PoolScheduleBlock             @relation(fields: [poolScheduleBlockId], references: [id], onDelete: Restrict)
+  substituteTeacherId String
+  substituteTeacher   User                          @relation("SubstitutionSubstituteTeacher", fields: [substituteTeacherId], references: [id], onDelete: Restrict)
+  status              String                        @default("pending")
+  accumulation        Boolean                       @default(false)
+  poolKey             String
+  laneNumber          Int
+  title               String
+  notes               String?
+  startMinutes        Int
+  endMinutes          Int
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
+
+  @@index([substituteTeacherId, status])
+  @@index([poolScheduleBlockId])
 }
 
 model GroupClassHourlyRate {
