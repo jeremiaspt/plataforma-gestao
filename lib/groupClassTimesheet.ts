@@ -212,7 +212,7 @@ export async function calculateGroupClassTimesheet({
       weekday: item.request.substitutionDate.getDay(),
       startMinutes: item.startMinutes,
       endMinutes: item.endMinutes,
-      title: item.title,
+      title: item.accumulation ? `ACUM. ${item.title}` : item.title,
       notes: item.notes,
       recurrenceType: "substitution",
       validFrom: item.request.substitutionDate,
