@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
-import { getPaymentEmailSettings } from "@/lib/email";
+import { getPaymentEmailSettings, getSubstitutionEmailSettings } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export default async function EmailSettingsPage({
@@ -18,11 +18,12 @@ export default async function EmailSettingsPage({
     redirect("/dashboard");
   }
 
-  const [settings, logs] = await Promise.all([
+  const [paymentSettings, substitutionSettings, logs] = await Promise.all([
     getPaymentEmailSettings(),
+    getSubstitutionEmailSettings(),
     prisma.emailLog.findMany({
       orderBy: { createdAt: "desc" },
-      take: 80
+      take: 100
     })
   ]);
 
@@ -32,8 +33,8 @@ export default async function EmailSettingsPage({
         <div className="topbar">
           <div>
             <p className="eyebrow">Configuração</p>
-            <h1>Emails de pagamentos TP</h1>
-            <p className="muted">Os pagamentos lançados pela receção ou admin enviam email ao professor com os CC definidos aqui.</p>
+            <h1>Emails</h1>
+            <p className="muted">Define os envios automáticos e consulta os logs de emails enviados pela plataforma.</p>
           </div>
         </div>
 
@@ -51,23 +52,45 @@ export default async function EmailSettingsPage({
 
         {activeTab === "settings" ? (
           <form className="email-settings-form email-settings-card" action="/api/email-settings" method="post">
-            <label className="checkbox">
-              <input type="checkbox" name="enabled" defaultChecked={settings.enabled} />
-              Enviar emails ao professor quando é lançado um pagamento TP
-            </label>
-            <div className="field">
-              <label htmlFor="ccEmails">CC diretor/coordenadores</label>
-              <textarea
-                id="ccEmails"
-                name="ccEmails"
-                defaultValue={settings.ccEmails || ""}
-                placeholder="email1@exemplo.pt, email2@exemplo.pt"
-                rows={4}
-              />
+            <div className="email-settings-section">
+              <h2>Pagamentos TP</h2>
+              <label className="checkbox">
+                <input type="checkbox" name="paymentEnabled" defaultChecked={paymentSettings.enabled} />
+                Enviar emails ao professor quando é lançado um pagamento TP
+              </label>
+              <div className="field">
+                <label htmlFor="paymentCcEmails">CC diretor/coordenadores</label>
+                <textarea
+                  id="paymentCcEmails"
+                  name="paymentCcEmails"
+                  defaultValue={paymentSettings.ccEmails || ""}
+                  placeholder="email1@exemplo.pt, email2@exemplo.pt"
+                  rows={3}
+                />
+              </div>
             </div>
+
+            <div className="email-settings-section">
+              <h2>Substituições</h2>
+              <label className="checkbox">
+                <input type="checkbox" name="substitutionEnabled" defaultChecked={substitutionSettings.enabled} />
+                Enviar emails de pedidos e respostas de substituições
+              </label>
+              <div className="field">
+                <label htmlFor="substitutionCcEmails">CC diretor/coordenadores</label>
+                <textarea
+                  id="substitutionCcEmails"
+                  name="substitutionCcEmails"
+                  defaultValue={substitutionSettings.ccEmails || ""}
+                  placeholder="email1@exemplo.pt, email2@exemplo.pt"
+                  rows={3}
+                />
+              </div>
+            </div>
+
             <p className="muted">No Render devem estar definidas as variáveis RESEND_API_KEY e EMAIL_FROM.</p>
             <button className="button" type="submit">
-              Guardar configuracao
+              Guardar configuração
             </button>
           </form>
         ) : null}

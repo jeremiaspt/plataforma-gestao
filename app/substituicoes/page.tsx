@@ -28,6 +28,13 @@ function classLabel(block: { poolKey: string; laneNumber: number }) {
   return `${poolMap.eyebrow} · ${lane?.label || `${poolMap.laneFieldLabel} ${block.laneNumber}`}`;
 }
 
+function itemStatusText(status: string) {
+  if (status === "approved") return "Aceite";
+  if (status === "rejected") return "Rejeitada";
+  if (status === "cancelled") return "Cancelada";
+  return "Pendente";
+}
+
 export default async function SubstitutionsPage({
   searchParams
 }: {
@@ -240,6 +247,29 @@ export default async function SubstitutionsPage({
                             {classLabel(item)}
                             {item.accumulation ? " · Acumulação" : ""}
                           </small>
+                          <div className="substitution-item-actions">
+                            <span className={statusClass(item.status)}>{itemStatusText(item.status)}</span>
+                            {item.status === "pending" && item.substituteTeacherId === user.id ? (
+                              <>
+                                <form action="/api/group-class-substitutions/respond" method="post">
+                                  <input type="hidden" name="itemId" value={item.id} />
+                                  <input type="hidden" name="action" value="approved" />
+                                  <input type="hidden" name="date" value={selectedDateValue} />
+                                  <button className="button compact-button" type="submit">
+                                    Aceitar
+                                  </button>
+                                </form>
+                                <form action="/api/group-class-substitutions/respond" method="post">
+                                  <input type="hidden" name="itemId" value={item.id} />
+                                  <input type="hidden" name="action" value="rejected" />
+                                  <input type="hidden" name="date" value={selectedDateValue} />
+                                  <button className="button danger compact-button" type="submit">
+                                    Rejeitar
+                                  </button>
+                                </form>
+                              </>
+                            ) : null}
+                          </div>
                         </div>
                       ))}
                     </div>

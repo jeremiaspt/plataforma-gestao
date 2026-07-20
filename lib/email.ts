@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 
 const paymentNotificationKey = "personal_training_payment";
+const substitutionNotificationKey = "group_class_substitution";
 
 export function parseEmailList(value?: string | null) {
   return (value || "")
@@ -15,6 +16,18 @@ export async function getPaymentEmailSettings() {
     update: {},
     create: {
       key: paymentNotificationKey,
+      enabled: true,
+      ccEmails: ""
+    }
+  });
+}
+
+export async function getSubstitutionEmailSettings() {
+  return prisma.emailSettings.upsert({
+    where: { key: substitutionNotificationKey },
+    update: {},
+    create: {
+      key: substitutionNotificationKey,
       enabled: true,
       ccEmails: ""
     }
@@ -65,4 +78,3 @@ export async function sendResendEmail({
 
   return data.id || null;
 }
-

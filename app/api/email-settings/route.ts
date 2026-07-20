@@ -11,22 +11,38 @@ export async function POST(request: Request) {
   }
 
   const formData = await request.formData();
-  const enabled = formData.get("enabled") === "on";
-  const ccEmails = String(formData.get("ccEmails") || "").trim();
+  const paymentEnabled = formData.get("paymentEnabled") === "on";
+  const paymentCcEmails = String(formData.get("paymentCcEmails") || "").trim();
+  const substitutionEnabled = formData.get("substitutionEnabled") === "on";
+  const substitutionCcEmails = String(formData.get("substitutionCcEmails") || "").trim();
 
   try {
-    await prisma.emailSettings.upsert({
-      where: { key: "personal_training_payment" },
-      update: {
-        enabled,
-        ccEmails
-      },
-      create: {
-        key: "personal_training_payment",
-        enabled,
-        ccEmails
-      }
-    });
+    await prisma.$transaction([
+      prisma.emailSettings.upsert({
+        where: { key: "personal_training_payment" },
+        update: {
+          enabled: paymentEnabled,
+          ccEmails: paymentCcEmails
+        },
+        create: {
+          key: "personal_training_payment",
+          enabled: paymentEnabled,
+          ccEmails: paymentCcEmails
+        }
+      }),
+      prisma.emailSettings.upsert({
+        where: { key: "group_class_substitution" },
+        update: {
+          enabled: substitutionEnabled,
+          ccEmails: substitutionCcEmails
+        },
+        create: {
+          key: "group_class_substitution",
+          enabled: substitutionEnabled,
+          ccEmails: substitutionCcEmails
+        }
+      })
+    ]);
 
     return NextResponse.redirect(appRedirectUrl("/configuracoes-email?tab=settings&success=1", request));
   } catch {

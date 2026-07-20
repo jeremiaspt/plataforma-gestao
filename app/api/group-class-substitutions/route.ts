@@ -3,6 +3,7 @@ import { hasRole, requireUser } from "@/lib/auth";
 import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { dateToWeekday, overlapsExistingBlock, parseDateInput, poolBlockAppliesToDate } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
+import { sendSubstitutionRequestEmail } from "@/lib/substitutionEmail";
 import { appRedirectUrl } from "@/lib/url";
 
 function redirectPath(request: Request, status: "success" | "error", dateValue: string, teacherId?: string) {
@@ -81,9 +82,10 @@ export async function POST(request: Request) {
       active: true,
       roles: { some: { role: { key: "professor" } } }
     },
-    select: { id: true }
+    select: { id: true, email: true, name: true }
   });
   const validSubstituteIds = new Set(substitutes.map((teacher) => teacher.id));
+  const substitutesById = new Map(substitutes.map((teacher) => [teacher.id, teacher]));
 
   const substituteBlocks = await prisma.poolScheduleBlock.findMany({
     where: {
@@ -134,15 +136,50 @@ export async function POST(request: Request) {
     });
   }
 
-  await prisma.groupClassSubstitutionRequest.create({
+  const substitutionRequest = await prisma.groupClassSubstitutionRequest.create({
     data: {
       absentTeacherId,
       requestedById: user.id,
       status: isAdmin ? "approved" : "pending",
       substitutionDate,
       items: { createMany: { data: items } }
+    },
+    include: {
+      absentTeacher: { select: { name: true } },
+      items: true
     }
   });
+
+  if (!isAdmin) {
+    const actionUrl = appRedirectUrl(`/substituicoes?tab=gerir&date=${dateValue}`, request).toString();
+    const itemsBySubstitute = new Map<string, typeof substitutionRequest.items>();
+
+    for (const item of substitutionRequest.items) {
+      const substituteItems = itemsBySubstitute.get(item.substituteTeacherId) || [];
+      substituteItems.push(item);
+      itemsBySubstitute.set(item.substituteTeacherId, substituteItems);
+    }
+
+    await Promise.all(
+      Array.from(itemsBySubstitute.entries()).map(([substituteTeacherId, substituteItems]) => {
+        const substituteTeacher = substitutesById.get(substituteTeacherId);
+
+        if (!substituteTeacher) {
+          return Promise.resolve();
+        }
+
+        return sendSubstitutionRequestEmail({
+          requestId: substitutionRequest.id,
+          absentTeacherName: substitutionRequest.absentTeacher.name,
+          substituteTeacherEmail: substituteTeacher.email,
+          substituteTeacherName: substituteTeacher.name,
+          substitutionDate,
+          items: substituteItems,
+          actionUrl
+        });
+      })
+    );
+  }
 
   return redirectPath(request, "success", dateValue, selectedTeacherId);
 }
