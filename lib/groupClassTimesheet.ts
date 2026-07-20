@@ -76,11 +76,50 @@ function blockMatchesRule(block: Block, rule: RateRule) {
   return patterns.some((pattern) => title.startsWith(pattern));
 }
 
+function overlapMinutes(startMinutes: number, endMinutes: number, intervals: Array<{ startMinutes: number; endMinutes: number }>) {
+  const normalizedIntervals = intervals
+    .map((interval) => ({
+      startMinutes: Math.max(startMinutes, interval.startMinutes),
+      endMinutes: Math.min(endMinutes, interval.endMinutes)
+    }))
+    .filter((interval) => interval.endMinutes > interval.startMinutes)
+    .sort((a, b) => a.startMinutes - b.startMinutes);
+
+  let total = 0;
+  let currentStart: number | null = null;
+  let currentEnd: number | null = null;
+
+  for (const interval of normalizedIntervals) {
+    if (currentStart === null || currentEnd === null) {
+      currentStart = interval.startMinutes;
+      currentEnd = interval.endMinutes;
+      continue;
+    }
+
+    if (interval.startMinutes <= currentEnd) {
+      currentEnd = Math.max(currentEnd, interval.endMinutes);
+      continue;
+    }
+
+    total += currentEnd - currentStart;
+    currentStart = interval.startMinutes;
+    currentEnd = interval.endMinutes;
+  }
+
+  if (currentStart !== null && currentEnd !== null) {
+    total += currentEnd - currentStart;
+  }
+
+  return total;
+}
+
 export async function calculateGroupClassTimesheet({
+  excludeDockSupportOverlapWithClasses = false,
   holidayOptions,
   month,
   teacherId
 }: {
+  excludeDockSupportOverlapWithClasses?: boolean;
   holidayOptions: HolidayOptions;
   month?: string;
   teacherId: string;
@@ -131,8 +170,12 @@ export async function calculateGroupClassTimesheet({
     const dateValue = dateToInputValue(date);
     const weekday = date.getDay();
     const grouped = new Map<string, Block[]>();
+    const dayBlocks = blocks.filter((item) => item.weekday === weekday && poolBlockAppliesToDate(item, date));
+    const classIntervals = dayBlocks
+      .filter((item) => item.poolKey !== "apoio_cais")
+      .map((item) => ({ startMinutes: item.startMinutes, endMinutes: item.endMinutes }));
 
-    for (const block of blocks.filter((item) => item.weekday === weekday && poolBlockAppliesToDate(item, date))) {
+    for (const block of dayBlocks) {
       const key = [block.poolKey, block.startMinutes, block.endMinutes].join("|");
       grouped.set(key, [...(grouped.get(key) || []), block]);
     }
@@ -152,9 +195,19 @@ export async function calculateGroupClassTimesheet({
         continue;
       }
 
-      row.dayHours.set(dateValue, (row.dayHours.get(dateValue) || 0) + hours);
+      const countedMinutes =
+        excludeDockSupportOverlapWithClasses && block.poolKey === "apoio_cais"
+          ? Math.max(0, block.endMinutes - block.startMinutes - overlapMinutes(block.startMinutes, block.endMinutes, classIntervals))
+          : block.endMinutes - block.startMinutes;
+      const countedHours = countedMinutes / 60;
+
+      if (countedMinutes <= 0) {
+        continue;
+      }
+
+      row.dayHours.set(dateValue, (row.dayHours.get(dateValue) || 0) + countedHours);
       row.dayCounts.set(dateValue, (row.dayCounts.get(dateValue) || 0) + 1);
-      row.totalHours += hours;
+      row.totalHours += countedHours;
     }
   }
 

@@ -20,27 +20,37 @@ export async function getSystemSettings() {
       maintenanceMode: true,
       includeLisbonMunicipalHolidays: false,
       includeChristmasEveHoliday: false,
-      includeNewYearsEveHoliday: false
+      includeNewYearsEveHoliday: false,
+      excludeDockSupportOverlapWithClasses: false
     }
   });
 }
 
 export async function setSystemSettings({
   includeChristmasEveHoliday,
+  excludeDockSupportOverlapWithClasses,
   includeLisbonMunicipalHolidays,
   includeNewYearsEveHoliday,
   maintenanceMode
 }: {
   includeChristmasEveHoliday: boolean;
+  excludeDockSupportOverlapWithClasses: boolean;
   includeLisbonMunicipalHolidays: boolean;
   includeNewYearsEveHoliday: boolean;
   maintenanceMode: boolean;
 }) {
   return prisma.systemSettings.upsert({
     where: { key: settingsKey },
-    update: { includeChristmasEveHoliday, includeLisbonMunicipalHolidays, includeNewYearsEveHoliday, maintenanceMode },
+    update: {
+      excludeDockSupportOverlapWithClasses,
+      includeChristmasEveHoliday,
+      includeLisbonMunicipalHolidays,
+      includeNewYearsEveHoliday,
+      maintenanceMode
+    },
     create: {
       key: settingsKey,
+      excludeDockSupportOverlapWithClasses,
       includeChristmasEveHoliday,
       includeLisbonMunicipalHolidays,
       includeNewYearsEveHoliday,

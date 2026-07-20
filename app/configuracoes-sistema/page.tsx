@@ -66,6 +66,17 @@ export default async function SystemSettingsPage({
           <p className="muted">
             Quando estas opções estão ativas, esses dias ficam assinalados como ponto, não permitem marcações PT e não contam nas aulas de grupo.
           </p>
+          <label className="checkbox">
+            <input
+              type="checkbox"
+              name="excludeDockSupportOverlapWithClasses"
+              defaultChecked={settings.excludeDockSupportOverlapWithClasses}
+            />
+            Não contabilizar Apoio ao Cais em acumulação com aula
+          </label>
+          <p className="muted">
+            Quando ativo, se o Apoio ao Cais coincidir com uma aula do mesmo professor, só a parte sem sobreposição entra na folha de horas.
+          </p>
           <button className="button" type="submit">
             Guardar configuração
           </button>

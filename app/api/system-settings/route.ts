@@ -15,9 +15,11 @@ export async function POST(request: Request) {
   const includeLisbonMunicipalHolidays = formData.get("includeLisbonMunicipalHolidays") === "on";
   const includeChristmasEveHoliday = formData.get("includeChristmasEveHoliday") === "on";
   const includeNewYearsEveHoliday = formData.get("includeNewYearsEveHoliday") === "on";
+  const excludeDockSupportOverlapWithClasses = formData.get("excludeDockSupportOverlapWithClasses") === "on";
 
   try {
     await setSystemSettings({
+      excludeDockSupportOverlapWithClasses,
       includeChristmasEveHoliday,
       includeLisbonMunicipalHolidays,
       includeNewYearsEveHoliday,

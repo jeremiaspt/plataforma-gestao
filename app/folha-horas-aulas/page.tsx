@@ -66,6 +66,7 @@ export default async function GroupClassTimesheetPage({
   const selectedMonth = params.month || currentBillingMonthValue();
   const systemSettings = await getSystemSettings();
   const timesheet = await calculateGroupClassTimesheet({
+    excludeDockSupportOverlapWithClasses: systemSettings.excludeDockSupportOverlapWithClasses,
     holidayOptions: {
       includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
       includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
