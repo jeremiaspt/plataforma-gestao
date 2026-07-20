@@ -34,6 +34,38 @@ function laneLabel(poolKey: string, laneNumber: number) {
   return poolMap?.lanes.find((lane) => lane.number === laneNumber)?.label || `${poolMap?.laneFieldLabel || "Espaço"} ${laneNumber}`;
 }
 
+function mergeSameClassBlocks<
+  T extends {
+    id: string;
+    poolKey: string;
+    startMinutes: number;
+    endMinutes: number;
+    title: string;
+    notes: string | null;
+    laneNumber: number;
+  }
+>(blocks: T[]) {
+  const merged = new Map<string, T & { laneNumbers: number[] }>();
+
+  for (const block of blocks) {
+    const key = [block.poolKey, block.startMinutes, block.title, block.notes || ""].join("|");
+    const current = merged.get(key);
+
+    if (!current) {
+      merged.set(key, { ...block, laneNumbers: [block.laneNumber] });
+      continue;
+    }
+
+    current.endMinutes = Math.max(current.endMinutes, block.endMinutes);
+    current.laneNumbers.push(block.laneNumber);
+  }
+
+  return Array.from(merged.values()).map((block) => ({
+    ...block,
+    laneNumbers: Array.from(new Set(block.laneNumbers)).sort((a, b) => a - b)
+  }));
+}
+
 export default async function GroupClassesPage({
   searchParams
 }: {
@@ -128,7 +160,9 @@ export default async function GroupClassesPage({
       }
     >();
 
-    for (const block of blocks.filter((item) => item.weekday === weekday.key && poolBlockAppliesToDate(item, date))) {
+    const dayBlocks = mergeSameClassBlocks(blocks.filter((item) => item.weekday === weekday.key && poolBlockAppliesToDate(item, date)));
+
+    for (const block of dayBlocks) {
       const groupKey = [block.poolKey, block.startMinutes, block.endMinutes].join("|");
       const current =
         grouped.get(groupKey) ||
@@ -148,7 +182,7 @@ export default async function GroupClassesPage({
           laneNumbers: []
         };
 
-      currentClass.laneNumbers.push(block.laneNumber);
+      currentClass.laneNumbers.push(...block.laneNumbers);
       current.classes.set(classKey, currentClass);
       grouped.set(groupKey, current);
     }

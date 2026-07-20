@@ -77,6 +77,24 @@ function blockMatchesRule(block: Block, rule: RateRule) {
   return patterns.some((pattern) => title.startsWith(pattern));
 }
 
+function mergeSameClassBlocks(blocks: Block[]) {
+  const merged = new Map<string, Block>();
+
+  for (const block of blocks) {
+    const key = [block.poolKey, block.startMinutes, block.title, block.notes || ""].join("|");
+    const current = merged.get(key);
+
+    if (!current) {
+      merged.set(key, { ...block });
+      continue;
+    }
+
+    current.endMinutes = Math.max(current.endMinutes, block.endMinutes);
+  }
+
+  return Array.from(merged.values());
+}
+
 function overlapMinutes(startMinutes: number, endMinutes: number, intervals: Array<{ startMinutes: number; endMinutes: number }>) {
   const normalizedIntervals = intervals
     .map((interval) => ({
@@ -171,7 +189,7 @@ export async function calculateGroupClassTimesheet({
     const dateValue = dateToInputValue(date);
     const weekday = date.getDay();
     const grouped = new Map<string, Block[]>();
-    const dayBlocks = blocks.filter((item) => item.weekday === weekday && poolBlockAppliesToDate(item, date));
+    const dayBlocks = mergeSameClassBlocks(blocks.filter((item) => item.weekday === weekday && poolBlockAppliesToDate(item, date)));
     const classIntervals = dayBlocks
       .filter((item) => item.poolKey !== "apoio_cais")
       .map((item) => ({ startMinutes: item.startMinutes, endMinutes: item.endMinutes }));
