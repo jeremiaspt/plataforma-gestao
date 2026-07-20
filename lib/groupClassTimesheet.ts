@@ -29,6 +29,7 @@ type Block = {
   recurrenceType: string;
   validFrom: Date | null;
   validTo: Date | null;
+  groupKeySuffix?: string;
 };
 
 function addDays(date: Date, days: number) {
@@ -154,7 +155,7 @@ export async function calculateGroupClassTimesheet({
   }
 
   const period = getBillingPeriod(teacher.billingCycle, month);
-  const [rules, blocks] = await Promise.all([
+  const [rules, blocks, outgoingSubstitutions, incomingSubstitutions] = await Promise.all([
     prisma.groupClassHourlyRate.findMany({
       where: { active: true },
       orderBy: [{ displayOrder: "asc" }, { name: "asc" }]
@@ -166,8 +167,60 @@ export async function calculateGroupClassTimesheet({
         type: "aula"
       },
       orderBy: [{ weekday: "asc" }, { startMinutes: "asc" }, { poolKey: "asc" }, { laneNumber: "asc" }]
+    }),
+    prisma.groupClassSubstitutionItem.findMany({
+      where: {
+        status: "approved",
+        request: {
+          absentTeacherId: teacherId,
+          status: "approved",
+          substitutionDate: { gte: period.start, lt: period.endExclusive }
+        }
+      },
+      include: { request: { select: { substitutionDate: true } } }
+    }),
+    prisma.groupClassSubstitutionItem.findMany({
+      where: {
+        status: "approved",
+        substituteTeacherId: teacherId,
+        request: {
+          status: "approved",
+          substitutionDate: { gte: period.start, lt: period.endExclusive }
+        }
+      },
+      include: { request: { select: { substitutionDate: true } } },
+      orderBy: [{ startMinutes: "asc" }, { poolKey: "asc" }, { laneNumber: "asc" }]
     })
   ]);
+  const outgoingSubstitutionsByDate = new Map<string, Set<string>>();
+  const incomingSubstitutionsByDate = new Map<string, Block[]>();
+
+  for (const item of outgoingSubstitutions) {
+    const dateValue = dateToInputValue(item.request.substitutionDate);
+    const blockIds = outgoingSubstitutionsByDate.get(dateValue) || new Set<string>();
+    blockIds.add(item.poolScheduleBlockId);
+    outgoingSubstitutionsByDate.set(dateValue, blockIds);
+  }
+
+  for (const item of incomingSubstitutions) {
+    const dateValue = dateToInputValue(item.request.substitutionDate);
+    const dayBlocks = incomingSubstitutionsByDate.get(dateValue) || [];
+
+    dayBlocks.push({
+      id: item.id,
+      poolKey: item.poolKey,
+      weekday: item.request.substitutionDate.getDay(),
+      startMinutes: item.startMinutes,
+      endMinutes: item.endMinutes,
+      title: item.title,
+      notes: item.notes,
+      recurrenceType: "substitution",
+      validFrom: item.request.substitutionDate,
+      validTo: item.request.substitutionDate,
+      groupKeySuffix: item.accumulation ? item.id : undefined
+    });
+    incomingSubstitutionsByDate.set(dateValue, dayBlocks);
+  }
 
   const rows = rules.map((rule) => ({
     id: rule.id,
@@ -191,13 +244,17 @@ export async function calculateGroupClassTimesheet({
     const dateValue = dateToInputValue(date);
     const weekday = date.getDay();
     const grouped = new Map<string, Block[]>();
-    const dayBlocks = mergeSameClassBlocks(blocks.filter((item) => item.weekday === weekday && poolBlockAppliesToDate(item, date)));
+    const substitutedBlockIds = outgoingSubstitutionsByDate.get(dateValue) || new Set<string>();
+    const ownBlocks = blocks.filter(
+      (item) => item.weekday === weekday && !substitutedBlockIds.has(item.id) && poolBlockAppliesToDate(item, date)
+    );
+    const dayBlocks = mergeSameClassBlocks([...ownBlocks, ...(incomingSubstitutionsByDate.get(dateValue) || [])]);
     const classIntervals = dayBlocks
       .filter((item) => item.poolKey !== "apoio_cais")
       .map((item) => ({ startMinutes: item.startMinutes, endMinutes: item.endMinutes }));
 
     for (const block of dayBlocks) {
-      const key = [block.poolKey, block.startMinutes, block.endMinutes].join("|");
+      const key = [block.poolKey, block.startMinutes, block.endMinutes, block.groupKeySuffix || ""].join("|");
       grouped.set(key, [...(grouped.get(key) || []), block]);
     }
 
