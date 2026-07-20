@@ -114,6 +114,7 @@ export async function calculateGroupClassTimesheet({
     id: rule.id,
     name: rule.name,
     hourlyRate: decimalToNumber(rule.hourlyRate),
+    dayCounts: new Map<string, number>(),
     dayHours: new Map<string, number>(),
     totalHours: 0,
     totalValue: 0
@@ -151,6 +152,7 @@ export async function calculateGroupClassTimesheet({
       }
 
       row.dayHours.set(dateValue, (row.dayHours.get(dateValue) || 0) + hours);
+      row.dayCounts.set(dateValue, (row.dayCounts.get(dateValue) || 0) + 1);
       row.totalHours += hours;
     }
   }

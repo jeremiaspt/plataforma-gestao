@@ -411,15 +411,15 @@ select {
 
 .timesheet-table {
   border-collapse: collapse;
-  min-width: 1180px;
+  table-layout: fixed;
   width: 100%;
 }
 
 .timesheet-table th,
 .timesheet-table td {
   border: 1px dashed #94a3b8;
-  font-size: 12px;
-  padding: 6px 7px;
+  font-size: 11px;
+  padding: 5px 4px;
   text-align: center;
   white-space: nowrap;
 }
@@ -438,15 +438,33 @@ select {
 
 .timesheet-table thead small {
   display: block;
-  font-size: 10px;
-  margin-top: 2px;
+  font-size: 9px;
+  line-height: 1.05;
+  margin-top: 1px;
 }
 
 .timesheet-table tbody th {
   background: #f8fafc;
   color: #0f3d73;
-  min-width: 170px;
+  width: 145px;
   text-align: left;
+  white-space: normal;
+}
+
+.timesheet-table thead th:first-child {
+  width: 145px;
+}
+
+.timesheet-table thead th:nth-child(2) {
+  width: 72px;
+}
+
+.timesheet-table thead th:nth-last-child(2) {
+  width: 76px;
+}
+
+.timesheet-table thead th:last-child {
+  width: 82px;
 }
 
 .timesheet-table tbody td:nth-last-child(-n + 2),

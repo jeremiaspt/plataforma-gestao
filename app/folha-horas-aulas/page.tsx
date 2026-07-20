@@ -124,7 +124,7 @@ export default async function GroupClassTimesheetPage({
                 {periodDates.map((date) => (
                   <th key={dateToInputValue(date)}>
                     <span>{date.getDate()}</span>
-                    <small>{date.toLocaleDateString("pt-PT", { weekday: "short" })}</small>
+                    <small>{date.toLocaleDateString("pt-PT", { weekday: "short" }).replace(".", "")}</small>
                   </th>
                 ))}
                 <th>Total horas</th>
@@ -138,8 +138,8 @@ export default async function GroupClassTimesheetPage({
                   <td>{row.hourlyRate.toFixed(2)}</td>
                   {periodDates.map((date) => {
                     const dateValue = dateToInputValue(date);
-                    const hours = row.dayHours.get(dateValue) || 0;
-                    return <td key={dateValue}>{hours ? hours.toFixed(2).replace(".", ",") : ""}</td>;
+                    const count = row.dayCounts.get(dateValue) || 0;
+                    return <td key={dateValue}>{count || ""}</td>;
                   })}
                   <td>{row.totalHours.toFixed(2).replace(".", ",")}</td>
                   <td>{formatCurrency(row.totalValue)}</td>
