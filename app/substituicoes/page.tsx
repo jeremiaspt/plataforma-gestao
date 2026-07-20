@@ -31,7 +31,7 @@ function classLabel(block: { poolKey: string; laneNumber: number }) {
 export default async function SubstitutionsPage({
   searchParams
 }: {
-  searchParams: Promise<{ date?: string; error?: string; success?: string; teacherId?: string }>;
+  searchParams: Promise<{ date?: string; error?: string; success?: string; tab?: string; teacherId?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -45,6 +45,8 @@ export default async function SubstitutionsPage({
 
   const selectedDate = parseDateParam(params.date);
   const selectedDateValue = dateToInputValue(selectedDate);
+  const todayValue = dateToInputValue(new Date());
+  const activeTab = params.tab === "geral" ? "geral" : "gerir";
   const weekday = selectedDate.getDay();
   const teachers = await prisma.user.findMany({
     where: {
@@ -57,7 +59,7 @@ export default async function SubstitutionsPage({
   const selectedTeacherId = isAdmin ? params.teacherId || teachers[0]?.id || user.id : user.id;
   const substituteTeachers = teachers.filter((teacher) => teacher.id !== selectedTeacherId);
 
-  const [rawBlocks, substitutions] = await Promise.all([
+  const [rawBlocks, substitutions, allFutureSubstitutions] = await Promise.all([
     prisma.poolScheduleBlock.findMany({
       where: {
         active: true,
@@ -80,10 +82,23 @@ export default async function SubstitutionsPage({
       },
       orderBy: [{ substitutionDate: "asc" }, { createdAt: "desc" }],
       take: 40
+    }),
+    prisma.groupClassSubstitutionRequest.findMany({
+      where: {
+        status: { not: "cancelled" },
+        substitutionDate: { gte: new Date(`${todayValue}T00:00:00`) }
+      },
+      include: {
+        absentTeacher: { select: { name: true } },
+        items: { include: { substituteTeacher: { select: { name: true } } }, orderBy: { startMinutes: "asc" } }
+      },
+      orderBy: [{ substitutionDate: "asc" }, { createdAt: "desc" }],
+      take: 80
     })
   ]);
 
   const blocks = rawBlocks.filter((block) => poolBlockAppliesToDate(block, selectedDate));
+  const tabSuffix = `date=${selectedDateValue}${isAdmin ? `&teacherId=${selectedTeacherId}` : ""}`;
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
@@ -94,7 +109,7 @@ export default async function SubstitutionsPage({
             <h1>Substituições</h1>
             <p className="muted">Cria pedidos de substituição para aulas de grupo e acompanha as próximas substituições.</p>
           </div>
-          <span className="status active">{substitutions.length} registos</span>
+          <span className="status active">{activeTab === "geral" ? allFutureSubstitutions.length : substitutions.length} registos</span>
         </div>
 
         {params.success ? <p className="success">Pedido de substituição registado.</p> : null}
@@ -102,7 +117,19 @@ export default async function SubstitutionsPage({
           <p className="error">Não foi possível criar o pedido. Confirma as aulas, substitutos e a opção de acumulação.</p>
         ) : null}
 
+        <div className="tabs">
+          <a className={activeTab === "gerir" ? "tab active" : "tab"} href={`/substituicoes?tab=gerir&${tabSuffix}`}>
+            Gerir substituiÃ§Ãµes
+          </a>
+          <a className={activeTab === "geral" ? "tab active" : "tab"} href={`/substituicoes?tab=geral&${tabSuffix}`}>
+            VisÃ£o geral
+          </a>
+        </div>
+
+        {activeTab === "gerir" ? (
+          <>
         <form className="substitution-filter" method="get" action="/substituicoes">
+          <input type="hidden" name="tab" value="gerir" />
           <div className="field">
             <label htmlFor="date">Dia da falta</label>
             <input id="date" name="date" type="date" defaultValue={selectedDateValue} />
@@ -194,6 +221,7 @@ export default async function SubstitutionsPage({
                       <input type="hidden" name="requestId" value={request.id} />
                       <input type="hidden" name="date" value={selectedDateValue} />
                       <input type="hidden" name="teacherId" value={selectedTeacherId} />
+                      <input type="hidden" name="tab" value="gerir" />
                       <button className="button danger compact-button" type="submit">
                         Cancelar
                       </button>
@@ -219,6 +247,45 @@ export default async function SubstitutionsPage({
             );
           })}
         </div>
+          </>
+        ) : (
+          <>
+            <div className="substitution-list-header">
+              <h2>Futuras substituiÃ§Ãµes de todos os professores</h2>
+              <p className="muted">Mostra quem estÃ¡ previsto substituir aulas nos dias atuais e futuros.</p>
+            </div>
+            <div className="substitution-request-list">
+              {allFutureSubstitutions.length === 0 ? <p className="muted">Sem substituiÃ§Ãµes futuras registadas.</p> : null}
+              {allFutureSubstitutions.map((request) => (
+                <article className="substitution-request-card" key={request.id}>
+                  <div className="substitution-request-head">
+                    <div>
+                      <strong>
+                        {formatDate(request.substitutionDate)} Â· Falta: {request.absentTeacher.name}
+                      </strong>
+                      <span>{request.items.length} aula(s)</span>
+                    </div>
+                    <span className={statusClass(request.status)}>{statusLabel(request.status)}</span>
+                  </div>
+                  <div className="substitution-request-items">
+                    {request.items.map((item) => (
+                      <div className="substitution-request-item" key={item.id}>
+                        <span>
+                          {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} Â· {item.title}
+                        </span>
+                        <strong>{item.substituteTeacher.name}</strong>
+                        <small>
+                          {classLabel(item)}
+                          {item.accumulation ? " Â· AcumulaÃ§Ã£o" : ""}
+                        </small>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </>
+        )}
       </section>
     </AppShell>
   );

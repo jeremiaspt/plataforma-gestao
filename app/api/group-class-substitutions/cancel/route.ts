@@ -4,8 +4,12 @@ import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
-function redirectPath(request: Request, status: "success" | "error", dateValue: string, teacherId?: string) {
+function redirectPath(request: Request, status: "success" | "error", dateValue: string, teacherId?: string, tab?: string) {
   const params = new URLSearchParams({ [status]: "1" });
+
+  if (tab) {
+    params.set("tab", tab);
+  }
 
   if (dateValue) {
     params.set("date", dateValue);
@@ -31,6 +35,7 @@ export async function POST(request: Request) {
   const requestId = String(formData.get("requestId") || "");
   const dateValue = String(formData.get("date") || "");
   const teacherId = String(formData.get("teacherId") || "");
+  const tab = String(formData.get("tab") || "");
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: `/substituicoes?date=${dateValue}` });
 
   if (maintenanceBlock) {
@@ -43,11 +48,11 @@ export async function POST(request: Request) {
   });
 
   if (!substitutionRequest || substitutionRequest.status === "cancelled") {
-    return redirectPath(request, "error", dateValue, teacherId);
+    return redirectPath(request, "error", dateValue, teacherId, tab);
   }
 
   if (!isAdmin && substitutionRequest.absentTeacherId !== user.id) {
-    return redirectPath(request, "error", dateValue, teacherId);
+    return redirectPath(request, "error", dateValue, teacherId, tab);
   }
 
   await prisma.$transaction([
@@ -61,5 +66,5 @@ export async function POST(request: Request) {
     })
   ]);
 
-  return redirectPath(request, "success", dateValue, teacherId);
+  return redirectPath(request, "success", dateValue, teacherId, tab);
 }
