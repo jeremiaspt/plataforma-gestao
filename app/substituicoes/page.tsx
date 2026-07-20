@@ -7,12 +7,14 @@ import { prisma } from "@/lib/prisma";
 function statusLabel(status: string) {
   if (status === "approved") return "Aprovado";
   if (status === "rejected") return "Rejeitado";
+  if (status === "cancelled") return "Cancelado";
   return "Pendente";
 }
 
 function statusClass(status: string) {
   if (status === "approved") return "status active";
   if (status === "rejected") return "status inactive";
+  if (status === "cancelled") return "status inactive";
   return "status pending";
 }
 
@@ -173,7 +175,10 @@ export default async function SubstitutionsPage({
         </div>
         <div className="substitution-request-list">
           {substitutions.length === 0 ? <p className="muted">Sem substituições futuras registadas.</p> : null}
-          {substitutions.map((request) => (
+          {substitutions.map((request) => {
+            const canCancel = request.status !== "cancelled" && (isAdmin || request.absentTeacherId === user.id);
+
+            return (
             <article className="substitution-request-card" key={request.id}>
               <div className="substitution-request-head">
                 <div>
@@ -182,7 +187,19 @@ export default async function SubstitutionsPage({
                   </strong>
                   <span>{request.items.length} aula(s)</span>
                 </div>
-                <span className={statusClass(request.status)}>{statusLabel(request.status)}</span>
+                <div className="substitution-request-actions">
+                  <span className={statusClass(request.status)}>{statusLabel(request.status)}</span>
+                  {canCancel ? (
+                    <form action="/api/group-class-substitutions/cancel" method="post">
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <input type="hidden" name="date" value={selectedDateValue} />
+                      <input type="hidden" name="teacherId" value={selectedTeacherId} />
+                      <button className="button danger compact-button" type="submit">
+                        Cancelar
+                      </button>
+                    </form>
+                  ) : null}
+                </div>
               </div>
               <div className="substitution-request-items">
                 {request.items.map((item) => (
@@ -199,7 +216,8 @@ export default async function SubstitutionsPage({
                 ))}
               </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       </section>
     </AppShell>
