@@ -13,6 +13,7 @@ type RateRule = {
   matchPatterns: string | null;
   calculationMode: string;
   durationFilter: number | null;
+  weekendOnly: boolean;
   displayOrder: number;
 };
 
@@ -182,7 +183,11 @@ export async function calculateGroupClassTimesheet({
 
     for (const groupBlocks of grouped.values()) {
       const block = groupBlocks[0];
-      const matchingRule = rules.find((rule) => groupBlocks.some((groupBlock) => blockMatchesRule(groupBlock, rule)));
+      const isWeekend = weekday === 0 || weekday === 6;
+      const dayRules = isWeekend
+        ? [...rules.filter((rule) => rule.weekendOnly), ...rules.filter((rule) => !rule.weekendOnly)]
+        : rules.filter((rule) => !rule.weekendOnly);
+      const matchingRule = dayRules.find((rule) => groupBlocks.some((groupBlock) => blockMatchesRule(groupBlock, rule)));
       const hours = (block.endMinutes - block.startMinutes) / 60;
 
       if (!matchingRule) {

@@ -76,6 +76,10 @@ export default async function GroupClassHourlyRatesPage({
             <label htmlFor="matchPatterns">Aulas tipo</label>
             <textarea id="matchPatterns" name="matchPatterns" rows={2} placeholder="Ex.: N1/N2/N3/N4/AMA2/AMA3/AMA4" />
           </div>
+          <label className="checkbox compact-checkbox">
+            <input type="checkbox" name="weekendOnly" />
+            Fim de semana
+          </label>
           <button className="button" type="submit">
             Criar regra
           </button>
@@ -125,6 +129,10 @@ export default async function GroupClassHourlyRatesPage({
                 <label>Aulas tipo</label>
                 <textarea name="matchPatterns" rows={2} defaultValue={rate.matchPatterns || ""} />
               </div>
+              <label className="checkbox compact-checkbox">
+                <input type="checkbox" name="weekendOnly" defaultChecked={rate.weekendOnly} />
+                Fim de semana
+              </label>
               <label className="checkbox compact-checkbox">
                 <input type="checkbox" name="active" defaultChecked={rate.active} />
                 Ativa

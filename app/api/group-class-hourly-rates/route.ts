@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const durationFilterValue = String(formData.get("durationFilter") || "");
   const durationFilter = durationFilterValue ? Number(durationFilterValue) : null;
   const displayOrder = Number(formData.get("displayOrder"));
+  const weekendOnly = formData.get("weekendOnly") === "on";
 
   if (
     !name ||
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
       matchPatterns: matchSource === "title" ? matchPatterns : null,
       calculationMode,
       durationFilter,
+      weekendOnly,
       displayOrder
     }
   });

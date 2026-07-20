@@ -31,6 +31,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const durationFilterValue = String(formData.get("durationFilter") || "");
   const durationFilter = durationFilterValue ? Number(durationFilterValue) : null;
   const displayOrder = Number(formData.get("displayOrder"));
+  const weekendOnly = formData.get("weekendOnly") === "on";
   const active = formData.get("active") === "on";
 
   if (
@@ -55,7 +56,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       hourlyRate,
       matchPatterns: matchSource === "title" ? matchPatterns : null,
       matchSource,
-      name
+      name,
+      weekendOnly
     }
   });
 
