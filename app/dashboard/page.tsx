@@ -1,4 +1,4 @@
-import { ArrowRight, Brush, CalendarDays, Dumbbell, FileSpreadsheet, Settings, Users, Waves } from "lucide-react";
+import { ArrowRight, Brush, CalendarCheck, CalendarDays, Dumbbell, FileSpreadsheet, Settings, Users, Waves } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/auth";
 
@@ -100,6 +100,20 @@ const toolCards = [
     role: "professor",
     href: "/aulas-grupo",
     icon: CalendarDays
+  },
+  {
+    title: "Substituições",
+    description: "Gerir faltas, substitutos e visão geral futura.",
+    role: "admin",
+    href: "/substituicoes",
+    icon: CalendarCheck
+  },
+  {
+    title: "Substituições",
+    description: "Criar e consultar substituições de aulas.",
+    role: "professor",
+    href: "/substituicoes",
+    icon: CalendarCheck
   },
   {
     title: "Folha de horas",

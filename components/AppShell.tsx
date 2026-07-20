@@ -148,7 +148,7 @@ export async function AppShell({
         ) : null}
         <div className="app-topbar">
           <div>
-            <p className="eyebrow">Sessao iniciada</p>
+            <p className="eyebrow">Sessão iniciada</p>
             <h1>{userName}</h1>
           </div>
         </div>
