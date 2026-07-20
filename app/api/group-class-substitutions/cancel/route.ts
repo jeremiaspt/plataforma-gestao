@@ -36,6 +36,8 @@ export async function POST(request: Request) {
   const dateValue = String(formData.get("date") || "");
   const teacherId = String(formData.get("teacherId") || "");
   const tab = String(formData.get("tab") || "");
+  const statusFilter = String(formData.get("status") || "");
+  const reason = String(formData.get("reason") || "").trim();
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: `/substituicoes?date=${dateValue}` });
 
   if (maintenanceBlock) {
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
     select: { absentTeacherId: true, status: true }
   });
 
-  if (!substitutionRequest || substitutionRequest.status === "cancelled") {
+  if (!substitutionRequest || substitutionRequest.status === "cancelled" || !reason) {
     return redirectPath(request, "error", dateValue, teacherId, tab);
   }
 
@@ -58,7 +60,13 @@ export async function POST(request: Request) {
   await prisma.$transaction([
     prisma.groupClassSubstitutionRequest.update({
       where: { id: requestId },
-      data: { status: "cancelled" }
+      data: {
+        cancelReason: reason,
+        cancelledAt: new Date(),
+        cancelledById: user.id,
+        cancelledByName: user.name,
+        status: "cancelled"
+      }
     }),
     prisma.groupClassSubstitutionItem.updateMany({
       where: { requestId },
@@ -66,5 +74,12 @@ export async function POST(request: Request) {
     })
   ]);
 
-  return redirectPath(request, "success", dateValue, teacherId, tab);
+  const params = new URLSearchParams({ success: "1" });
+
+  if (tab) params.set("tab", tab);
+  if (dateValue) params.set("date", dateValue);
+  if (teacherId) params.set("teacherId", teacherId);
+  if (statusFilter) params.set("status", statusFilter);
+
+  return NextResponse.redirect(appRedirectUrl(`/substituicoes?${params.toString()}`, request));
 }

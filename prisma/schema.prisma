@@ -98,6 +98,10 @@ model GroupClassSubstitutionRequest {
   requestedBy      User?                        @relation("SubstitutionRequestedBy", fields: [requestedById], references: [id], onDelete: SetNull)
   substitutionDate DateTime                     @db.Date
   status           String                       @default("pending")
+  cancelledAt      DateTime?
+  cancelledById    String?
+  cancelledByName  String?
+  cancelReason     String?
   items            GroupClassSubstitutionItem[]
   createdAt        DateTime                     @default(now())
   updatedAt        DateTime                     @updatedAt

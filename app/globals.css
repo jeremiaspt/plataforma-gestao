@@ -451,6 +451,54 @@ select {
   justify-content: flex-end;
 }
 
+.substitution-cancel-form {
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: minmax(180px, 1fr) auto;
+  padding-top: 8px;
+}
+
+.substitution-cancel-form input {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  min-width: 0;
+  padding: 8px 10px;
+}
+
+.substitution-cancel-note {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  color: #7c2d12;
+  display: grid;
+  gap: 3px;
+  padding: 8px 10px;
+}
+
+.substitution-cancel-note span {
+  font-size: 12px;
+}
+
+@media (max-width: 1120px) {
+  .substitution-class-row,
+  .substitution-request-item {
+    grid-template-columns: 1fr;
+  }
+
+  .substitution-item-actions {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 780px) {
+  .substitution-cancel-form,
+  .substitution-filter {
+    grid-template-columns: 1fr;
+  }
+}
+
 .compact-button {
   font-size: 12px;
   min-height: 30px;
