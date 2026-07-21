@@ -721,8 +721,7 @@ select {
 }
 
 .timesheet-table thead th:first-child,
-.timesheet-table thead th:nth-child(2),
-.timesheet-table thead th:nth-child(3) {
+.timesheet-table thead th:nth-child(2) {
   background: #eef2f7;
   color: #0f172a;
 }
@@ -748,10 +747,6 @@ select {
 
 .timesheet-table thead th:nth-child(2) {
   width: 58px;
-}
-
-.timesheet-table thead th:nth-child(3) {
-  width: 72px;
 }
 
 .timesheet-table thead th:nth-last-child(2) {
@@ -796,6 +791,8 @@ select {
 }
 
 .personal-training-timesheet-table thead th:nth-child(3) {
+  background: #eef2f7;
+  color: #0f172a;
   width: 96px;
   white-space: normal;
 }
