@@ -813,7 +813,7 @@ h1 {
 }
 
 .dashboard-section-head {
-  align-items: end;
+  align-items: flex-end;
   border-bottom: 1px solid #e5eaf0;
   display: flex;
   gap: 12px;
@@ -861,6 +861,36 @@ h1 {
   height: 42px;
   justify-content: center;
   width: 42px;
+}
+
+.tool-icon.tool-icon-admin {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.tool-icon.tool-icon-pool {
+  background: #dff7f4;
+  color: #0f766e;
+}
+
+.tool-icon.tool-icon-classes {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.tool-icon.tool-icon-payments {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.tool-icon.tool-icon-general {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.tool-icon.tool-icon-support {
+  background: #f3e8ff;
+  color: #7e22ce;
 }
 
 .tool-arrow {
