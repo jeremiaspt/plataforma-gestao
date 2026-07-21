@@ -24,11 +24,12 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   const name = String(formData.get("name") || "").trim();
+  const studentCount = Number(formData.get("studentCount"));
   const displayOrder = Number(formData.get("displayOrder"));
   const active = formData.get("active") === "on";
   const paymentTypeIds = Array.from(new Set(formData.getAll("paymentTypeId").map(String).filter(Boolean)));
 
-  if (!name || !Number.isInteger(displayOrder) || paymentTypeIds.length === 0) {
+  if (!name || !Number.isInteger(studentCount) || studentCount < 1 || studentCount > 10 || !Number.isInteger(displayOrder) || paymentTypeIds.length === 0) {
     return redirectPath(request, "error");
   }
 
@@ -44,7 +45,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   await prisma.$transaction([
     prisma.personalTrainingTimesheetRule.update({
       where: { id },
-      data: { active, displayOrder, name }
+      data: { active, displayOrder, name, studentCount }
     }),
     prisma.personalTrainingTimesheetRuleItem.deleteMany({ where: { ruleId: id } }),
     prisma.personalTrainingTimesheetRuleItem.createMany({

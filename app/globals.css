@@ -605,13 +605,13 @@ select {
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(180px, 1fr) 90px minmax(360px, 2fr) 130px;
+  grid-template-columns: minmax(170px, 1fr) 90px 80px minmax(340px, 2fr) 130px;
   padding: 10px;
 }
 
 .training-timesheet-rule-row {
   background: #ffffff;
-  grid-template-columns: minmax(170px, 1fr) 90px 90px minmax(360px, 2fr) 150px;
+  grid-template-columns: minmax(160px, 1fr) 90px 80px 84px minmax(320px, 2fr) 150px;
 }
 
 .training-timesheet-rule-list {
@@ -673,7 +673,7 @@ select {
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(220px, 320px) 160px 150px auto;
+  grid-template-columns: minmax(220px, 320px) 160px auto;
   padding: 10px;
   width: fit-content;
 }
@@ -711,7 +711,8 @@ select {
 }
 
 .timesheet-table thead th:first-child,
-.timesheet-table thead th:nth-child(2) {
+.timesheet-table thead th:nth-child(2),
+.timesheet-table thead th:nth-child(3) {
   background: #eef2f7;
   color: #0f172a;
 }
@@ -736,6 +737,10 @@ select {
 }
 
 .timesheet-table thead th:nth-child(2) {
+  width: 58px;
+}
+
+.timesheet-table thead th:nth-child(3) {
   width: 72px;
 }
 

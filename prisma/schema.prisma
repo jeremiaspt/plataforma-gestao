@@ -181,6 +181,7 @@ model PersonalTrainingPaymentType {
 model PersonalTrainingTimesheetRule {
   id           String                              @id @default(cuid())
   name         String
+  studentCount Int                                 @default(1)
   displayOrder Int                                 @default(0)
   active       Boolean                             @default(true)
   items        PersonalTrainingTimesheetRuleItem[]

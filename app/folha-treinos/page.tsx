@@ -20,7 +20,7 @@ function formatCellValue(value: number) {
 export default async function PersonalTrainingTimesheetPage({
   searchParams
 }: {
-  searchParams: Promise<{ teacherId?: string; tab?: string; month?: string; mode?: string }>;
+  searchParams: Promise<{ teacherId?: string; tab?: string; month?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -42,7 +42,6 @@ export default async function PersonalTrainingTimesheetPage({
   const activeTab = isAdmin && params.tab === "professor" ? "professor" : "mine";
   const selectedTeacherId = activeTab === "professor" ? params.teacherId || teachers[0]?.id || user.id : user.id;
   const selectedMonth = params.month || currentBillingMonthValue();
-  const mode = params.mode === "quantity" ? "quantity" : "credits";
   const timesheet = await calculatePersonalTrainingTimesheet({ month: selectedMonth, teacherId: selectedTeacherId });
 
   if (!timesheet) {
@@ -51,7 +50,7 @@ export default async function PersonalTrainingTimesheetPage({
 
   const periodDates = eachPeriodDate(timesheet.period.start, timesheet.period.endExclusive);
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
-  const tabHref = (tab: "mine" | "professor") => `/folha-treinos?tab=${tab}&month=${selectedMonth}&mode=${mode}`;
+  const tabHref = (tab: "mine" | "professor") => `/folha-treinos?tab=${tab}&month=${selectedMonth}`;
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
@@ -97,24 +96,18 @@ export default async function PersonalTrainingTimesheetPage({
             <label htmlFor="month">Mês</label>
             <input id="month" name="month" type="month" defaultValue={selectedMonth} />
           </div>
-          <div className="field">
-            <label htmlFor="mode">Mapa</label>
-            <select id="mode" name="mode" defaultValue={mode}>
-              <option value="credits">Créditos</option>
-              <option value="quantity">Quantidade</option>
-            </select>
-          </div>
           <button className="button secondary" type="submit">
             Ver folha
           </button>
         </form>
 
         <div className="timesheet-table-wrap">
-          <table className="timesheet-table">
+          <table className="timesheet-table personal-training-timesheet-table">
             <thead>
               <tr>
                 <th>Caract.</th>
-                <th>Valor ref.</th>
+                <th>N.º alunos</th>
+                <th>Valor por aluno</th>
                 {periodDates.map((date) => {
                   const dateValue = dateToInputValue(date);
 
@@ -125,24 +118,23 @@ export default async function PersonalTrainingTimesheetPage({
                     </th>
                   );
                 })}
-                <th>Total créditos</th>
-                <th>Qtd.</th>
-                <th>Total professor</th>
+                <th>Total aulas</th>
+                <th>Parcial</th>
               </tr>
             </thead>
             <tbody>
               {timesheet.rows.map((row) => (
                 <tr key={row.id}>
                   <th>{row.name}</th>
-                  <td>{formatCurrency(row.unitTeacherValue)}</td>
+                  <td>{row.studentCount}</td>
+                  <td>{formatCurrency(row.valuePerStudent)}</td>
                   {periodDates.map((date) => {
                     const dateValue = dateToInputValue(date);
-                    const value = mode === "quantity" ? row.dayQuantity.get(dateValue) || 0 : row.dayCredits.get(dateValue) || 0;
+                    const value = row.dayLessons.get(dateValue) || 0;
 
                     return <td key={dateValue}>{formatCellValue(value)}</td>;
                   })}
-                  <td>{row.totalCredits}</td>
-                  <td>{row.totalQuantity}</td>
+                  <td>{formatCellValue(row.totalLessons)}</td>
                   <td>{formatCurrency(row.totalValue)}</td>
                 </tr>
               ))}
@@ -162,7 +154,7 @@ export default async function PersonalTrainingTimesheetPage({
             <p className="muted">Estes pagamentos existem, mas ainda não entram em nenhuma regra da folha de treinos.</p>
             {timesheet.unmatched.slice(0, 20).map((item, index) => (
               <p key={`${item.date}-${index}`}>
-                {item.date} · {item.student} · {item.paymentType} · {item.credits} créditos · {formatCurrency(item.value)}
+                {item.date} · {item.student} · {item.paymentType} · {formatCellValue(item.lessons)} aulas · {formatCurrency(item.value)}
               </p>
             ))}
           </div>

@@ -34,18 +34,22 @@ export default async function PersonalTrainingTimesheetRulesPage({
           <div>
             <p className="eyebrow">Treinos personalizados</p>
             <h1>Configuração folha treinos</h1>
-            <p className="muted">Define as Caract., a ordem e quais os tipos de treinos personalizados que entram em cada linha.</p>
+            <p className="muted">Define as Caract., número de alunos, ordem e tipos de treinos personalizados incluídos.</p>
           </div>
           <span className="status active">{rules.length} regras</span>
         </div>
 
         {params.success ? <p className="success">Configuração guardada.</p> : null}
-        {params.error ? <p className="error">Não foi possível guardar. Confirma o nome, ordem e pelo menos um tipo de treino.</p> : null}
+        {params.error ? <p className="error">Não foi possível guardar. Confirma o nome, n.º de alunos, ordem e pelo menos um tipo de treino.</p> : null}
 
         <form className="training-timesheet-rule-form" action="/api/personal-training/timesheet-rules" method="post">
           <div className="field">
             <label htmlFor="name">Caract.</label>
-            <input id="name" name="name" placeholder="Ex.: TP Individual 30M" required />
+            <input id="name" name="name" placeholder="Ex.: AP 30MIN IND" required />
+          </div>
+          <div className="field compact-number-field">
+            <label htmlFor="studentCount">N.º alunos</label>
+            <input id="studentCount" name="studentCount" type="number" min="1" max="10" step="1" defaultValue={1} required />
           </div>
           <div className="field compact-number-field">
             <label htmlFor="displayOrder">Ordem</label>
@@ -60,7 +64,7 @@ export default async function PersonalTrainingTimesheetRulesPage({
                   <span>
                     {paymentType.description}
                     <small>
-                      {paymentType.credits} créditos · {formatCurrency(paymentType.teacherPrice)} professor
+                      {formatCurrency(paymentType.teacherPrice)} professor · {paymentType.credits} sessão(ões)
                       {!paymentType.active ? " · inativo" : ""}
                     </small>
                   </span>
@@ -85,6 +89,10 @@ export default async function PersonalTrainingTimesheetRulesPage({
                   <input name="name" defaultValue={rule.name} required />
                 </div>
                 <div className="field compact-number-field">
+                  <label>N.º alunos</label>
+                  <input name="studentCount" type="number" min="1" max="10" step="1" defaultValue={rule.studentCount} required />
+                </div>
+                <div className="field compact-number-field">
                   <label>Ordem</label>
                   <input name="displayOrder" type="number" step="1" defaultValue={rule.displayOrder} required />
                 </div>
@@ -101,7 +109,7 @@ export default async function PersonalTrainingTimesheetRulesPage({
                         <span>
                           {paymentType.description}
                           <small>
-                            {paymentType.credits} créditos · {formatCurrency(paymentType.teacherPrice)} professor
+                            {formatCurrency(paymentType.teacherPrice)} professor · {paymentType.credits} sessão(ões)
                             {!paymentType.active ? " · inativo" : ""}
                           </small>
                         </span>

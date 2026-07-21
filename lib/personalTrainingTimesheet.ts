@@ -51,22 +51,23 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
   ]);
 
   const rows = rules.map((rule) => {
-    const paymentTypeIds = new Set(rule.items.map((item) => item.paymentTypeId));
-    const firstPaymentType = rule.items[0]?.paymentType;
+    const sortedItems = [...rule.items].sort((left, right) => left.paymentType.description.localeCompare(right.paymentType.description, "pt"));
+    const firstPaymentType = sortedItems[0]?.paymentType;
+    const firstCredits = firstPaymentType?.credits || 0;
+    const valuePerStudent = firstPaymentType && firstCredits > 0 ? decimalToNumber(firstPaymentType.teacherPrice) / firstCredits : 0;
 
     return {
       id: rule.id,
       name: rule.name,
-      dayCredits: new Map<string, number>(),
-      dayQuantity: new Map<string, number>(),
-      paymentTypeIds,
-      totalCredits: 0,
-      totalQuantity: 0,
+      studentCount: rule.studentCount,
+      dayLessons: new Map<string, number>(),
+      paymentTypeIds: new Set(rule.items.map((item) => item.paymentTypeId)),
+      totalLessons: 0,
       totalValue: 0,
-      unitTeacherValue: firstPaymentType ? decimalToNumber(firstPaymentType.teacherPrice) : 0
+      valuePerStudent
     };
   });
-  const unmatched: Array<{ date: string; student: string; paymentType: string; credits: number; value: number }> = [];
+  const unmatched: Array<{ date: string; student: string; paymentType: string; lessons: number; value: number }> = [];
 
   for (const payment of payments) {
     const dateValue = dateToInputValue(payment.createdAt);
@@ -78,17 +79,17 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
         date: dateValue,
         student: `${payment.student.fullName} - ${payment.student.memberNumber}`,
         paymentType: payment.paymentType.description,
-        credits: payment.totalCredits,
+        lessons: payment.totalCredits,
         value: teacherTotal
       });
       continue;
     }
 
-    row.dayCredits.set(dateValue, (row.dayCredits.get(dateValue) || 0) + payment.totalCredits);
-    row.dayQuantity.set(dateValue, (row.dayQuantity.get(dateValue) || 0) + payment.quantity);
-    row.totalCredits += payment.totalCredits;
-    row.totalQuantity += payment.quantity;
-    row.totalValue += teacherTotal;
+    const lessonCount = payment.totalCredits / row.studentCount;
+
+    row.dayLessons.set(dateValue, (row.dayLessons.get(dateValue) || 0) + lessonCount);
+    row.totalLessons += lessonCount;
+    row.totalValue += payment.totalCredits * row.valuePerStudent;
   }
 
   return {
