@@ -564,6 +564,7 @@ select {
 }
 
 .hourly-rates-panel,
+.training-timesheet-rules-panel,
 .timesheet-panel {
   display: grid;
   gap: 14px;
@@ -596,6 +597,59 @@ select {
   gap: 10px;
 }
 
+.training-timesheet-rule-form,
+.training-timesheet-rule-row {
+  align-items: flex-start;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(180px, 1fr) 90px minmax(360px, 2fr) 130px;
+  padding: 10px;
+}
+
+.training-timesheet-rule-row {
+  background: #ffffff;
+  grid-template-columns: minmax(170px, 1fr) 90px 90px minmax(360px, 2fr) 150px;
+}
+
+.training-timesheet-rule-list {
+  display: grid;
+  gap: 10px;
+}
+
+.training-type-picker {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.training-type-picker > strong {
+  color: #10233f;
+  font-size: 13px;
+}
+
+.training-type-checkboxes {
+  display: grid;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.training-type-checkboxes .checkbox {
+  align-items: flex-start;
+}
+
+.training-type-checkboxes small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
 .compact-number-field small {
   color: var(--muted);
   display: block;
@@ -613,13 +667,13 @@ select {
 }
 
 .timesheet-filter {
-  align-items: end;
+  align-items: flex-end;
   background: #f8fafc;
   border: 1px solid var(--line);
   border-radius: 8px;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(220px, 320px) 160px auto;
+  grid-template-columns: minmax(220px, 320px) 160px 150px auto;
   padding: 10px;
   width: fit-content;
 }
@@ -2824,6 +2878,8 @@ h1 {
 
   .hourly-rate-form,
   .hourly-rate-row,
+  .training-timesheet-rule-form,
+  .training-timesheet-rule-row,
   .timesheet-filter {
     grid-template-columns: 1fr;
     width: 100%;

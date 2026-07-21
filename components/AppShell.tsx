@@ -65,14 +65,7 @@ export async function AppShell({
   const canUseMaintenance = roles.includes("manutencao");
   const systemSettings = await getSystemSettings();
 
-  const mainItems: NavItem[] = [
-    {
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      label: "Dashboard",
-      tone: "general"
-    }
-  ];
+  const mainItems: NavItem[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tone: "general" }];
   const adminItems: NavItem[] = isAdmin
     ? [
         { href: "/utilizadores", icon: Users, label: "Utilizadores", tone: "admin" },
@@ -80,7 +73,8 @@ export async function AppShell({
         { href: "/configuracoes-email", icon: Mail, label: "Emails", tone: "admin" },
         { href: "/configuracoes-sistema", icon: Settings, label: "Sistema", tone: "admin" },
         { href: "/valor-hora-aulas", icon: FileSpreadsheet, label: "Valor hora", tone: "admin" },
-        { href: "/treinos-personalizados/tipos", icon: Dumbbell, label: "Treinos personalizados", tone: "admin" }
+        { href: "/treinos-personalizados/tipos", icon: Dumbbell, label: "Treinos personalizados", tone: "admin" },
+        { href: "/configurar-folha-treinos", icon: FileSpreadsheet, label: "Config. folha treinos", tone: "admin" }
       ]
     : [];
   const poolItems: NavItem[] = canUsePool
@@ -90,15 +84,19 @@ export async function AppShell({
         { href: "/apoio-ao-cais", icon: Waves, label: "Apoio ao Cais", tone: "pool" }
       ]
     : [];
-  const classItems: NavItem[] = isAdmin || isProfessor
-    ? [
-        { href: "/aulas-grupo", icon: CalendarDays, label: "Aulas de grupo", tone: "classes" },
-        { href: "/substituicoes", icon: CalendarCheck, label: "Substituições", tone: "classes" },
-        { href: "/folha-horas-aulas", icon: FileSpreadsheet, label: "Folha de horas", tone: "classes" }
-      ]
-    : [];
+  const classItems: NavItem[] =
+    isAdmin || isProfessor
+      ? [
+          { href: "/aulas-grupo", icon: CalendarDays, label: "Aulas de grupo", tone: "classes" },
+          { href: "/substituicoes", icon: CalendarCheck, label: "Substituições", tone: "classes" },
+          { href: "/folha-horas-aulas", icon: FileSpreadsheet, label: "Folha de horas", tone: "classes" }
+        ]
+      : [];
   const paymentItems: NavItem[] = canUsePayments
-    ? [{ href: "/treinos-personalizados/pagamentos", icon: Dumbbell, label: "Pagamento TP", tone: "payments" }]
+    ? [
+        { href: "/treinos-personalizados/pagamentos", icon: Dumbbell, label: "Pagamento TP", tone: "payments" },
+        ...(isAdmin || isProfessor ? [{ href: "/folha-treinos", icon: FileSpreadsheet, label: "Folha de treinos", tone: "payments" as const }] : [])
+      ]
     : [];
   const operationalItems: NavItem[] = [
     ...(canUseCleaning ? [{ href: "#", icon: Brush, label: "Limpeza", tone: "support" as const }] : []),

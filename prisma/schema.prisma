@@ -173,8 +173,31 @@ model PersonalTrainingPaymentType {
   active       Boolean                   @default(true)
   payments     PersonalTrainingPayment[]
   bookings     PersonalTrainingBooking[]
+  timesheetRuleItems PersonalTrainingTimesheetRuleItem[]
   createdAt    DateTime                  @default(now())
   updatedAt    DateTime                  @updatedAt
+}
+
+model PersonalTrainingTimesheetRule {
+  id           String                              @id @default(cuid())
+  name         String
+  displayOrder Int                                 @default(0)
+  active       Boolean                             @default(true)
+  items        PersonalTrainingTimesheetRuleItem[]
+  createdAt    DateTime                            @default(now())
+  updatedAt    DateTime                            @updatedAt
+
+  @@index([active, displayOrder])
+}
+
+model PersonalTrainingTimesheetRuleItem {
+  ruleId        String
+  paymentTypeId String
+  rule          PersonalTrainingTimesheetRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  paymentType   PersonalTrainingPaymentType   @relation(fields: [paymentTypeId], references: [id], onDelete: Cascade)
+
+  @@id([ruleId, paymentTypeId])
+  @@index([paymentTypeId])
 }
 
 model PersonalTrainingStudent {

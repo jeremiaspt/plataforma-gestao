@@ -83,6 +83,14 @@ const sections: ToolSection[] = [
         href: "/treinos-personalizados/tipos",
         icon: Dumbbell,
         tone: "admin"
+      },
+      {
+        title: "Config. folha treinos",
+        description: "Definir Caract. e ordem da folha de treinos.",
+        roles: ["admin"],
+        href: "/configurar-folha-treinos",
+        icon: FileSpreadsheet,
+        tone: "admin"
       }
     ]
   },
@@ -156,6 +164,14 @@ const sections: ToolSection[] = [
         roles: ["admin", "professor", "recepcao"],
         href: "/treinos-personalizados/pagamentos",
         icon: Dumbbell,
+        tone: "payments"
+      },
+      {
+        title: "Folha de treinos",
+        description: "Consultar treinos por professor e ciclo.",
+        roles: ["admin", "professor"],
+        href: "/folha-treinos",
+        icon: FileSpreadsheet,
         tone: "payments"
       }
     ]
