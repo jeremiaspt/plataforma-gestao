@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
+import { getPaidLessonsForPaymentType } from "@/lib/personalTrainingRules";
 import { prisma } from "@/lib/prisma";
 
 export default async function PersonalTrainingTimesheetRulesPage({
@@ -64,7 +65,7 @@ export default async function PersonalTrainingTimesheetRulesPage({
                   <span>
                     {paymentType.description}
                     <small>
-                      {formatCurrency(paymentType.teacherPrice)} professor · {paymentType.credits} sessão(ões)
+                      {formatCurrency(paymentType.teacherPrice)} professor · {getPaidLessonsForPaymentType(paymentType.description, paymentType.credits)} aula(s) folha · {paymentType.credits} crédito(s)
                       {!paymentType.active ? " · inativo" : ""}
                     </small>
                   </span>
@@ -109,7 +110,7 @@ export default async function PersonalTrainingTimesheetRulesPage({
                         <span>
                           {paymentType.description}
                           <small>
-                            {formatCurrency(paymentType.teacherPrice)} professor · {paymentType.credits} sessão(ões)
+                            {formatCurrency(paymentType.teacherPrice)} professor · {getPaidLessonsForPaymentType(paymentType.description, paymentType.credits)} aula(s) folha · {paymentType.credits} crédito(s)
                             {!paymentType.active ? " · inativo" : ""}
                           </small>
                         </span>

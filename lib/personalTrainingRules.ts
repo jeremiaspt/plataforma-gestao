@@ -17,6 +17,16 @@ export function getTrainingTypeKey(description: string) {
   return normalizeText(getTrainingTypeName(description));
 }
 
+export function getPaidLessonsForPaymentType(description: string, fallbackCredits: number) {
+  const normalized = description
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+  const match = normalized.match(/(\d+)\s+sess(?:ao|oes)/);
+
+  return match ? Number(match[1]) : fallbackCredits;
+}
+
 export function paymentTypeMatchesDuration(description: string, durationMinutes: number) {
   const normalized = description.toLowerCase();
   return normalized.includes(`${durationMinutes}m`) || normalized.includes(`${durationMinutes} min`);

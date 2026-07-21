@@ -632,7 +632,7 @@ select {
 
 .training-type-checkboxes {
   display: grid;
-  gap: 6px;
+  gap: 7px;
   max-height: 240px;
   overflow-y: auto;
   padding-right: 4px;
@@ -640,6 +640,16 @@ select {
 
 .training-type-checkboxes .checkbox {
   align-items: flex-start;
+  gap: 9px;
+  line-height: 1.25;
+  min-height: 56px;
+  padding: 8px 10px;
+}
+
+.training-type-checkboxes .checkbox span {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
 }
 
 .training-type-checkboxes small {
@@ -763,6 +773,40 @@ select {
   background: #fee2e2;
   color: #991b1b;
   font-weight: 800;
+}
+
+.personal-training-timesheet-table {
+  min-width: 1420px;
+}
+
+.personal-training-timesheet-table th,
+.personal-training-timesheet-table td {
+  font-size: 10.5px;
+  padding: 4px 3px;
+}
+
+.personal-training-timesheet-table thead th:first-child,
+.personal-training-timesheet-table tbody th {
+  width: 142px;
+}
+
+.personal-training-timesheet-table thead th:nth-child(2) {
+  width: 72px;
+  white-space: normal;
+}
+
+.personal-training-timesheet-table thead th:nth-child(3) {
+  width: 96px;
+  white-space: normal;
+}
+
+.personal-training-timesheet-table thead th:nth-last-child(2) {
+  width: 78px;
+  white-space: normal;
+}
+
+.personal-training-timesheet-table thead th:last-child {
+  width: 80px;
 }
 
 .timesheet-unmatched {

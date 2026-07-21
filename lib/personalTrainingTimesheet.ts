@@ -2,6 +2,7 @@ import { getBillingPeriod } from "@/lib/billingCycles";
 import { decimalToNumber } from "@/lib/money";
 import { dateToInputValue } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
+import { getPaidLessonsForPaymentType } from "@/lib/personalTrainingRules";
 
 function addDays(date: Date, days: number) {
   const nextDate = new Date(date);
@@ -53,8 +54,8 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
   const rows = rules.map((rule) => {
     const sortedItems = [...rule.items].sort((left, right) => left.paymentType.description.localeCompare(right.paymentType.description, "pt"));
     const firstPaymentType = sortedItems[0]?.paymentType;
-    const firstCredits = firstPaymentType?.credits || 0;
-    const valuePerStudent = firstPaymentType && firstCredits > 0 ? decimalToNumber(firstPaymentType.teacherPrice) / firstCredits : 0;
+    const firstPaidLessons = firstPaymentType ? getPaidLessonsForPaymentType(firstPaymentType.description, firstPaymentType.credits) : 0;
+    const valuePerStudent = firstPaymentType && firstPaidLessons > 0 ? decimalToNumber(firstPaymentType.teacherPrice) / firstPaidLessons : 0;
 
     return {
       id: rule.id,
@@ -75,21 +76,24 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     const teacherTotal = decimalToNumber(payment.teacherTotal);
 
     if (!row) {
+      const paidLessons = getPaidLessonsForPaymentType(payment.paymentType.description, payment.creditsPerUnit) * payment.quantity;
+
       unmatched.push({
         date: dateValue,
         student: `${payment.student.fullName} - ${payment.student.memberNumber}`,
         paymentType: payment.paymentType.description,
-        lessons: payment.totalCredits,
+        lessons: paidLessons,
         value: teacherTotal
       });
       continue;
     }
 
-    const lessonCount = payment.totalCredits / row.studentCount;
+    const paidLessons = getPaidLessonsForPaymentType(payment.paymentType.description, payment.creditsPerUnit) * payment.quantity;
+    const lessonCount = paidLessons / row.studentCount;
 
     row.dayLessons.set(dateValue, (row.dayLessons.get(dateValue) || 0) + lessonCount);
     row.totalLessons += lessonCount;
-    row.totalValue += payment.totalCredits * row.valuePerStudent;
+    row.totalValue += paidLessons * row.valuePerStudent;
   }
 
   return {
