@@ -1,145 +1,203 @@
-import { ArrowRight, Brush, CalendarCheck, CalendarDays, Dumbbell, FileSpreadsheet, Settings, Users, Waves } from "lucide-react";
+import {
+  ArrowRight,
+  Activity,
+  Brush,
+  CalendarCheck,
+  CalendarDays,
+  Dumbbell,
+  FileSpreadsheet,
+  Settings,
+  UserRound,
+  Users,
+  Waves,
+  Wrench
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { AppShell } from "@/components/AppShell";
 import { requireUser } from "@/lib/auth";
 
-const toolCards = [
+type ToolCard = {
+  title: string;
+  description: string;
+  href: string;
+  icon: LucideIcon;
+  roles: string[];
+  tone: "admin" | "pool" | "classes" | "payments" | "general" | "support";
+};
+
+type ToolSection = {
+  title: string;
+  description: string;
+  tools: ToolCard[];
+};
+
+const sections: ToolSection[] = [
   {
-    title: "Utilizadores",
-    description: "Criar, editar e autorizar acessos.",
-    role: "admin",
-    href: "/utilizadores",
-    icon: Users
+    title: "Administração",
+    description: "Configuração, acessos e regras da plataforma.",
+    tools: [
+      {
+        title: "Utilizadores",
+        description: "Criar, editar e autorizar acessos.",
+        roles: ["admin"],
+        href: "/utilizadores",
+        icon: Users,
+        tone: "admin"
+      },
+      {
+        title: "Atividade",
+        description: "Consultar registos de ações importantes.",
+        roles: ["admin"],
+        href: "/atividade",
+        icon: Activity,
+        tone: "admin"
+      },
+      {
+        title: "Emails",
+        description: "Configurar envios e consultar logs.",
+        roles: ["admin"],
+        href: "/configuracoes-email",
+        icon: Settings,
+        tone: "admin"
+      },
+      {
+        title: "Sistema",
+        description: "Modo manutenção e regras gerais.",
+        roles: ["admin"],
+        href: "/configuracoes-sistema",
+        icon: Settings,
+        tone: "admin"
+      },
+      {
+        title: "Valor hora",
+        description: "Configurar valores da folha de horas.",
+        roles: ["admin"],
+        href: "/valor-hora-aulas",
+        icon: FileSpreadsheet,
+        tone: "admin"
+      },
+      {
+        title: "Treinos personalizados",
+        description: "Configurar tipos, créditos e valores.",
+        roles: ["admin"],
+        href: "/treinos-personalizados/tipos",
+        icon: Dumbbell,
+        tone: "admin"
+      }
+    ]
   },
   {
-    title: "Treinos Personalizados",
-    description: "Configurar pagamentos e créditos.",
-    role: "admin",
-    href: "/treinos-personalizados/tipos",
-    icon: Settings
-  },
-  {
-    title: "Sistema",
-    description: "Ativar ou desativar o modo manutenção.",
-    role: "admin",
-    href: "/configuracoes-sistema",
-    icon: Settings
-  },
-  {
-    title: "Valor hora aulas",
-    description: "Configurar características e valores da folha.",
-    role: "admin",
-    href: "/valor-hora-aulas",
-    icon: FileSpreadsheet
-  },
-  {
-    title: "Pagamentos TP",
-    description: "Lançar pagamentos de treinos personalizados.",
-    role: "recepcao",
-    href: "/treinos-personalizados/pagamentos",
-    icon: Dumbbell
-  },
-  {
-    title: "Pagamentos TP",
-    description: "Consultar pagamentos lançados.",
-    role: "professor",
-    href: "/treinos-personalizados/pagamentos",
-    icon: Dumbbell
-  },
-  {
-    title: "Piscina 25m",
-    description: "Mapa de disponibilidade por pista e dia.",
-    role: "professor",
-    href: "/piscina-25m",
-    icon: Waves
-  },
-  {
-    title: "Piscina 25m",
-    description: "Mapa de disponibilidade por pista e dia.",
-    role: "recepcao",
-    href: "/piscina-25m",
-    icon: Waves
-  },
-  {
-    title: "Tanque de aprendizagem",
-    description: "Mapa de disponibilidade por espaço e dia.",
-    role: "professor",
-    href: "/tanque-aprendizagem",
-    icon: Waves
-  },
-  {
-    title: "Tanque de aprendizagem",
-    description: "Mapa de disponibilidade por espaço e dia.",
-    role: "recepcao",
-    href: "/tanque-aprendizagem",
-    icon: Waves
-  },
-  {
-    title: "Apoio ao Cais",
-    description: "Mapa de disponibilidade por professor e horário.",
-    role: "professor",
-    href: "/apoio-ao-cais",
-    icon: Waves
-  },
-  {
-    title: "Apoio ao Cais",
-    description: "Mapa de disponibilidade por professor e horário.",
-    role: "recepcao",
-    href: "/apoio-ao-cais",
-    icon: Waves
+    title: "Mapas de disponibilidade",
+    description: "Consulta dos espaços e ocupações por dia.",
+    tools: [
+      {
+        title: "Mapa P25m",
+        description: "Piscina 25m por pista e horário.",
+        roles: ["admin", "professor", "recepcao"],
+        href: "/piscina-25m",
+        icon: Waves,
+        tone: "pool"
+      },
+      {
+        title: "Tanque aprendizagem",
+        description: "Tanque por espaço e horário.",
+        roles: ["admin", "professor", "recepcao"],
+        href: "/tanque-aprendizagem",
+        icon: Waves,
+        tone: "pool"
+      },
+      {
+        title: "Apoio ao Cais",
+        description: "Disponibilidade por professor e horário.",
+        roles: ["admin", "professor", "recepcao"],
+        href: "/apoio-ao-cais",
+        icon: Waves,
+        tone: "pool"
+      }
+    ]
   },
   {
     title: "Aulas de grupo",
-    description: "Consultar horário semanal por professor.",
-    role: "admin",
-    href: "/aulas-grupo",
-    icon: CalendarDays
+    description: "Horários, substituições e folha de horas.",
+    tools: [
+      {
+        title: "Aulas de grupo",
+        description: "Consultar horário semanal por professor.",
+        roles: ["admin", "professor"],
+        href: "/aulas-grupo",
+        icon: CalendarDays,
+        tone: "classes"
+      },
+      {
+        title: "Substituições",
+        description: "Gerir faltas, substitutos e visão geral.",
+        roles: ["admin", "professor"],
+        href: "/substituicoes",
+        icon: CalendarCheck,
+        tone: "classes"
+      },
+      {
+        title: "Folha de horas",
+        description: "Consultar a folha de horas das aulas.",
+        roles: ["admin", "professor"],
+        href: "/folha-horas-aulas",
+        icon: FileSpreadsheet,
+        tone: "classes"
+      }
+    ]
   },
   {
-    title: "Aulas de grupo",
-    description: "Horário semanal das aulas associadas ao professor.",
-    role: "professor",
-    href: "/aulas-grupo",
-    icon: CalendarDays
+    title: "Treinos personalizados",
+    description: "Pagamentos e créditos de treinos personalizados.",
+    tools: [
+      {
+        title: "Pagamento TP",
+        description: "Lançar ou consultar pagamentos TP.",
+        roles: ["admin", "professor", "recepcao"],
+        href: "/treinos-personalizados/pagamentos",
+        icon: Dumbbell,
+        tone: "payments"
+      }
+    ]
   },
   {
-    title: "Substituições",
-    description: "Gerir faltas, substitutos e visão geral futura.",
-    role: "admin",
-    href: "/substituicoes",
-    icon: CalendarCheck
+    title: "Operacional",
+    description: "Áreas internas por equipa.",
+    tools: [
+      { title: "Limpeza", description: "Tarefas e estados de execução.", roles: ["limpeza"], href: "#", icon: Brush, tone: "support" },
+      { title: "Manutenção", description: "Pedidos, prioridades e resolução.", roles: ["manutencao"], href: "#", icon: Wrench, tone: "support" }
+    ]
   },
   {
-    title: "Substituições",
-    description: "Criar e consultar substituições de aulas.",
-    role: "professor",
-    href: "/substituicoes",
-    icon: CalendarCheck
-  },
-  {
-    title: "Folha de horas",
-    description: "Consultar a folha de horas das aulas de grupo.",
-    role: "admin",
-    href: "/folha-horas-aulas",
-    icon: FileSpreadsheet
-  },
-  {
-    title: "Folha de horas",
-    description: "Consultar a folha de horas das tuas aulas.",
-    role: "professor",
-    href: "/folha-horas-aulas",
-    icon: FileSpreadsheet
-  },
-  { title: "Limpeza", description: "Tarefas e estados de execução.", role: "limpeza", href: "#", icon: Brush },
-  { title: "Manutenção", description: "Pedidos, prioridades e resolução.", role: "manutencao", href: "#", icon: Settings }
+    title: "Geral",
+    description: "Conta pessoal e preferências.",
+    tools: [
+      {
+        title: "A minha conta",
+        description: "Alterar password e consultar dados pessoais.",
+        roles: ["admin", "professor", "recepcao", "limpeza", "manutencao"],
+        href: "/conta",
+        icon: UserRound,
+        tone: "general"
+      }
+    ]
+  }
 ];
+
+function canSeeTool(roles: string[], tool: ToolCard) {
+  return tool.roles.some((role) => roles.includes(role));
+}
 
 export default async function DashboardPage() {
   const user = await requireUser();
   const roles = user.roles.map((userRole) => userRole.role.key);
-  const allowedTools = roles.includes("admin") ? toolCards : toolCards.filter((tool) => roles.includes(tool.role));
-  const visibleTools = allowedTools.filter(
-    (tool, index, list) => list.findIndex((item) => item.title === tool.title && item.href === tool.href) === index
-  );
+  const visibleSections = sections
+    .map((section) => ({
+      ...section,
+      tools: section.tools.filter((tool) => canSeeTool(roles, tool))
+    }))
+    .filter((section) => section.tools.length > 0);
+  const toolCount = visibleSections.reduce((count, section) => count + section.tools.length, 0);
 
   return (
     <AppShell userName={user.name} roles={roles}>
@@ -149,26 +207,36 @@ export default async function DashboardPage() {
           <h1>Ferramentas disponíveis</h1>
           <p className="muted">Acede rapidamente às áreas autorizadas para o teu utilizador.</p>
         </div>
-        <span className="status active">{visibleTools.length} ferramentas</span>
+        <span className="status active">{toolCount} ferramentas</span>
       </section>
 
-      <section className="grid dashboard-grid">
-        {visibleTools.map((tool, index) => {
-          const Icon = tool.icon;
+      <section className="dashboard-sections">
+        {visibleSections.map((section) => (
+          <div className="dashboard-section" key={section.title}>
+            <div className="dashboard-section-head">
+              <h2>{section.title}</h2>
+              <p className="muted">{section.description}</p>
+            </div>
+            <div className="grid dashboard-grid">
+              {section.tools.map((tool) => {
+                const Icon = tool.icon;
 
-          return (
-            <a className="card tool-card" href={tool.href} key={`${tool.title}-${index}`}>
-              <span className="tool-icon">
-                <Icon size={20} />
-              </span>
-              <span>
-                <h2>{tool.title}</h2>
-                <p className="muted">{tool.description}</p>
-              </span>
-              <ArrowRight className="tool-arrow" size={18} />
-            </a>
-          );
-        })}
+                return (
+                  <a className="card tool-card" href={tool.href} key={tool.href}>
+                    <span className={`tool-icon tool-icon-${tool.tone}`}>
+                      <Icon size={20} />
+                    </span>
+                    <span>
+                      <h2>{tool.title}</h2>
+                      <p className="muted">{tool.description}</p>
+                    </span>
+                    <ArrowRight className="tool-arrow" size={18} />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </section>
     </AppShell>
   );

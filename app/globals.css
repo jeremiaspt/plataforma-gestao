@@ -89,7 +89,19 @@ select {
 
 .nav {
   display: grid;
-  gap: 5px;
+  gap: 10px;
+}
+
+.nav-section {
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+  display: grid;
+  gap: 4px;
+  padding-top: 10px;
+}
+
+.nav-section:first-child {
+  border-top: 0;
+  padding-top: 0;
 }
 
 .nav-label {
@@ -97,7 +109,7 @@ select {
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.08em;
-  margin: 16px 10px 5px;
+  margin: 4px 10px 5px;
   text-transform: uppercase;
 }
 
@@ -114,7 +126,7 @@ select {
   cursor: pointer;
   font-weight: 700;
   min-height: 40px;
-  padding: 10px 11px;
+  padding: 8px 9px;
   text-align: left;
 }
 
@@ -123,6 +135,52 @@ select {
 .nav .active {
   background: rgba(255, 255, 255, 0.09);
   color: #ffffff;
+}
+
+.nav-icon {
+  align-items: center;
+  border-radius: 7px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.nav-icon-admin,
+.tool-icon-admin {
+  background: #eef2ff;
+  color: #3730a3;
+}
+
+.nav-icon-pool,
+.tool-icon-pool {
+  background: #dff7f4;
+  color: #0f766e;
+}
+
+.nav-icon-classes,
+.tool-icon-classes {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.nav-icon-payments,
+.tool-icon-payments {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.nav-icon-general,
+.tool-icon-general {
+  background: #f1f5f9;
+  color: #334155;
+}
+
+.nav-icon-support,
+.tool-icon-support {
+  background: #f3e8ff;
+  color: #7e22ce;
 }
 
 .main {
@@ -739,12 +797,47 @@ h1 {
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
 }
 
+.dashboard-sections {
+  display: grid;
+  gap: 18px;
+}
+
+.dashboard-section {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.035);
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.dashboard-section-head {
+  align-items: end;
+  border-bottom: 1px solid #e5eaf0;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding-bottom: 10px;
+}
+
+.dashboard-section-head h2 {
+  font-size: 17px;
+  margin: 0;
+}
+
+.dashboard-section-head p {
+  font-size: 13px;
+  margin: 0;
+  text-align: right;
+}
+
 .tool-card {
   align-items: flex-start;
   display: grid;
   gap: 12px;
   grid-template-columns: 42px minmax(0, 1fr) auto;
-  min-height: 128px;
+  min-height: 112px;
   position: relative;
   transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
@@ -2591,6 +2684,19 @@ h1 {
   .dashboard-hero {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .dashboard-section {
+    padding: 12px;
+  }
+
+  .dashboard-section-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .dashboard-section-head p {
+    text-align: left;
   }
 
   .grid {
