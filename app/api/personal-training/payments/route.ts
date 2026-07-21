@@ -95,6 +95,10 @@ export async function POST(request: Request) {
   const totalPrice = pricePerUnit * quantity;
   const teacherTotal = teacherPricePerUnit * quantity;
 
+  const students = await prisma.personalTrainingStudent.findMany({
+    where: { id: { in: studentIds } }
+  });
+  const studentsById = new Map(students.map((student) => [student.id, student]));
   const createdPayments = await prisma.$transaction(
     studentIds.map((studentId) =>
       prisma.personalTrainingPayment.create({
@@ -115,10 +119,29 @@ export async function POST(request: Request) {
     )
   );
 
-  const students = await prisma.personalTrainingStudent.findMany({
-    where: { id: { in: studentIds } }
+  await prisma.personalTrainingPaymentLog.createMany({
+    data: createdPayments.map((payment) => {
+      const student = studentsById.get(payment.studentId);
+
+      return {
+        paymentId: payment.id,
+        teacherId: payment.teacherId,
+        studentId: payment.studentId,
+        action: "created",
+        teacherName: teacher.name,
+        studentName: student?.fullName || "",
+        studentMemberNumber: student?.memberNumber || "",
+        paymentType: paymentType.description,
+        quantity: payment.quantity,
+        totalCredits: payment.totalCredits,
+        totalPrice: payment.totalPrice,
+        teacherTotal: payment.teacherTotal,
+        createdByName: user.name,
+        actionById: user.id,
+        actionByName: user.name
+      };
+    })
   });
-  const studentsById = new Map(students.map((student) => [student.id, student]));
 
   await sendPaymentNotificationEmail({
     paymentIds: createdPayments.map((payment) => payment.id),

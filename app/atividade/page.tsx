@@ -43,6 +43,7 @@ function formatMinutes(minutes: number) {
 
 function actionLabel(action: string) {
   const labels: Record<string, string> = {
+    created: "Pagamento lançado",
     criacao: "Marcação criada",
     cancelamento: "Marcação anulada",
     alteracao_cancelou_anterior: "Alteração: marcação anterior anulada",
@@ -96,7 +97,7 @@ export default async function ActivityPage({
     return `/atividade?${query.toString()}`;
   };
 
-  const [paymentLogs, bookingLogs, creditAdjustments, emailLogs] = await Promise.all([
+  const [rawPaymentLogs, bookingLogs, creditAdjustments, emailLogs, payments] = await Promise.all([
     prisma.personalTrainingPaymentLog.findMany({
       where: {
         createdAt: { gte: fromDate, lt: endExclusive }
@@ -124,11 +125,57 @@ export default async function ActivityPage({
       },
       orderBy: { createdAt: "desc" },
       take: 120
+    }),
+    prisma.personalTrainingPayment.findMany({
+      where: {
+        createdAt: { gte: fromDate, lt: endExclusive }
+      },
+      include: {
+        teacher: { select: { name: true } },
+        student: true,
+        paymentType: true,
+        createdBy: { select: { name: true } }
+      },
+      orderBy: { createdAt: "desc" },
+      take: 120
     })
   ]);
 
+  const loggedCreatedPaymentIds = new Set(rawPaymentLogs.filter((log) => log.action === "created").map((log) => log.paymentId));
+  const paymentLogs = [
+    ...rawPaymentLogs,
+    ...payments
+      .filter((payment) => !loggedCreatedPaymentIds.has(payment.id))
+      .map((payment) => ({
+        id: `fallback-${payment.id}`,
+        paymentId: payment.id,
+        teacherId: payment.teacherId,
+        studentId: payment.studentId,
+        action: "created",
+        teacherName: payment.teacher.name,
+        studentName: payment.student.fullName,
+        studentMemberNumber: payment.student.memberNumber,
+        paymentType: payment.paymentType.description,
+        quantity: payment.quantity,
+        totalCredits: payment.totalCredits,
+        totalPrice: payment.totalPrice,
+        teacherTotal: payment.teacherTotal,
+        createdByName: payment.createdBy?.name || null,
+        actionById: payment.createdById,
+        actionByName: payment.createdBy?.name || "Utilizador",
+        reason: null,
+        createdAt: payment.createdAt
+      }))
+  ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+  const createdPayments = paymentLogs.filter((log) => log.action === "created");
   const cancelledPayments = paymentLogs.filter((log) => log.action === "cancelled");
   const failedEmails = emailLogs.filter((log) => log.status === "failed");
+  const paymentCreditsTotal = paymentLogs.reduce((total, log) => {
+    if (log.action === "created") return total + log.totalCredits;
+    if (log.action === "cancelled") return total - log.totalCredits;
+    return total;
+  }, 0);
   const creditDeltaTotal = creditAdjustments.reduce((total, adjustment) => total + adjustment.deltaCredits, 0);
   const [creditTeachers, creditStudents] = await Promise.all([
     creditAdjustments.length
@@ -212,8 +259,9 @@ export default async function ActivityPage({
 
         <div className="stats-grid activity-stats">
           <div className="stat-card">
-            <span>Pagamentos anulados</span>
-            <strong>{cancelledPayments.length}</strong>
+            <span>Pagamentos lançados</span>
+            <strong>{createdPayments.length}</strong>
+            <small className="muted">{cancelledPayments.length} anulados</small>
           </div>
           <div className="stat-card">
             <span>Marcações</span>
@@ -222,9 +270,9 @@ export default async function ActivityPage({
           <div className="stat-card">
             <span>Ajustes créditos</span>
             <strong>{creditAdjustments.length}</strong>
-            <small className={creditDeltaTotal < 0 ? "negative-balance" : "muted"}>
-              {creditDeltaTotal > 0 ? "+" : ""}
-              {creditDeltaTotal} créditos
+            <small className={creditDeltaTotal + paymentCreditsTotal < 0 ? "negative-balance" : "muted"}>
+              {creditDeltaTotal + paymentCreditsTotal > 0 ? "+" : ""}
+              {creditDeltaTotal + paymentCreditsTotal} créditos total
             </small>
           </div>
           <div className="stat-card">
@@ -353,7 +401,26 @@ export default async function ActivityPage({
               <span>Utilizador</span>
               <span>Motivo</span>
             </div>
-            {creditAdjustments.length === 0 ? <p className="muted">Não existem ajustes de créditos neste período.</p> : null}
+            {paymentLogs.length === 0 && creditAdjustments.length === 0 ? (
+              <p className="muted">Não existem movimentos de créditos neste período.</p>
+            ) : null}
+            {paymentLogs.map((log) => (
+              <div className="credit-activity-row" key={`payment-credit-${log.id}`}>
+                <span>{log.createdAt.toLocaleString("pt-PT")}</span>
+                <span>{log.teacherName}</span>
+                <span>
+                  {log.studentName}
+                  <small>{log.studentMemberNumber}</small>
+                </span>
+                <span>{log.paymentType}</span>
+                <span className={log.action === "cancelled" ? "negative-balance" : ""}>
+                  {log.action === "cancelled" ? "-" : "+"}
+                  {log.totalCredits}
+                </span>
+                <span>{log.actionByName}</span>
+                <span>{actionLabel(log.action)}</span>
+              </div>
+            ))}
             {creditAdjustments.map((log) => (
               <div className="credit-activity-row" key={log.id}>
                 <span>{log.createdAt.toLocaleString("pt-PT")}</span>
