@@ -2,7 +2,7 @@ import { getBillingPeriod } from "@/lib/billingCycles";
 import { decimalToNumber } from "@/lib/money";
 import { dateToInputValue } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
-import { getPaidLessonsForPaymentType } from "@/lib/personalTrainingRules";
+import { getPaidLessonsForPaymentType, requiredParticipantsForType } from "@/lib/personalTrainingRules";
 
 function getTrainingDurationLabel(description: string) {
   const durationMatch = description.match(/(\d+)\s*(?:m|min)/i);
@@ -77,8 +77,7 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
   const studentDetailMap = new Map<
     string,
     {
-      memberNumber: string;
-      fullName: string;
+      students: Array<{ memberNumber: string; fullName: string }>;
       trainingLabel: string;
       days: Set<number>;
     }
@@ -105,19 +104,29 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     const paidLessons = getPaidLessonsForPaymentType(payment.paymentType.description, payment.creditsPerUnit) * payment.quantity;
     const lessonCount = paidLessons / row.studentCount;
     const trainingLabel = getTrainingDurationLabel(payment.paymentType.description);
-    const detailKey = `${payment.studentId}:${trainingLabel}`;
+    const requiredParticipants = requiredParticipantsForType(payment.paymentType.description);
+    const detailKey =
+      requiredParticipants > 1
+        ? `${payment.paymentTypeId}:${payment.quantity}:${payment.createdAt.getTime()}:${trainingLabel}`
+        : `${payment.studentId}:${trainingLabel}`;
     const studentDetail =
       studentDetailMap.get(detailKey) ||
       {
-        memberNumber: payment.student.memberNumber,
-        fullName: payment.student.fullName,
+        students: [],
         trainingLabel,
         days: new Set<number>()
       };
+    const hasStudent = studentDetail.students.some((student) => student.memberNumber === payment.student.memberNumber);
 
     row.dayLessons.set(dateValue, (row.dayLessons.get(dateValue) || 0) + lessonCount);
     row.totalLessons += lessonCount;
     row.totalValue += paidLessons * row.valuePerStudent;
+    if (!hasStudent) {
+      studentDetail.students.push({
+        memberNumber: payment.student.memberNumber,
+        fullName: payment.student.fullName
+      });
+    }
     studentDetail.days.add(payment.createdAt.getDate());
     studentDetailMap.set(detailKey, studentDetail);
   }
@@ -125,10 +134,13 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
   const studentDetails = Array.from(studentDetailMap.values())
     .map((detail) => ({
       ...detail,
+      students: detail.students.sort((left, right) => left.fullName.localeCompare(right.fullName, "pt")),
       days: Array.from(detail.days).sort((left, right) => left - right)
     }))
     .sort((left, right) => {
-      const nameOrder = left.fullName.localeCompare(right.fullName, "pt");
+      const leftFirstStudent = left.students[0];
+      const rightFirstStudent = right.students[0];
+      const nameOrder = (leftFirstStudent?.fullName || "").localeCompare(rightFirstStudent?.fullName || "", "pt");
       if (nameOrder !== 0) return nameOrder;
       return left.trainingLabel.localeCompare(right.trainingLabel, "pt", { numeric: true });
     });

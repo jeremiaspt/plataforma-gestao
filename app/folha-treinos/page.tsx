@@ -155,11 +155,15 @@ export default async function PersonalTrainingTimesheetPage({
               <p className="muted">Pagamentos considerados neste ciclo, agrupados por utente e duracao.</p>
             </div>
             <div className="timesheet-detail-grid">
-              {timesheet.studentDetails.map((item) => (
-                <p key={`${item.memberNumber}-${item.trainingLabel}`}>
-                  {item.memberNumber} - {item.fullName} {item.trainingLabel} ({item.days.join(", ")})
-                </p>
-              ))}
+              {timesheet.studentDetails.map((item, index) => {
+                const students = item.students.map((student) => `${student.memberNumber} - ${student.fullName}`).join(" / ");
+
+                return (
+                  <p key={`${students}-${item.trainingLabel}-${index}`}>
+                    {students} {item.trainingLabel} ({item.days.join(", ")})
+                  </p>
+                );
+              })}
             </div>
           </div>
         ) : null}
