@@ -24,7 +24,15 @@ export function getPaidLessonsForPaymentType(description: string, fallbackCredit
     .toLowerCase();
   const match = normalized.match(/(\d+)\s+sess(?:ao|oes)/);
 
-  return match ? Number(match[1]) : fallbackCredits;
+  if (match) {
+    return Number(match[1]);
+  }
+
+  if (normalized.match(/\b1x\s*semana\b/)) {
+    return 1;
+  }
+
+  return fallbackCredits;
 }
 
 export function paymentTypeMatchesDuration(description: string, durationMinutes: number) {
