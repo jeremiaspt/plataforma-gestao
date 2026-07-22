@@ -29,7 +29,7 @@ export function PersonalTrainingImportForm() {
       <div>
         <h2>Importar pagamentos TP por Excel</h2>
         <p className="muted">
-          Primeira linha com cabeçalhos. Colunas: A número utente, B nome utente, C professor, D pack, E quantidade, G data pagamento, H rececionista.
+          Primeira linha com cabeçalhos. Colunas: A número utente, B nome utente, C professor, D pack, E quantidade, G data pagamento em DD/MM/AAAA, H rececionista. Não adiciona créditos aos alunos.
         </p>
       </div>
       <div className="field">

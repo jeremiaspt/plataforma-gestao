@@ -51,7 +51,7 @@ function parsePaymentDate(value: unknown) {
   if (portugueseDate) {
     const [, day, month, year] = portugueseDate;
     const date = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(date.getTime()) ? null : date;
+    return date.getFullYear() === Number(year) && date.getMonth() === Number(month) - 1 && date.getDate() === Number(day) ? date : null;
   }
 
   const isoDate = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
@@ -59,7 +59,7 @@ function parsePaymentDate(value: unknown) {
   if (isoDate) {
     const [, year, month, day] = isoDate;
     const date = new Date(Number(year), Number(month) - 1, Number(day));
-    return Number.isNaN(date.getTime()) ? null : date;
+    return date.getFullYear() === Number(year) && date.getMonth() === Number(month) - 1 && date.getDate() === Number(day) ? date : null;
   }
 
   return null;
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
   let rows;
 
   try {
-    rows = await readSheet(Buffer.from(await file.arrayBuffer()));
+    rows = await readSheet(Buffer.from(await file.arrayBuffer()), { dateFormat: "dd/mm/yyyy" });
   } catch {
     return redirectWithErrors(request, ["Não foi possível ler o ficheiro. Confirma que é um Excel .xlsx válido."]);
   }
@@ -225,8 +225,8 @@ export async function POST(request: Request) {
           update: { fullName: row.fullName },
           create: { memberNumber: row.memberNumber, fullName: row.fullName }
         });
-        const creditsPerUnit = paymentType.credits;
-        const totalCredits = creditsPerUnit * row.quantity;
+        const creditsPerUnit = 0;
+        const totalCredits = 0;
         const pricePerUnit = decimalToNumber(paymentType.price);
         const teacherPricePerUnit = decimalToNumber(paymentType.teacherPrice);
         const totalPrice = pricePerUnit * row.quantity;
