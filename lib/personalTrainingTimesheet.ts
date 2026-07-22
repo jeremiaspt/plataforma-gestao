@@ -74,12 +74,20 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     };
   });
   const unmatched: Array<{ date: string; student: string; paymentType: string; lessons: number; value: number }> = [];
+  const detailEventMap = new Map<
+    string,
+    {
+      students: Array<{ memberNumber: string; fullName: string }>;
+      trainingLabel: string;
+      day: number;
+    }
+  >();
   const studentDetailMap = new Map<
     string,
     {
       students: Array<{ memberNumber: string; fullName: string }>;
       trainingLabel: string;
-      days: Set<number>;
+      dayCounts: Map<number, number>;
     }
   >();
 
@@ -105,37 +113,52 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     const lessonCount = paidLessons / row.studentCount;
     const trainingLabel = getTrainingDurationLabel(payment.paymentType.description);
     const requiredParticipants = requiredParticipantsForType(payment.paymentType.description);
-    const detailKey =
+    const detailEventKey =
       requiredParticipants > 1
         ? `${payment.paymentTypeId}:${payment.quantity}:${payment.createdAt.getTime()}:${trainingLabel}`
         : `${payment.studentId}:${trainingLabel}`;
-    const studentDetail =
-      studentDetailMap.get(detailKey) ||
+    const detailEvent =
+      detailEventMap.get(detailEventKey) ||
       {
         students: [],
         trainingLabel,
-        days: new Set<number>()
+        day: payment.createdAt.getDate()
       };
-    const hasStudent = studentDetail.students.some((student) => student.memberNumber === payment.student.memberNumber);
+    const hasStudent = detailEvent.students.some((student) => student.memberNumber === payment.student.memberNumber);
 
     row.dayLessons.set(dateValue, (row.dayLessons.get(dateValue) || 0) + lessonCount);
     row.totalLessons += lessonCount;
     row.totalValue += paidLessons * row.valuePerStudent;
     if (!hasStudent) {
-      studentDetail.students.push({
+      detailEvent.students.push({
         memberNumber: payment.student.memberNumber,
         fullName: payment.student.fullName
       });
     }
-    studentDetail.days.add(payment.createdAt.getDate());
+    detailEventMap.set(detailEventKey, detailEvent);
+  }
+
+  for (const event of detailEventMap.values()) {
+    const sortedStudents = event.students.sort((left, right) => left.fullName.localeCompare(right.fullName, "pt"));
+    const detailKey = `${event.trainingLabel}:${sortedStudents.map((student) => student.memberNumber).join("|")}`;
+    const studentDetail =
+      studentDetailMap.get(detailKey) ||
+      {
+        students: sortedStudents,
+        trainingLabel: event.trainingLabel,
+        dayCounts: new Map<number, number>()
+      };
+
+    studentDetail.dayCounts.set(event.day, (studentDetail.dayCounts.get(event.day) || 0) + 1);
     studentDetailMap.set(detailKey, studentDetail);
   }
 
   const studentDetails = Array.from(studentDetailMap.values())
     .map((detail) => ({
       ...detail,
-      students: detail.students.sort((left, right) => left.fullName.localeCompare(right.fullName, "pt")),
-      days: Array.from(detail.days).sort((left, right) => left - right)
+      days: Array.from(detail.dayCounts.entries())
+        .sort(([leftDay], [rightDay]) => leftDay - rightDay)
+        .map(([day, count]) => (count > 1 ? `${day}x${count}` : day.toString()))
     }))
     .sort((left, right) => {
       const leftFirstStudent = left.students[0];
