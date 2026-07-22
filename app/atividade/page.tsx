@@ -1,5 +1,4 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
@@ -51,7 +50,7 @@ function decodeImportErrors(value?: string) {
     const parsed = JSON.parse(source);
     return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
   } catch {
-    return [];
+    return value ? [value] : [];
   }
 }
 
@@ -94,7 +93,6 @@ export default async function ActivityPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const cookieStore = await cookies();
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
 
   if (!hasRole(user, "admin")) {
@@ -114,7 +112,7 @@ export default async function ActivityPage({
   const endExclusive = addDays(toDate, 1);
   const fromValue = dateInputValue(fromDate);
   const toValue = dateInputValue(toDate);
-  const importErrors = decodeImportErrors(params.importErrors || cookieStore.get("payment_import_errors")?.value);
+  const importErrors = decodeImportErrors(params.importErrors);
   const monthValue = currentMonthValue();
 
   const tabHref = (tab: ActivityTab) => {
@@ -512,7 +510,7 @@ export default async function ActivityPage({
               <div className="validation-panel">
                 <strong>Importação rejeitada</strong>
                 <p className="muted">Nenhum pagamento foi inserido. Corrige os erros no ficheiro e volta a carregar.</p>
-                {importErrors.map((error, index) => (
+                {(importErrors.length > 0 ? importErrors : ["A importação foi rejeitada, mas não foi possível apresentar o detalhe. Tenta novamente após atualizar a página."]).map((error, index) => (
                   <div className="validation-row error" key={`${error}-${index}`}>
                     <span>Erro</span>
                     <div>

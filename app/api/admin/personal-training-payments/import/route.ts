@@ -104,18 +104,13 @@ function summarizeErrors(errors: string[]) {
     return `${message} Linhas: ${visibleLines}${suffix}.`;
   });
 
-  return [...standalone, ...groupedMessages].slice(0, 25);
+  return [...standalone, ...groupedMessages].slice(0, 8).map((message) => (message.length > 220 ? `${message.slice(0, 217)}...` : message));
 }
 
 function redirectWithErrors(request: Request, errors: string[]) {
-  const response = NextResponse.redirect(appRedirectUrl("/atividade?tab=maintenance&importError=1", request));
-  response.cookies.set("payment_import_errors", JSON.stringify(summarizeErrors(errors)), {
-    httpOnly: true,
-    maxAge: 300,
-    path: "/atividade",
-    sameSite: "lax"
-  });
-  return response;
+  const params = new URLSearchParams({ tab: "maintenance", importError: "1" });
+  params.set("importErrors", Buffer.from(JSON.stringify(summarizeErrors(errors))).toString("base64url"));
+  return NextResponse.redirect(appRedirectUrl(`/atividade?${params.toString()}`, request));
 }
 
 export async function POST(request: Request) {
