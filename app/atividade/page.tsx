@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { PersonalTrainingImportForm } from "@/components/PersonalTrainingImportForm";
 import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
@@ -604,21 +605,7 @@ export default async function ActivityPage({
               </button>
             </form>
 
-            <form className="maintenance-card" action="/api/admin/personal-training-payments/import" method="post" encType="multipart/form-data">
-              <div>
-                <h2>Importar pagamentos TP por Excel</h2>
-                <p className="muted">
-                  Primeira linha com cabeçalhos. Colunas: A número utente, B nome utente, C professor, D pack, E quantidade, G data pagamento, H rececionista.
-                </p>
-              </div>
-              <div className="field">
-                <label htmlFor="paymentsFile">Ficheiro Excel</label>
-                <input id="paymentsFile" name="paymentsFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
-              </div>
-              <button className="button secondary" type="submit">
-                Validar e importar
-              </button>
-            </form>
+            <PersonalTrainingImportForm />
           </div>
         ) : null}
       </section>
