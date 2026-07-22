@@ -116,7 +116,7 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     const detailEventKey =
       requiredParticipants > 1
         ? `${payment.paymentTypeId}:${payment.quantity}:${payment.createdAt.getTime()}:${trainingLabel}`
-        : `${payment.studentId}:${trainingLabel}`;
+        : payment.id;
     const detailEvent =
       detailEventMap.get(detailEventKey) ||
       {
