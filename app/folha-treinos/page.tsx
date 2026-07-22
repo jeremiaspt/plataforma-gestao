@@ -148,6 +148,22 @@ export default async function PersonalTrainingTimesheetPage({
           </table>
         </div>
 
+        {timesheet.studentDetails.length > 0 ? (
+          <div className="timesheet-detail-list">
+            <div>
+              <h2>Detalhe por utente</h2>
+              <p className="muted">Pagamentos considerados neste ciclo, agrupados por utente e duracao.</p>
+            </div>
+            <div className="timesheet-detail-grid">
+              {timesheet.studentDetails.map((item) => (
+                <p key={`${item.memberNumber}-${item.trainingLabel}`}>
+                  {item.memberNumber} - {item.fullName} {item.trainingLabel} ({item.days.join(", ")})
+                </p>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         {timesheet.unmatched.length > 0 ? (
           <div className="timesheet-unmatched">
             <h2>Pagamentos sem Caract.</h2>
