@@ -907,6 +907,11 @@ select {
   margin-bottom: 4px;
 }
 
+.timesheet-detail-sections {
+  display: grid;
+  gap: 12px;
+}
+
 .timesheet-detail-grid {
   display: grid;
   gap: 6px;

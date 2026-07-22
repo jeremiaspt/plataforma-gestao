@@ -186,7 +186,10 @@ export async function calculateGroupClassTimesheet({
           substitutionDate: { gte: period.start, lt: period.endExclusive }
         }
       },
-      include: { request: { select: { substitutionDate: true } } }
+      include: {
+        request: { select: { substitutionDate: true } },
+        substituteTeacher: { select: { name: true } }
+      }
     }),
     prisma.groupClassSubstitutionItem.findMany({
       where: {
@@ -197,7 +200,14 @@ export async function calculateGroupClassTimesheet({
           substitutionDate: { gte: period.start, lt: period.endExclusive }
         }
       },
-      include: { request: { select: { substitutionDate: true } } },
+      include: {
+        request: {
+          select: {
+            absentTeacher: { select: { name: true } },
+            substitutionDate: true
+          }
+        }
+      },
       orderBy: [{ startMinutes: "asc" }, { poolKey: "asc" }, { laneNumber: "asc" }]
     })
   ]);
@@ -309,6 +319,26 @@ export async function calculateGroupClassTimesheet({
   }
 
   return {
+    absenceDetails: outgoingSubstitutions.map((item) => ({
+      accumulation: item.accumulation,
+      date: dateToInputValue(item.request.substitutionDate),
+      endMinutes: item.endMinutes,
+      laneNumber: item.laneNumber,
+      poolKey: item.poolKey,
+      startMinutes: item.startMinutes,
+      substituteTeacherName: item.substituteTeacher.name,
+      title: item.title
+    })),
+    extraDetails: incomingSubstitutions.map((item) => ({
+      absentTeacherName: item.request.absentTeacher.name,
+      accumulation: item.accumulation,
+      date: dateToInputValue(item.request.substitutionDate),
+      endMinutes: item.endMinutes,
+      laneNumber: item.laneNumber,
+      poolKey: item.poolKey,
+      startMinutes: item.startMinutes,
+      title: item.title
+    })),
     period,
     rows,
     teacher,

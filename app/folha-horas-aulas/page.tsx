@@ -6,7 +6,7 @@ import { hasRole, requireUser } from "@/lib/auth";
 import { getHolidayForDate } from "@/lib/holidays";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
-import { dateToInputValue } from "@/lib/pool";
+import { dateToInputValue, formatMinutes, getPoolMapByKey } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 
 function addDays(date: Date, days: number) {
@@ -37,6 +37,16 @@ function formatDayHours(value: number) {
   }
 
   return value.toFixed(2).replace(".", ",");
+}
+
+function formatDateValue(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("pt-PT");
+}
+
+function classLabel(block: { poolKey: string; laneNumber: number }) {
+  const poolMap = getPoolMapByKey(block.poolKey);
+  const lane = poolMap.lanes.find((item) => item.number === block.laneNumber);
+  return `${poolMap.eyebrow} Â· ${lane?.label || `${poolMap.laneFieldLabel} ${block.laneNumber}`}`;
 }
 
 export default async function GroupClassTimesheetPage({
@@ -199,6 +209,44 @@ export default async function GroupClassTimesheetPage({
             </tfoot>
           </table>
         </div>
+
+        {timesheet.absenceDetails.length > 0 || timesheet.extraDetails.length > 0 ? (
+          <div className="timesheet-detail-sections">
+            {timesheet.absenceDetails.length > 0 ? (
+              <section className="timesheet-detail-list">
+                <div>
+                  <h2>Faltas</h2>
+                  <p className="muted">Aulas retiradas desta folha por substituiÃ§Ã£o.</p>
+                </div>
+                <div className="timesheet-detail-grid">
+                  {timesheet.absenceDetails.map((item, index) => (
+                    <p key={`${item.date}-${item.title}-${index}`}>
+                      {formatDateValue(item.date)} Â· {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} Â· {item.title}
+                      {item.accumulation ? " (ACUM.)" : ""} Â· {classLabel(item)} Â· Substituto: {item.substituteTeacherName}
+                    </p>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {timesheet.extraDetails.length > 0 ? (
+              <section className="timesheet-detail-list">
+                <div>
+                  <h2>Extras</h2>
+                  <p className="muted">SubstituiÃ§Ãµes feitas por outros professores neste perÃ­odo.</p>
+                </div>
+                <div className="timesheet-detail-grid">
+                  {timesheet.extraDetails.map((item, index) => (
+                    <p key={`${item.date}-${item.title}-${index}`}>
+                      {formatDateValue(item.date)} Â· {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} Â· {item.title}
+                      {item.accumulation ? " (ACUM.)" : ""} Â· {classLabel(item)} Â· Por: {item.absentTeacherName}
+                    </p>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+          </div>
+        ) : null}
 
         {timesheet.unmatched.length > 0 ? (
           <div className="timesheet-unmatched">

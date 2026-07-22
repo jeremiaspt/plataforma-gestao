@@ -127,6 +127,21 @@ export async function POST(request: Request) {
       weekday
     }
   });
+  const existingSubstitutionItems = await prisma.groupClassSubstitutionItem.findMany({
+    where: {
+      status: { in: ["pending", "approved"] },
+      substituteTeacherId: { in: substituteIds },
+      request: {
+        status: { in: ["pending", "approved"] },
+        substitutionDate
+      }
+    },
+    select: {
+      endMinutes: true,
+      startMinutes: true,
+      substituteTeacherId: true
+    }
+  });
 
   const items = [];
 
@@ -148,7 +163,7 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const substituteHasConflict = substituteBlocks.some(
+    const substituteHasScheduleConflict = substituteBlocks.some(
       (candidate) =>
         candidate.teacherId === substituteTeacherId &&
         poolBlockAppliesToDate(candidate, substitutionDate) &&
@@ -159,6 +174,37 @@ export async function POST(request: Request) {
           existingEnd: candidate.endMinutes
         })
     );
+    const substituteHasSubstitutionConflict = existingSubstitutionItems.some(
+      (candidate) =>
+        candidate.substituteTeacherId === substituteTeacherId &&
+        overlapsExistingBlock({
+          startMinutes: block.startMinutes,
+          endMinutes: block.endMinutes,
+          existingStart: candidate.startMinutes,
+          existingEnd: candidate.endMinutes
+        })
+    );
+    const substituteHasConflict = substituteHasScheduleConflict || substituteHasSubstitutionConflict;
+
+    if (substituteHasConflict && !isAdmin) {
+      validationMessages.push({
+        status: "error",
+        label: blockLabel,
+        message:
+          "O professor substituto jÃ¡ tem aula nesse horÃ¡rio. O pedido de substituiÃ§Ã£o com acumulaÃ§Ã£o tem de ser pedido ao Diretor ou Coordenador, uma vez que sÃ³ com autorizaÃ§Ã£o a substituiÃ§Ã£o pode ser feita."
+      });
+      continue;
+    }
+
+    if (accumulation && !isAdmin) {
+      validationMessages.push({
+        status: "error",
+        label: blockLabel,
+        message:
+          "A acumulaÃ§Ã£o sÃ³ pode ser lanÃ§ada por um administrador. Este pedido deve ser encaminhado ao Diretor ou Coordenador para autorizaÃ§Ã£o."
+      });
+      continue;
+    }
 
     if (substituteHasConflict && !accumulation) {
       validationMessages.push({

@@ -297,10 +297,12 @@ export default async function SubstitutionsPage({
                     ))}
                   </select>
                 </div>
-                <label className="checkbox compact-checkbox">
-                  <input type="checkbox" name={`accumulation_${block.id}`} />
-                  Acumulação
-                </label>
+                {isAdmin ? (
+                  <label className="checkbox compact-checkbox">
+                    <input type="checkbox" name={`accumulation_${block.id}`} />
+                    Acumulação
+                  </label>
+                ) : null}
               </div>
             ))}
 
