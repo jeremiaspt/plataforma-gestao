@@ -36,6 +36,13 @@ function parseQuantity(value: unknown) {
 
 function parsePaymentDate(value: unknown) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const day = value.getDate();
+    const month = value.getMonth() + 1;
+
+    if (day <= 12 && month <= 12) {
+      return new Date(value.getFullYear(), day - 1, month);
+    }
+
     return new Date(value.getFullYear(), value.getMonth(), value.getDate());
   }
 
