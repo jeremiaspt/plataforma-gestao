@@ -80,10 +80,42 @@ function duplicateNormalizedNames(items: Array<{ name: string }>) {
   return new Set(Array.from(counts.entries()).filter(([, count]) => count > 1).map(([key]) => key));
 }
 
+function summarizeErrors(errors: string[]) {
+  const grouped = new Map<string, number[]>();
+  const standalone: string[] = [];
+
+  for (const error of errors) {
+    const match = error.match(/^Linha\s+(\d+):\s+(.+)$/);
+
+    if (!match) {
+      standalone.push(error);
+      continue;
+    }
+
+    const [, line, message] = match;
+    const lines = grouped.get(message) || [];
+    lines.push(Number(line));
+    grouped.set(message, lines);
+  }
+
+  const groupedMessages = Array.from(grouped.entries()).map(([message, lines]) => {
+    const visibleLines = lines.slice(0, 18).join(", ");
+    const suffix = lines.length > 18 ? `, +${lines.length - 18} linha(s)` : "";
+    return `${message} Linhas: ${visibleLines}${suffix}.`;
+  });
+
+  return [...standalone, ...groupedMessages].slice(0, 25);
+}
+
 function redirectWithErrors(request: Request, errors: string[]) {
-  const params = new URLSearchParams({ tab: "maintenance", importError: "1" });
-  params.set("importErrors", Buffer.from(JSON.stringify(errors.slice(0, 80))).toString("base64url"));
-  return NextResponse.redirect(appRedirectUrl(`/atividade?${params.toString()}`, request));
+  const response = NextResponse.redirect(appRedirectUrl("/atividade?tab=maintenance&importError=1", request));
+  response.cookies.set("payment_import_errors", JSON.stringify(summarizeErrors(errors)), {
+    httpOnly: true,
+    maxAge: 300,
+    path: "/atividade",
+    sameSite: "lax"
+  });
+  return response;
 }
 
 export async function POST(request: Request) {

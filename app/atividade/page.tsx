@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
@@ -46,7 +47,8 @@ function decodeImportErrors(value?: string) {
   }
 
   try {
-    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    const source = value.trim().startsWith("[") ? value : Buffer.from(value, "base64url").toString("utf8");
+    const parsed = JSON.parse(source);
     return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
   } catch {
     return [];
@@ -92,6 +94,7 @@ export default async function ActivityPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
+  const cookieStore = await cookies();
   const roleKeys = user.roles.map((userRole) => userRole.role.key);
 
   if (!hasRole(user, "admin")) {
@@ -111,7 +114,7 @@ export default async function ActivityPage({
   const endExclusive = addDays(toDate, 1);
   const fromValue = dateInputValue(fromDate);
   const toValue = dateInputValue(toDate);
-  const importErrors = decodeImportErrors(params.importErrors);
+  const importErrors = decodeImportErrors(params.importErrors || cookieStore.get("payment_import_errors")?.value);
   const monthValue = currentMonthValue();
 
   const tabHref = (tab: ActivityTab) => {
