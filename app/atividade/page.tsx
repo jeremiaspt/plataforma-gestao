@@ -35,6 +35,24 @@ function addDays(date: Date, days: number) {
   return next;
 }
 
+function currentMonthValue() {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function decodeImportErrors(value?: string) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+}
+
 function formatMinutes(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
@@ -65,6 +83,11 @@ export default async function ActivityPage({
     resetError?: string;
     restoreSuccess?: string;
     restoreError?: string;
+    paymentDeleteSuccess?: string;
+    paymentDeleteError?: string;
+    importSuccess?: string;
+    importError?: string;
+    importErrors?: string;
   }>;
 }) {
   const user = await requireUser();
@@ -88,6 +111,8 @@ export default async function ActivityPage({
   const endExclusive = addDays(toDate, 1);
   const fromValue = dateInputValue(fromDate);
   const toValue = dateInputValue(toDate);
+  const importErrors = decodeImportErrors(params.importErrors);
+  const monthValue = currentMonthValue();
 
   const tabHref = (tab: ActivityTab) => {
     const query = new URLSearchParams();
@@ -471,6 +496,31 @@ export default async function ActivityPage({
             {params.restoreSuccess ? <p className="success">Backup reposto com sucesso.</p> : null}
             {params.restoreError ? <p className="error">Não foi possível repor o backup. Confirma o ficheiro e a frase de segurança.</p> : null}
 
+            {params.paymentDeleteSuccess ? (
+              <p className="success">
+                {params.paymentDeleteSuccess === "0"
+                  ? "Não existiam pagamentos TP no período escolhido."
+                  : `${params.paymentDeleteSuccess} pagamento(s) TP apagado(s). Os créditos dos alunos foram preservados.`}
+              </p>
+            ) : null}
+            {params.paymentDeleteError ? <p className="error">Não foi possível apagar pagamentos. Confirma os meses, a proteção de créditos e a frase de segurança.</p> : null}
+            {params.importSuccess ? <p className="success">{params.importSuccess} pagamento(s) importado(s) com sucesso.</p> : null}
+            {params.importError ? (
+              <div className="validation-panel">
+                <strong>Importação rejeitada</strong>
+                <p className="muted">Nenhum pagamento foi inserido. Corrige os erros no ficheiro e volta a carregar.</p>
+                {importErrors.map((error, index) => (
+                  <div className="validation-row error" key={`${error}-${index}`}>
+                    <span>Erro</span>
+                    <div>
+                      <strong>Linha do Excel</strong>
+                      <p>{error}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
             <div className="maintenance-card">
               <div>
                 <h2>Backup antes da limpeza</h2>
@@ -520,6 +570,52 @@ export default async function ActivityPage({
               </div>
               <button className="button secondary" type="submit">
                 Repor backup
+              </button>
+            </form>
+
+            <form className="maintenance-card danger-zone" action="/api/admin/personal-training-payments/delete-months" method="post">
+              <div>
+                <h2>Apagar pagamentos TP por mês</h2>
+                <p className="muted">
+                  Remove apenas os registos de pagamentos e respetivos logs no intervalo escolhido. Para não alterar os saldos, os créditos dos pagamentos ativos são preservados como ajuste manual.
+                </p>
+              </div>
+              <div className="maintenance-inline-fields">
+                <div className="field">
+                  <label htmlFor="fromMonth">De mês</label>
+                  <input id="fromMonth" name="fromMonth" type="month" defaultValue={monthValue} required />
+                </div>
+                <div className="field">
+                  <label htmlFor="toMonth">Até mês</label>
+                  <input id="toMonth" name="toMonth" type="month" defaultValue={monthValue} required />
+                </div>
+              </div>
+              <label className="checkbox">
+                <input type="checkbox" name="preserveCredits" required />
+                Confirmo que os créditos dos alunos devem ser preservados
+              </label>
+              <div className="field">
+                <label htmlFor="deletePaymentsConfirmation">Frase de segurança</label>
+                <input id="deletePaymentsConfirmation" name="typedConfirmation" placeholder="APAGAR PAGAMENTOS TP" required />
+              </div>
+              <button className="button danger" type="submit">
+                Apagar pagamentos TP
+              </button>
+            </form>
+
+            <form className="maintenance-card" action="/api/admin/personal-training-payments/import" method="post" encType="multipart/form-data">
+              <div>
+                <h2>Importar pagamentos TP por Excel</h2>
+                <p className="muted">
+                  Primeira linha com cabeçalhos. Colunas: A número utente, B nome utente, C professor, D pack, E quantidade, G data pagamento, H rececionista.
+                </p>
+              </div>
+              <div className="field">
+                <label htmlFor="paymentsFile">Ficheiro Excel</label>
+                <input id="paymentsFile" name="paymentsFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
+              </div>
+              <button className="button secondary" type="submit">
+                Validar e importar
               </button>
             </form>
           </div>

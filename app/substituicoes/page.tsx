@@ -37,6 +37,30 @@ function formatDate(date: Date) {
   return date.toLocaleDateString("pt-PT");
 }
 
+function decodeValidation(value?: string) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8"));
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed
+      .map((item) => ({
+        label: String(item?.label || ""),
+        message: String(item?.message || ""),
+        status: item?.status === "ok" ? "ok" : "error"
+      }))
+      .filter((item) => item.label && item.message);
+  } catch {
+    return [];
+  }
+}
+
 function classLabel(block: { poolKey: string; laneNumber: number }) {
   const poolMap = getPoolMapByKey(block.poolKey);
   const lane = poolMap.lanes.find((item) => item.number === block.laneNumber);
@@ -56,7 +80,7 @@ function tabHref(tab: string, date: string, teacherId: string, status: string, i
 export default async function SubstitutionsPage({
   searchParams
 }: {
-  searchParams: Promise<{ date?: string; error?: string; success?: string; tab?: string; teacherId?: string; status?: string }>;
+  searchParams: Promise<{ date?: string; error?: string; success?: string; tab?: string; teacherId?: string; status?: string; validation?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -75,6 +99,7 @@ export default async function SubstitutionsPage({
   const todayStart = new Date(`${todayValue}T00:00:00`);
   const activeTab = params.tab === "geral" || params.tab === "historico" ? params.tab : "gerir";
   const statusFilter = statusOptions.some((option) => option.value === params.status) ? params.status || "all" : "all";
+  const validationMessages = decodeValidation(params.validation);
   const weekday = selectedDate.getDay();
   const teachers = await prisma.user.findMany({
     where: {
@@ -174,6 +199,20 @@ export default async function SubstitutionsPage({
 
         {params.success ? <p className="success">Operação registada.</p> : null}
         {params.error ? <p className="error">Não foi possível concluir a operação. Confirma os dados e tenta novamente.</p> : null}
+        {validationMessages.length > 0 ? (
+          <div className="validation-panel">
+            <strong>Validação do pedido</strong>
+            {validationMessages.map((message, index) => (
+              <div className={message.status === "ok" ? "validation-row ok" : "validation-row error"} key={`${message.label}-${index}`}>
+                <span>{message.status === "ok" ? "OK" : "Erro"}</span>
+                <div>
+                  <strong>{message.label}</strong>
+                  <p>{message.message}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="tabs">
           <a className={activeTab === "gerir" ? "tab active" : "tab"} href={tabHref("gerir", selectedDateValue, selectedTeacherId, statusFilter, isAdmin)}>

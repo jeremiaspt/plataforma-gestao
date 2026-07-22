@@ -539,6 +539,49 @@ select {
   font-size: 12px;
 }
 
+.validation-panel {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 10px 12px;
+}
+
+.validation-row {
+  align-items: flex-start;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 58px minmax(0, 1fr);
+  padding: 8px;
+}
+
+.validation-row > span {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 4px 7px;
+  text-align: center;
+}
+
+.validation-row.ok > span {
+  background: #dff7f4;
+  color: #0f766e;
+}
+
+.validation-row.error > span {
+  background: #fee2e2;
+  color: #b42318;
+}
+
+.validation-row p {
+  color: var(--muted);
+  margin: 2px 0 0;
+}
+
 @media (max-width: 1120px) {
   .substitution-class-row,
   .substitution-request-item {
@@ -2628,6 +2671,12 @@ h1 {
 .maintenance-grid {
   display: grid;
   gap: 12px;
+}
+
+.maintenance-inline-fields {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
 }
 
 .maintenance-card {

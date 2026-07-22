@@ -6,7 +6,17 @@ import { prisma } from "@/lib/prisma";
 import { sendSubstitutionRequestEmail } from "@/lib/substitutionEmail";
 import { appRedirectUrl } from "@/lib/url";
 
-function redirectPath(request: Request, status: "success" | "error", dateValue: string, teacherId?: string) {
+type ValidationMessage = {
+  status: "ok" | "error";
+  label: string;
+  message: string;
+};
+
+function encodeValidation(messages: ValidationMessage[]) {
+  return Buffer.from(JSON.stringify(messages)).toString("base64url");
+}
+
+function redirectPath(request: Request, status: "success" | "error", dateValue: string, teacherId?: string, messages?: ValidationMessage[]) {
   const params = new URLSearchParams({ [status]: "1" });
 
   if (dateValue) {
@@ -15,6 +25,10 @@ function redirectPath(request: Request, status: "success" | "error", dateValue: 
 
   if (teacherId) {
     params.set("teacherId", teacherId);
+  }
+
+  if (messages?.length) {
+    params.set("validation", encodeValidation(messages));
   }
 
   return NextResponse.redirect(appRedirectUrl(`/substituicoes?${params.toString()}`, request));
@@ -41,8 +55,22 @@ export async function POST(request: Request) {
     return maintenanceBlock;
   }
 
-  if (!substitutionDate || !absentTeacherId || selectedBlockIds.length === 0) {
-    return redirectPath(request, "error", dateValue, selectedTeacherId);
+  const validationMessages: ValidationMessage[] = [];
+
+  if (!substitutionDate) {
+    validationMessages.push({ status: "error", label: "Data", message: "A data selecionada não é válida." });
+  }
+
+  if (!absentTeacherId) {
+    validationMessages.push({ status: "error", label: "Professor em falta", message: "Não foi possível identificar o professor em falta." });
+  }
+
+  if (selectedBlockIds.length === 0) {
+    validationMessages.push({ status: "error", label: "Aulas", message: "Seleciona pelo menos uma aula para substituir." });
+  }
+
+  if (validationMessages.length > 0 || !substitutionDate) {
+    return redirectPath(request, "error", dateValue, selectedTeacherId, validationMessages);
   }
 
   const absentTeacher = await prisma.user.findFirst({
@@ -55,7 +83,9 @@ export async function POST(request: Request) {
   });
 
   if (!absentTeacher) {
-    return redirectPath(request, "error", dateValue, selectedTeacherId);
+    return redirectPath(request, "error", dateValue, selectedTeacherId, [
+      { status: "error", label: "Professor em falta", message: "O professor em falta não existe, está inativo ou não tem categoria professor." }
+    ]);
   }
 
   const weekday = dateToWeekday(substitutionDate);
@@ -70,7 +100,9 @@ export async function POST(request: Request) {
   });
 
   if (blocks.length !== selectedBlockIds.length || blocks.some((block) => !poolBlockAppliesToDate(block, substitutionDate))) {
-    return redirectPath(request, "error", dateValue, selectedTeacherId);
+    return redirectPath(request, "error", dateValue, selectedTeacherId, [
+      { status: "error", label: "Aulas selecionadas", message: "Uma ou mais aulas selecionadas já não existem ou não se aplicam à data escolhida." }
+    ]);
   }
 
   const substituteIds = Array.from(
@@ -101,9 +133,19 @@ export async function POST(request: Request) {
   for (const block of blocks) {
     const substituteTeacherId = String(formData.get(`substituteTeacherId_${block.id}`) || "");
     const accumulation = formData.get(`accumulation_${block.id}`) === "on";
+    const blockLabel = `${block.title} · ${Math.floor(block.startMinutes / 60).toString().padStart(2, "0")}:${(block.startMinutes % 60).toString().padStart(2, "0")} - ${Math.floor(block.endMinutes / 60).toString().padStart(2, "0")}:${(block.endMinutes % 60).toString().padStart(2, "0")}`;
 
     if (!substituteTeacherId || substituteTeacherId === absentTeacherId || !validSubstituteIds.has(substituteTeacherId)) {
-      return redirectPath(request, "error", dateValue, selectedTeacherId);
+      validationMessages.push({
+        status: "error",
+        label: blockLabel,
+        message: !substituteTeacherId
+          ? "Falta selecionar o professor substituto."
+          : substituteTeacherId === absentTeacherId
+            ? "O professor em falta não pode ser o próprio substituto."
+            : "O professor substituto não existe, está inativo ou não tem categoria professor."
+      });
+      continue;
     }
 
     const substituteHasConflict = substituteBlocks.some(
@@ -119,8 +161,20 @@ export async function POST(request: Request) {
     );
 
     if (substituteHasConflict && !accumulation) {
-      return redirectPath(request, "error", dateValue, selectedTeacherId);
+      validationMessages.push({
+        status: "error",
+        label: blockLabel,
+        message: "O professor substituto já tem aula nesse horário. Marca a opção Acumulação se for intencional."
+      });
+      continue;
     }
+
+    const substitute = substitutesById.get(substituteTeacherId);
+    validationMessages.push({
+      status: "ok",
+      label: blockLabel,
+      message: `OK para ${substitute?.name || "professor selecionado"}${accumulation ? " com acumulação" : ""}.`
+    });
 
     items.push({
       accumulation,
@@ -134,6 +188,10 @@ export async function POST(request: Request) {
       substituteTeacherId,
       title: block.title
     });
+  }
+
+  if (validationMessages.some((message) => message.status === "error")) {
+    return redirectPath(request, "error", dateValue, selectedTeacherId, validationMessages);
   }
 
   const substitutionRequest = await prisma.groupClassSubstitutionRequest.create({
