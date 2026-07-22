@@ -49,6 +49,16 @@ function classLabel(block: { poolKey: string; laneNumber: number }) {
   return `${poolMap.eyebrow} - ${lane?.label || `${poolMap.laneFieldLabel} ${block.laneNumber}`}`;
 }
 
+function dockSupportTimeLabel(block: { endMinutes: number; poolKey: string; startMinutes: number }) {
+  if (block.poolKey !== "apoio_cais") {
+    return "";
+  }
+
+  const minutes = block.endMinutes - block.startMinutes;
+  const hours = minutes / 60;
+  return ` - ${minutes}min = ${hours.toFixed(2).replace(".", ",")}`;
+}
+
 function groupAbsenceDetails(
   items: Array<{
     accumulation: boolean;
@@ -284,6 +294,7 @@ export default async function GroupClassTimesheetPage({
                         <span key={`${item.title}-${index}`}>
                           {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} - {item.title}
                           {item.accumulation ? " (ACUM.)" : ""} - {classLabel(item)}
+                          {dockSupportTimeLabel(item)}
                         </span>
                       ))}
                     </div>
@@ -306,6 +317,7 @@ export default async function GroupClassTimesheetPage({
                         <span key={`${item.title}-${index}`}>
                           {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} - {item.title}
                           {item.accumulation ? " (ACUM.)" : ""} - {classLabel(item)}
+                          {dockSupportTimeLabel(item)}
                         </span>
                       ))}
                     </div>
