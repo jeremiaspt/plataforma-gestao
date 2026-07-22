@@ -929,6 +929,26 @@ select {
   padding: 8px 10px;
 }
 
+.timesheet-detail-card {
+  background: #ffffff;
+  border: 1px solid #dbe7f3;
+  border-radius: 7px;
+  color: #18345d;
+  display: grid;
+  gap: 5px;
+  font-size: 13px;
+  margin: 0;
+  padding: 8px 10px;
+}
+
+.timesheet-detail-card strong {
+  color: #082f49;
+}
+
+.timesheet-detail-card span {
+  font-weight: 700;
+}
+
 @media (max-width: 1320px) {
   .group-week-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
