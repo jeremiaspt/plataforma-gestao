@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
-import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel } from "@/lib/billingCycles";
+import { currentBillingMonthValue, formatBillingPeriod } from "@/lib/billingCycles";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getHolidayForDate } from "@/lib/holidays";
@@ -101,10 +101,7 @@ export default async function GroupClassTimesheetPage({
           <div>
             <p className="eyebrow">Aulas de grupo</p>
             <h1>Folha de horas</h1>
-            <p className="muted">
-              {timesheet.teacher.name} · {formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)} ·{" "}
-              {getBillingCycleLabel(timesheet.teacher.billingCycle)}
-            </p>
+            <p className="muted">{timesheet.teacher.name} · {formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)}</p>
           </div>
           <span className="status active">{formatCurrency(grandTotal)}</span>
         </div>
@@ -144,7 +141,7 @@ export default async function GroupClassTimesheetPage({
         </form>
 
         <div className="timesheet-table-wrap">
-          <table className="timesheet-table">
+          <table className="timesheet-table group-hours-timesheet-table">
             <thead>
               <tr>
                 <th>Caract.</th>
@@ -152,9 +149,14 @@ export default async function GroupClassTimesheetPage({
                 {periodDates.map((date) => {
                   const dateValue = dateToInputValue(date);
                   const holiday = holidayByDate.get(dateValue);
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
 
                   return (
-                    <th className={holiday ? "timesheet-holiday-cell" : undefined} key={dateValue} title={holiday?.name}>
+                    <th
+                      className={holiday ? "timesheet-holiday-cell" : isWeekend ? "timesheet-weekend-cell" : undefined}
+                      key={dateValue}
+                      title={holiday?.name}
+                    >
                       <span>{date.getDate()}</span>
                       <small>{weekdayShortLabel(date)}</small>
                     </th>
@@ -174,8 +176,12 @@ export default async function GroupClassTimesheetPage({
                     const count = row.dayCounts.get(dateValue) || 0;
                     const hours = row.dayHours.get(dateValue) || 0;
                     const value = row.calculationMode === "minutes" ? formatDayHours(hours) : formatDayHours(count);
+                    const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                     return (
-                      <td className={holidayByDate.has(dateValue) ? "timesheet-holiday-cell" : undefined} key={dateValue}>
+                      <td
+                        className={holidayByDate.has(dateValue) ? "timesheet-holiday-cell" : isWeekend ? "timesheet-weekend-cell" : undefined}
+                        key={dateValue}
+                      >
                         {value}
                       </td>
                     );

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { getBillingPeriod } from "@/lib/billingCycles";
+import { parseBillingMonth } from "@/lib/billingCycles";
 import { getHolidayForDate, HolidayOptions } from "@/lib/holidays";
 import { decimalToNumber } from "@/lib/money";
 import { dateToInputValue, poolBlockAppliesToDate } from "@/lib/pool";
@@ -44,6 +44,15 @@ function eachDate(start: Date, endExclusive: Date) {
     dates.push(new Date(date));
   }
   return dates;
+}
+
+function getCalendarMonthPeriod(monthValue?: string) {
+  const { year, monthIndex } = parseBillingMonth(monthValue);
+
+  return {
+    start: new Date(year, monthIndex, 1),
+    endExclusive: new Date(year, monthIndex + 1, 1)
+  };
 }
 
 function normalize(value: string) {
@@ -154,7 +163,7 @@ export async function calculateGroupClassTimesheet({
     return null;
   }
 
-  const period = getBillingPeriod(teacher.billingCycle, month);
+  const period = getCalendarMonthPeriod(month);
   const [rules, blocks, outgoingSubstitutions, incomingSubstitutions] = await Promise.all([
     prisma.groupClassHourlyRate.findMany({
       where: { active: true },

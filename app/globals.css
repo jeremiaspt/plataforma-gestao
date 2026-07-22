@@ -763,6 +763,21 @@ select {
   color: #ffffff;
 }
 
+.timesheet-table thead th.timesheet-weekend-cell {
+  background: #2563a6;
+  color: #ffffff;
+}
+
+.timesheet-table thead th.timesheet-month-a-cell {
+  background: #c05621;
+  color: #ffffff;
+}
+
+.timesheet-table thead th.timesheet-month-b-cell {
+  background: #1f7a5c;
+  color: #ffffff;
+}
+
 .timesheet-table thead th:first-child,
 .timesheet-table thead th:nth-child(2) {
   background: #eef2f7;
@@ -811,6 +826,25 @@ select {
   background: #fee2e2;
   color: #991b1b;
   font-weight: 800;
+}
+
+.timesheet-table tbody td.timesheet-weekend-cell {
+  background: #dbeafe;
+}
+
+.group-hours-timesheet-table {
+  min-width: 1320px;
+}
+
+.group-hours-timesheet-table th,
+.group-hours-timesheet-table td {
+  font-size: 10.5px;
+  padding: 4px 3px;
+}
+
+.group-hours-timesheet-table thead th:nth-child(2) {
+  width: 76px;
+  white-space: normal;
 }
 
 .personal-training-timesheet-table {

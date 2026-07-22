@@ -17,6 +17,18 @@ function formatCellValue(value: number) {
   return value.toFixed(2).replace(".", ",");
 }
 
+function monthKey(date: Date) {
+  return `${date.getFullYear()}-${date.getMonth()}`;
+}
+
+function trainingMonthClass(date: Date, monthKeys: string[]) {
+  if (monthKeys.length < 2) {
+    return undefined;
+  }
+
+  return monthKey(date) === monthKeys[0] ? "timesheet-month-a-cell" : "timesheet-month-b-cell";
+}
+
 export default async function PersonalTrainingTimesheetPage({
   searchParams
 }: {
@@ -49,6 +61,7 @@ export default async function PersonalTrainingTimesheetPage({
   }
 
   const periodDates = eachPeriodDate(timesheet.period.start, timesheet.period.endExclusive);
+  const periodMonthKeys = Array.from(new Set(periodDates.map((date) => monthKey(date))));
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
   const tabHref = (tab: "mine" | "professor") => `/folha-treinos?tab=${tab}&month=${selectedMonth}`;
 
@@ -112,7 +125,7 @@ export default async function PersonalTrainingTimesheetPage({
                   const dateValue = dateToInputValue(date);
 
                   return (
-                    <th key={dateValue}>
+                    <th className={trainingMonthClass(date, periodMonthKeys)} key={dateValue}>
                       <span>{date.getDate()}</span>
                       <small>{weekdayShortLabel(date)}</small>
                     </th>
