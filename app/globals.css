@@ -2886,21 +2886,61 @@ h1 {
   display: grid;
   font-size: 12px;
   gap: 1px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 6px 7px;
 }
 
 .birthday-overview-slot.occupied {
+  border-style: solid;
+  font-weight: 800;
+}
+
+.birthday-overview-slot.paid {
   background: #e6f5f2;
   border-color: #99d8d0;
   color: #0f766e;
-  font-weight: 800;
+}
+
+.birthday-overview-slot.not-paid {
+  background: #fff1f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.birthday-overview-slot summary {
+  cursor: pointer;
+  display: grid;
+  gap: 1px;
+  list-style: none;
+}
+
+.birthday-overview-slot summary::-webkit-details-marker {
+  display: none;
+}
+
+.birthday-overview-slot summary strong,
+.birthday-overview-slot summary span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .birthday-overview-slot small {
   color: inherit;
   font-size: 10px;
   font-weight: 700;
+}
+
+.birthday-detail-popover {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
+  color: #10233f;
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px;
 }
 
 .birthday-day-card {

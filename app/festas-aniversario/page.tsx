@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { BirthdayMonitorSelectGuard } from "@/components/BirthdayMonitorSelectGuard";
 import { hasRole, requireUser } from "@/lib/auth";
 import {
   birthdayAgeGroups,
@@ -68,6 +69,7 @@ export default async function BirthdayPartiesPage({
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
+      <BirthdayMonitorSelectGuard />
       <section className="panel birthday-panel">
         <div className="topbar">
           <div>
@@ -188,44 +190,22 @@ export default async function BirthdayPartiesPage({
                 <strong>{formatDateLabel(date)}</strong>
                 {birthdayPartySlots.map((slot) => {
                   const party = partiesBySlot.get(`${dateValue}:${slot.key}`);
+                  const selectedMonitorIds = new Set(party?.monitors.map((monitor) => monitor.teacherId) || []);
 
-                  return (
-                    <span className={party ? "birthday-overview-slot occupied" : "birthday-overview-slot"} key={slot.key}>
-                      <small>{slot.label}</small>
-                      {party ? party.responsibleName : "Livre"}
-                    </span>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="birthday-calendar">
-          {weekendDates.map((date) => {
-            const dateValue = dateInputValue(date);
-
-            return (
-              <div className="birthday-day-card" key={dateValue}>
-                <div className="birthday-day-title">
-                  <strong>{formatDateLabel(date)}</strong>
-                  <span>{dateValue}</span>
-                </div>
-                <div className="birthday-slots">
-                  {birthdayPartySlots.map((slot) => {
-                    const party = partiesBySlot.get(`${dateValue}:${slot.key}`);
-                    const selectedMonitorIds = new Set(party?.monitors.map((monitor) => monitor.teacherId) || []);
-
-                    return (
-                      <div className={party ? "birthday-slot occupied" : "birthday-slot"} key={slot.key}>
+                  return party ? (
+                    <details className={party.paymentStatus === "paid" ? "birthday-overview-slot occupied paid" : "birthday-overview-slot occupied not-paid"} key={slot.key}>
+                      <summary>
+                        <small>{slot.label}</small>
+                        <strong>{party.responsibleName}</strong>
+                        <span>{party.childCount} criancas</span>
+                        <span>{party.receptionist?.name || "Sem recepcionista"}</span>
+                        <span>{party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Sem monitores"}</span>
+                      </summary>
+                      <div className="birthday-detail-popover">
                         <div className="birthday-slot-head">
-                          <strong>{slot.label}</strong>
-                          <span className={party?.paymentStatus === "paid" ? "status active" : "status inactive"}>
-                            {party ? paymentStatusLabel(party.paymentStatus) : "Livre"}
-                          </span>
+                          <strong>{paymentStatusLabel(party.paymentStatus)}</strong>
+                          <span className={party.paymentStatus === "paid" ? "status active" : "status inactive"}>{slot.label}</span>
                         </div>
-
-                        {party ? (
                           <>
                             <div className="birthday-summary">
                               <span>{party.responsibleName}</span>
@@ -326,13 +306,15 @@ export default async function BirthdayPartiesPage({
                               </div>
                             ) : null}
                           </>
-                        ) : (
-                          <p className="muted">Sem festa marcada.</p>
-                        )}
                       </div>
-                    );
+                    </details>
+                  ) : (
+                    <div className="birthday-overview-slot" key={slot.key}>
+                      <small>{slot.label}</small>
+                      Livre
+                    </div>
+                  );
                   })}
-                </div>
               </div>
             );
           })}

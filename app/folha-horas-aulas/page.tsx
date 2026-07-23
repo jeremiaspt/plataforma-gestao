@@ -372,7 +372,7 @@ export default async function GroupClassTimesheetPage({
                       <strong>{formatDateValue(group.date)}</strong>
                       {group.classes.map((item, index) => (
                         <span key={`${item.title}-${index}`}>
-                          {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} - {item.title} - {item.responsibleName}
+                          {formatMinutes(item.startMinutes)}-{formatMinutes(item.endMinutes)} {item.title}
                         </span>
                       ))}
                     </div>

@@ -400,22 +400,13 @@ export async function calculateGroupClassTimesheet({
       startMinutes: item.startMinutes,
       title: item.title
     })),
-    otherDetails: birthdayPartyMonitors.flatMap((item) => [
-      {
-        date: dateToInputValue(item.party.partyDate),
-        endMinutes: item.party.startMinutes + 60,
-        responsibleName: item.party.responsibleName,
-        startMinutes: item.party.startMinutes,
-        title: "ANIV."
-      },
-      {
-        date: dateToInputValue(item.party.partyDate),
-        endMinutes: item.party.endMinutes,
-        responsibleName: item.party.responsibleName,
-        startMinutes: Math.max(item.party.startMinutes, item.party.endMinutes - 60),
-        title: "LIMP."
-      }
-    ]),
+    otherDetails: birthdayPartyMonitors.map((item) => ({
+      date: dateToInputValue(item.party.partyDate),
+      endMinutes: item.party.endMinutes,
+      responsibleName: item.party.responsibleName,
+      startMinutes: item.party.startMinutes,
+      title: "Festa Aniversario"
+    })),
     period,
     rows,
     teacher,

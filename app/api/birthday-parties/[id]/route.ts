@@ -71,13 +71,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const ageGroup = String(formData.get("ageGroup") || "");
   const childCount = Number(formData.get("childCount") || 0);
   const receptionistId = String(formData.get("receptionistId") || "");
-  const monitorIds = Array.from(new Set(formData.getAll("monitorId").map(String).filter(Boolean)));
+  const rawMonitorIds = formData.getAll("monitorId").map(String).filter(Boolean);
+  const monitorIds = Array.from(new Set(rawMonitorIds));
 
   if (!responsibleName || !responsibleContact || !responsibleEmail || !ageGroup || !Number.isInteger(childCount) || childCount < 1) {
     return redirectPath(request, month, "error", "Preenche todos os campos obrigatorios da festa.");
   }
 
   const monitorRequirement = requiredBirthdayMonitors(ageGroup, childCount);
+
+  if (rawMonitorIds.length !== monitorIds.length) {
+    return redirectPath(request, month, "error", "Nao podes selecionar o mesmo professor em mais do que um campo de monitor.");
+  }
 
   const [receptionist, monitors] = await Promise.all([
     receptionistId
