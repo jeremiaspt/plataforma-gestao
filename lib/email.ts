@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 const paymentNotificationKey = "personal_training_payment";
 const substitutionNotificationKey = "group_class_substitution";
+const classStudentNotificationKey = "class_student_notifications";
 
 export function parseEmailList(value?: string | null) {
   return (value || "")
@@ -34,15 +35,29 @@ export async function getSubstitutionEmailSettings() {
   });
 }
 
+export async function getClassStudentEmailSettings() {
+  return prisma.emailSettings.upsert({
+    where: { key: classStudentNotificationKey },
+    update: {},
+    create: {
+      key: classStudentNotificationKey,
+      enabled: true,
+      ccEmails: ""
+    }
+  });
+}
+
 export async function sendResendEmail({
   to,
   cc,
+  bcc,
   subject,
   html,
   text
 }: {
-  to: string;
+  to: string | string[];
   cc: string[];
+  bcc?: string[];
   subject: string;
   html: string;
   text: string;
@@ -62,8 +77,9 @@ export async function sendResendEmail({
     },
     body: JSON.stringify({
       from,
-      to: [to],
+      to: Array.isArray(to) ? to : [to],
       cc,
+      bcc,
       subject,
       html,
       text

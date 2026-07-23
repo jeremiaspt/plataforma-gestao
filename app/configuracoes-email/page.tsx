@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
-import { getPaymentEmailSettings, getSubstitutionEmailSettings } from "@/lib/email";
+import { getClassStudentEmailSettings, getPaymentEmailSettings, getSubstitutionEmailSettings } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export default async function EmailSettingsPage({
@@ -18,9 +18,10 @@ export default async function EmailSettingsPage({
     redirect("/dashboard");
   }
 
-  const [paymentSettings, substitutionSettings, logs] = await Promise.all([
+  const [paymentSettings, substitutionSettings, classStudentSettings, logs] = await Promise.all([
     getPaymentEmailSettings(),
     getSubstitutionEmailSettings(),
+    getClassStudentEmailSettings(),
     prisma.emailLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 100
@@ -82,6 +83,24 @@ export default async function EmailSettingsPage({
                   id="substitutionCcEmails"
                   name="substitutionCcEmails"
                   defaultValue={substitutionSettings.ccEmails || ""}
+                  placeholder="email1@exemplo.pt, email2@exemplo.pt"
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            <div className="email-settings-section">
+              <h2>Trocas e inscricoes</h2>
+              <label className="checkbox">
+                <input type="checkbox" name="classStudentEnabled" defaultChecked={classStudentSettings.enabled} />
+                Enviar emails de trocas de turma e novas inscricoes
+              </label>
+              <div className="field">
+                <label htmlFor="classStudentCcEmails">CC diretor/coordenadores</label>
+                <textarea
+                  id="classStudentCcEmails"
+                  name="classStudentCcEmails"
+                  defaultValue={classStudentSettings.ccEmails || ""}
                   placeholder="email1@exemplo.pt, email2@exemplo.pt"
                   rows={3}
                 />

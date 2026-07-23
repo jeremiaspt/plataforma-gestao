@@ -2727,6 +2727,37 @@ h1 {
   margin: 0;
 }
 
+.class-student-panel {
+  display: grid;
+  gap: 14px;
+  max-width: 1100px;
+}
+
+.class-student-panel > .topbar {
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 0;
+  padding-bottom: 14px;
+}
+
+.class-student-form {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.class-student-form select {
+  width: 100%;
+}
+
+.class-student-inline-fields {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(150px, 220px) minmax(240px, 1fr);
+}
+
 .email-log-table {
   background: #ffffff;
   border: 1px solid var(--line);
@@ -2984,6 +3015,10 @@ h1 {
   }
 
   .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .class-student-inline-fields {
     grid-template-columns: 1fr;
   }
 

@@ -9,7 +9,9 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Repeat2,
   Settings,
+  UserPlus,
   UserRound,
   Users,
   Waves,
@@ -61,6 +63,7 @@ export async function AppShell({
   const isReception = roles.includes("recepcao");
   const canUsePool = isAdmin || isProfessor || isReception;
   const canUsePayments = isAdmin || isProfessor || isReception;
+  const canUseReceptionClasses = isAdmin || isReception;
   const canUseCleaning = roles.includes("limpeza");
   const canUseMaintenance = roles.includes("manutencao");
   const systemSettings = await getSystemSettings();
@@ -98,6 +101,12 @@ export async function AppShell({
         ...(isAdmin || isProfessor ? [{ href: "/folha-treinos", icon: FileSpreadsheet, label: "Folha de treinos", tone: "payments" as const }] : [])
       ]
     : [];
+  const receptionItems: NavItem[] = canUseReceptionClasses
+    ? [
+        { href: "/troca-de-turma", icon: Repeat2, label: "Troca de turma", tone: "classes" },
+        { href: "/novas-inscricoes", icon: UserPlus, label: "Novas inscricoes", tone: "classes" }
+      ]
+    : [];
   const operationalItems: NavItem[] = [
     ...(canUseCleaning ? [{ href: "#", icon: Brush, label: "Limpeza", tone: "support" as const }] : []),
     ...(canUseMaintenance ? [{ href: "#", icon: Wrench, label: "Manutenção", tone: "support" as const }] : [])
@@ -118,6 +127,7 @@ export async function AppShell({
           <NavSection title="Administração" items={adminItems} />
           <NavSection title="Mapas de disponibilidade" items={poolItems} />
           <NavSection title="Aulas de grupo" items={classItems} />
+          <NavSection title="Recepcao" items={receptionItems} />
           <NavSection title="Treinos personalizados" items={paymentItems} />
           <NavSection title="Operacional" items={operationalItems} />
 

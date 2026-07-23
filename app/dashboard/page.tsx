@@ -6,7 +6,9 @@ import {
   CalendarDays,
   Dumbbell,
   FileSpreadsheet,
+  Repeat2,
   Settings,
+  UserPlus,
   UserRound,
   Users,
   Waves,
@@ -150,6 +152,28 @@ const sections: ToolSection[] = [
         roles: ["admin", "professor"],
         href: "/folha-horas-aulas",
         icon: FileSpreadsheet,
+        tone: "classes"
+      }
+    ]
+  },
+  {
+    title: "Recepcao",
+    description: "Registos de secretaria ligados as aulas de grupo.",
+    tools: [
+      {
+        title: "Troca de turma",
+        description: "Notificar professores sobre alteracoes de turma.",
+        roles: ["admin", "recepcao"],
+        href: "/troca-de-turma",
+        icon: Repeat2,
+        tone: "classes"
+      },
+      {
+        title: "Novas inscricoes",
+        description: "Registar inscricoes e notificar professores.",
+        roles: ["admin", "recepcao"],
+        href: "/novas-inscricoes",
+        icon: UserPlus,
         tone: "classes"
       }
     ]
