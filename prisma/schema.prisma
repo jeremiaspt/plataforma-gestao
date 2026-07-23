@@ -25,6 +25,10 @@ model User {
   substitutionRequestsAsAbsent      GroupClassSubstitutionRequest[] @relation("SubstitutionAbsentTeacher")
   substitutionRequestsCreated       GroupClassSubstitutionRequest[] @relation("SubstitutionRequestedBy")
   substitutionItemsAsSubstitute     GroupClassSubstitutionItem[]    @relation("SubstitutionSubstituteTeacher")
+  birthdayPartiesCreated            BirthdayParty[]                 @relation("BirthdayPartyCreatedBy")
+  birthdayPartiesReceptionist        BirthdayParty[]                 @relation("BirthdayPartyReceptionist")
+  birthdayPartyMonitors              BirthdayPartyMonitor[]          @relation("BirthdayPartyMonitorTeacher")
+  birthdayPartyPaymentLogs           BirthdayPartyPaymentLog[]       @relation("BirthdayPartyPaymentLogChangedBy")
   createdAt                         DateTime                        @default(now())
   updatedAt                         DateTime                        @updatedAt
 }
@@ -149,6 +153,60 @@ model GroupClassHourlyRate {
   updatedAt               DateTime @updatedAt
 
   @@index([active, displayOrder])
+}
+
+model BirthdayParty {
+  id                  String                    @id @default(cuid())
+  partyDate           DateTime                  @db.Date
+  slotKey             String
+  startMinutes        Int
+  endMinutes          Int
+  responsibleName     String
+  responsibleContact  String
+  responsibleEmail    String
+  ageGroup            String
+  childCount          Int
+  monitorRequirement  Int
+  paymentStatus       String                    @default("not_paid")
+  receptionistId      String
+  receptionist         User                      @relation("BirthdayPartyReceptionist", fields: [receptionistId], references: [id], onDelete: Restrict)
+  createdById         String?
+  createdBy           User?                     @relation("BirthdayPartyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  monitors            BirthdayPartyMonitor[]
+  paymentLogs         BirthdayPartyPaymentLog[]
+  createdAt           DateTime                  @default(now())
+  updatedAt           DateTime                  @updatedAt
+
+  @@unique([partyDate, slotKey])
+  @@index([partyDate])
+  @@index([paymentStatus])
+}
+
+model BirthdayPartyMonitor {
+  id        String        @id @default(cuid())
+  partyId   String
+  party     BirthdayParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  teacherId String
+  teacher   User          @relation("BirthdayPartyMonitorTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  createdAt DateTime      @default(now())
+
+  @@unique([partyId, teacherId])
+  @@index([teacherId])
+}
+
+model BirthdayPartyPaymentLog {
+  id              String        @id @default(cuid())
+  partyId         String
+  party           BirthdayParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  previousStatus  String
+  newStatus       String
+  changedById     String?
+  changedBy       User?         @relation("BirthdayPartyPaymentLogChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+  changedByName   String
+  createdAt       DateTime      @default(now())
+
+  @@index([partyId])
+  @@index([createdAt])
 }
 
 model PasswordResetToken {

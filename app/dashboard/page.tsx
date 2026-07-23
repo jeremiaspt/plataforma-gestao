@@ -2,6 +2,7 @@ import {
   ArrowRight,
   Activity,
   Brush,
+  Cake,
   CalendarCheck,
   CalendarDays,
   Dumbbell,
@@ -176,6 +177,20 @@ const sections: ToolSection[] = [
         href: "/novas-inscricoes",
         icon: UserPlus,
         tone: "classes"
+      }
+    ]
+  },
+  {
+    title: "Festas Aniversario",
+    description: "Mapa mensal, monitores e estado dos pagamentos.",
+    tools: [
+      {
+        title: "Mapa de festas",
+        description: "Gerir festas e consultar pagamentos.",
+        roles: ["admin", "recepcao"],
+        href: "/festas-aniversario",
+        icon: Cake,
+        tone: "support"
       }
     ]
   },

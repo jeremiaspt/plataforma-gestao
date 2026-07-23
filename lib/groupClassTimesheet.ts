@@ -164,7 +164,7 @@ export async function calculateGroupClassTimesheet({
   }
 
   const period = getCalendarMonthPeriod(month);
-  const [rules, blocks, outgoingSubstitutions, incomingSubstitutions] = await Promise.all([
+  const [rules, blocks, outgoingSubstitutions, incomingSubstitutions, birthdayPartyMonitors] = await Promise.all([
     prisma.groupClassHourlyRate.findMany({
       where: { active: true },
       orderBy: [{ displayOrder: "asc" }, { name: "asc" }]
@@ -209,10 +209,32 @@ export async function calculateGroupClassTimesheet({
         }
       },
       orderBy: [{ startMinutes: "asc" }, { poolKey: "asc" }, { laneNumber: "asc" }]
+    }),
+    prisma.birthdayPartyMonitor.findMany({
+      where: {
+        teacherId,
+        party: {
+          partyDate: { gte: period.start, lt: period.endExclusive }
+        }
+      },
+      include: {
+        party: {
+          select: {
+            childCount: true,
+            endMinutes: true,
+            partyDate: true,
+            responsibleName: true,
+            slotKey: true,
+            startMinutes: true
+          }
+        }
+      },
+      orderBy: [{ party: { partyDate: "asc" } }]
     })
   ]);
   const outgoingSubstitutionsByDate = new Map<string, Set<string>>();
   const incomingSubstitutionsByDate = new Map<string, Block[]>();
+  const birthdayBlocksByDate = new Map<string, Block[]>();
 
   for (const item of outgoingSubstitutions) {
     const dateValue = dateToInputValue(item.request.substitutionDate);
@@ -241,6 +263,41 @@ export async function calculateGroupClassTimesheet({
     incomingSubstitutionsByDate.set(dateValue, dayBlocks);
   }
 
+  for (const item of birthdayPartyMonitors) {
+    const dateValue = dateToInputValue(item.party.partyDate);
+    const dayBlocks = birthdayBlocksByDate.get(dateValue) || [];
+
+    dayBlocks.push(
+      {
+        id: `${item.id}-aniv`,
+        poolKey: "birthday_party",
+        weekday: item.party.partyDate.getDay(),
+        startMinutes: item.party.startMinutes,
+        endMinutes: item.party.startMinutes + 60,
+        title: "ANIV.",
+        notes: item.party.responsibleName,
+        recurrenceType: "birthday_party",
+        validFrom: item.party.partyDate,
+        validTo: item.party.partyDate,
+        groupKeySuffix: "birthday-aniv"
+      },
+      {
+        id: `${item.id}-limp`,
+        poolKey: "birthday_party",
+        weekday: item.party.partyDate.getDay(),
+        startMinutes: Math.max(item.party.startMinutes, item.party.endMinutes - 60),
+        endMinutes: item.party.endMinutes,
+        title: "LIMP.",
+        notes: item.party.responsibleName,
+        recurrenceType: "birthday_party",
+        validFrom: item.party.partyDate,
+        validTo: item.party.partyDate,
+        groupKeySuffix: "birthday-limp"
+      }
+    );
+    birthdayBlocksByDate.set(dateValue, dayBlocks);
+  }
+
   const rows = rules.map((rule) => ({
     id: rule.id,
     name: rule.name,
@@ -267,7 +324,11 @@ export async function calculateGroupClassTimesheet({
     const ownBlocks = blocks.filter(
       (item) => item.weekday === weekday && !substitutedBlockIds.has(item.id) && poolBlockAppliesToDate(item, date)
     );
-    const dayBlocks = mergeSameClassBlocks([...ownBlocks, ...(incomingSubstitutionsByDate.get(dateValue) || [])]);
+    const dayBlocks = mergeSameClassBlocks([
+      ...ownBlocks,
+      ...(incomingSubstitutionsByDate.get(dateValue) || []),
+      ...(birthdayBlocksByDate.get(dateValue) || [])
+    ]);
     const classIntervals = dayBlocks
       .filter((item) => item.poolKey !== "apoio_cais")
       .map((item) => ({ startMinutes: item.startMinutes, endMinutes: item.endMinutes }));
@@ -339,6 +400,22 @@ export async function calculateGroupClassTimesheet({
       startMinutes: item.startMinutes,
       title: item.title
     })),
+    otherDetails: birthdayPartyMonitors.flatMap((item) => [
+      {
+        date: dateToInputValue(item.party.partyDate),
+        endMinutes: item.party.startMinutes + 60,
+        responsibleName: item.party.responsibleName,
+        startMinutes: item.party.startMinutes,
+        title: "ANIV."
+      },
+      {
+        date: dateToInputValue(item.party.partyDate),
+        endMinutes: item.party.endMinutes,
+        responsibleName: item.party.responsibleName,
+        startMinutes: Math.max(item.party.startMinutes, item.party.endMinutes - 60),
+        title: "LIMP."
+      }
+    ]),
     period,
     rows,
     teacher,

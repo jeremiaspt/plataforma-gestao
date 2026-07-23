@@ -2,6 +2,7 @@ import Link from "next/link";
 import {
   Activity,
   Brush,
+  Cake,
   CalendarCheck,
   CalendarDays,
   Dumbbell,
@@ -70,6 +71,7 @@ export async function AppShell({
   const canUsePool = isAdmin || isProfessor || isReception;
   const canUsePayments = isAdmin || isProfessor || isReception;
   const canUseReceptionClasses = isAdmin || isReception;
+  const canUseBirthdayParties = isAdmin || isReception;
   const canUseCleaning = roles.includes("limpeza");
   const canUseMaintenance = roles.includes("manutencao");
   const systemSettings = await getSystemSettings();
@@ -133,6 +135,9 @@ export async function AppShell({
         { href: "/novas-inscricoes", icon: UserPlus, label: "Novas inscricoes", tone: "classes" }
       ]
     : [];
+  const birthdayItems: NavItem[] = canUseBirthdayParties
+    ? [{ href: "/festas-aniversario", icon: Cake, label: "Festas Aniversario", tone: "support" }]
+    : [];
   const operationalItems: NavItem[] = [
     ...(canUseCleaning ? [{ href: "#", icon: Brush, label: "Limpeza", tone: "support" as const }] : []),
     ...(canUseMaintenance ? [{ href: "#", icon: Wrench, label: "Manutenção", tone: "support" as const }] : [])
@@ -159,6 +164,7 @@ export async function AppShell({
           <NavSection title="Mapas de disponibilidade" items={poolItems} />
           <NavSection title="Aulas de grupo" items={classItems} />
           <NavSection title="Recepcao" items={receptionItems} />
+          <NavSection title="Festas Aniversario" items={birthdayItems} />
           <NavSection title="Treinos personalizados" items={paymentItems} />
           <NavSection title="Operacional" items={operationalItems} />
 

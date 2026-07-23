@@ -121,6 +121,32 @@ function groupExtraDetails(
     }))
     .sort((left, right) => left.date.localeCompare(right.date) || left.absentTeacherName.localeCompare(right.absentTeacherName, "pt"));
 }
+
+function groupOtherDetails(
+  items: Array<{
+    date: string;
+    endMinutes: number;
+    responsibleName: string;
+    startMinutes: number;
+    title: string;
+  }>
+) {
+  const groups = new Map<string, { date: string; classes: typeof items }>();
+
+  for (const item of items) {
+    const group = groups.get(item.date) || { date: item.date, classes: [] };
+    group.classes.push(item);
+    groups.set(item.date, group);
+  }
+
+  return Array.from(groups.values())
+    .map((group) => ({
+      ...group,
+      classes: group.classes.sort((left, right) => left.startMinutes - right.startMinutes || left.title.localeCompare(right.title, "pt"))
+    }))
+    .sort((left, right) => left.date.localeCompare(right.date));
+}
+
 export default async function GroupClassTimesheetPage({
   searchParams
 }: {
@@ -176,6 +202,7 @@ export default async function GroupClassTimesheetPage({
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
   const groupedAbsences = groupAbsenceDetails(timesheet.absenceDetails);
   const groupedExtras = groupExtraDetails(timesheet.extraDetails);
+  const groupedOthers = groupOtherDetails(timesheet.otherDetails);
   const tabHref = (tab: "mine" | "professor") => `/folha-horas-aulas?tab=${tab}&month=${selectedMonth}`;
 
   return (
@@ -283,7 +310,7 @@ export default async function GroupClassTimesheetPage({
             </tfoot>
           </table>
         </div>
-        {groupedAbsences.length > 0 || groupedExtras.length > 0 ? (
+        {groupedAbsences.length > 0 || groupedExtras.length > 0 || groupedOthers.length > 0 ? (
           <div className="timesheet-detail-sections">
             {groupedAbsences.length > 0 ? (
               <section className="timesheet-detail-list">
@@ -325,6 +352,27 @@ export default async function GroupClassTimesheetPage({
                           {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} - {item.title}
                           {item.accumulation ? " (ACUM.)" : ""} - {classLabel(item)}
                           {dockSupportTimeLabel(item)}
+                        </span>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
+
+            {groupedOthers.length > 0 ? (
+              <section className="timesheet-detail-list">
+                <div>
+                  <h2>Outros</h2>
+                  <p className="muted">Festas de aniversario contabilizadas neste periodo.</p>
+                </div>
+                <div className="timesheet-detail-grid">
+                  {groupedOthers.map((group) => (
+                    <div className="timesheet-detail-card" key={group.date}>
+                      <strong>{formatDateValue(group.date)}</strong>
+                      {group.classes.map((item, index) => (
+                        <span key={`${item.title}-${index}`}>
+                          {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} - {item.title} - {item.responsibleName}
                         </span>
                       ))}
                     </div>
