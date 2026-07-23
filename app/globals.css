@@ -87,6 +87,11 @@ select {
   margin-top: 3px;
 }
 
+.sidebar-toggle-input,
+.sidebar-toggle-button {
+  display: none;
+}
+
 .nav {
   display: grid;
   gap: 10px;
@@ -3014,7 +3019,30 @@ h1 {
   }
 
   .brand {
-    margin-bottom: 16px;
+    margin-bottom: 10px;
+  }
+
+  .sidebar-toggle-button {
+    align-items: center;
+    background: rgba(255, 255, 255, 0.09);
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    font-weight: 800;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 0;
+    min-height: 42px;
+  }
+
+  .sidebar-toggle-input:not(:checked) + .sidebar-toggle-button + .nav {
+    display: none;
+  }
+
+  .sidebar-toggle-input:checked + .sidebar-toggle-button {
+    margin-bottom: 14px;
   }
 
   .nav {

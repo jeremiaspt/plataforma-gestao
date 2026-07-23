@@ -83,7 +83,8 @@ export async function getGroupClassOptions(): Promise<GroupClassOption[]> {
       const first = group[0];
       const poolLabel = getPoolMapByKey(first.poolKey).eyebrow;
       const sortedBlocks = group.sort((a, b) => a.weekday - b.weekday || a.startMinutes - b.startMinutes || a.laneNumber - b.laneNumber);
-      const weeklyCountLabel = `${sortedBlocks.length}x/semana`;
+      const weeklyCount = new Set(sortedBlocks.map((block) => block.weekday)).size;
+      const weeklyCountLabel = `${weeklyCount}x/semana`;
 
       return {
         blockIds: sortedBlocks.map((block) => block.id),

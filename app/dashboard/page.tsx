@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Dumbbell,
   FileSpreadsheet,
+  Mail,
   Repeat2,
   Settings,
   UserPlus,
@@ -59,7 +60,7 @@ const sections: ToolSection[] = [
         description: "Configurar envios e consultar logs.",
         roles: ["admin"],
         href: "/configuracoes-email",
-        icon: Settings,
+        icon: Mail,
         tone: "admin"
       },
       {

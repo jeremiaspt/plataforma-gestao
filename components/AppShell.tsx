@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   LogOut,
   Mail,
+  Menu,
   Repeat2,
   Settings,
   UserPlus,
@@ -147,6 +148,11 @@ export async function AppShell({
             <small>Gestão operacional</small>
           </span>
         </div>
+        <input className="sidebar-toggle-input" id="sidebar-toggle" type="checkbox" />
+        <label className="sidebar-toggle-button" htmlFor="sidebar-toggle">
+          <Menu size={17} />
+          Menu
+        </label>
         <nav className="nav">
           <NavSection title="Principal" items={mainItems} />
           <NavSection title="Administração" items={adminItems} />
