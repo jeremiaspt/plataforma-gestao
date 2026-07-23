@@ -144,8 +144,8 @@ export default async function BirthdayPartiesPage({
             </div>
             <div className="field">
               <label htmlFor="receptionistId">Recepcionista</label>
-              <select id="receptionistId" name="receptionistId" required>
-                <option value="">Selecionar</option>
+              <select id="receptionistId" name="receptionistId">
+                <option value="">Por atribuir</option>
                 {receptionists.map((receptionist) => (
                   <option value={receptionist.id} key={receptionist.id}>
                     {receptionist.name}
@@ -153,13 +153,19 @@ export default async function BirthdayPartiesPage({
                 ))}
               </select>
             </div>
-            <div className="birthday-monitor-picker">
-              <strong>Monitores</strong>
-              {teachers.map((teacher) => (
-                <label className="checkbox compact-checkbox" key={teacher.id}>
-                  <input type="checkbox" name="monitorId" value={teacher.id} />
-                  {teacher.name}
-                </label>
+            <div className="birthday-monitor-selects">
+              {[1, 2, 3].map((position) => (
+                <div className="field" key={position}>
+                  <label htmlFor={`monitor-${position}`}>Monitor {position}</label>
+                  <select id={`monitor-${position}`} name="monitorId">
+                    <option value="">Por atribuir</option>
+                    {teachers.map((teacher) => (
+                      <option value={teacher.id} key={teacher.id}>
+                        {teacher.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               ))}
             </div>
             <button className="button" type="submit">
@@ -171,6 +177,28 @@ export default async function BirthdayPartiesPage({
         <div className="birthday-month-head">
           <h2>{formatMonthLabel(period.start)}</h2>
           <p className="muted">Cada dia permite uma festa das 15:00 as 18:00 e outra das 16:30 as 19:30.</p>
+        </div>
+
+        <div className="birthday-overview-grid">
+          {weekendDates.map((date) => {
+            const dateValue = dateInputValue(date);
+
+            return (
+              <div className="birthday-overview-day" key={dateValue}>
+                <strong>{formatDateLabel(date)}</strong>
+                {birthdayPartySlots.map((slot) => {
+                  const party = partiesBySlot.get(`${dateValue}:${slot.key}`);
+
+                  return (
+                    <span className={party ? "birthday-overview-slot occupied" : "birthday-overview-slot"} key={slot.key}>
+                      <small>{slot.label}</small>
+                      {party ? party.responsibleName : "Livre"}
+                    </span>
+                  );
+                })}
+              </div>
+            );
+          })}
         </div>
 
         <div className="birthday-calendar">
@@ -205,7 +233,7 @@ export default async function BirthdayPartiesPage({
                               <small>
                                 {ageGroupLabel(party.ageGroup)} - {party.childCount} criancas - {party.monitorRequirement} monitores
                               </small>
-                              <small>Recepcionista: {party.receptionist.name}</small>
+                              <small>Recepcionista: {party.receptionist?.name || "Por atribuir"}</small>
                               <small>Monitores: {party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Por atribuir"}</small>
                             </div>
 
@@ -253,7 +281,8 @@ export default async function BirthdayPartiesPage({
                                 </div>
                                 <div className="field">
                                   <label>Recepcionista</label>
-                                  <select name="receptionistId" defaultValue={party.receptionistId}>
+                                  <select name="receptionistId" defaultValue={party.receptionistId || ""}>
+                                    <option value="">Por atribuir</option>
                                     {receptionists.map((receptionist) => (
                                       <option value={receptionist.id} key={receptionist.id}>
                                         {receptionist.name}
@@ -261,13 +290,19 @@ export default async function BirthdayPartiesPage({
                                     ))}
                                   </select>
                                 </div>
-                                <div className="birthday-monitor-picker compact">
-                                  <strong>Monitores</strong>
-                                  {teachers.map((teacher) => (
-                                    <label className="checkbox compact-checkbox" key={teacher.id}>
-                                      <input type="checkbox" name="monitorId" value={teacher.id} defaultChecked={selectedMonitorIds.has(teacher.id)} />
-                                      {teacher.name}
-                                    </label>
+                                <div className="birthday-monitor-selects compact">
+                                  {[0, 1, 2].map((index) => (
+                                    <div className="field" key={index}>
+                                      <label>Monitor {index + 1}</label>
+                                      <select name="monitorId" defaultValue={party.monitors[index]?.teacherId || ""}>
+                                        <option value="">Por atribuir</option>
+                                        {teachers.map((teacher) => (
+                                          <option value={teacher.id} key={teacher.id} disabled={selectedMonitorIds.has(teacher.id) && party.monitors[index]?.teacherId !== teacher.id}>
+                                            {teacher.name}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
                                   ))}
                                 </div>
                                 <div className="action-row compact-actions">

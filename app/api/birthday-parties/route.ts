@@ -35,7 +35,7 @@ export async function POST(request: Request) {
   const receptionistId = String(formData.get("receptionistId") || "");
   const monitorIds = Array.from(new Set(formData.getAll("monitorId").map(String).filter(Boolean)));
 
-  if (!partyDate || !slot || !responsibleName || !responsibleContact || !responsibleEmail || !ageGroup || !Number.isInteger(childCount) || childCount < 1 || !receptionistId) {
+  if (!partyDate || !slot || !responsibleName || !responsibleContact || !responsibleEmail || !ageGroup || !Number.isInteger(childCount) || childCount < 1) {
     return redirectPath(request, month, "error", "Preenche todos os campos obrigatorios da festa.");
   }
 
@@ -45,22 +45,21 @@ export async function POST(request: Request) {
   }
 
   const monitorRequirement = requiredBirthdayMonitors(ageGroup, childCount);
-  if (monitorIds.length < monitorRequirement) {
-    return redirectPath(request, month, "error", `Esta festa necessita de ${monitorRequirement} monitores.`);
-  }
 
   const [receptionist, monitors] = await Promise.all([
-    prisma.user.findFirst({
-      where: { id: receptionistId, active: true, roles: { some: { role: { key: "recepcao" } } } },
-      select: { id: true }
-    }),
+    receptionistId
+      ? prisma.user.findFirst({
+          where: { id: receptionistId, active: true, roles: { some: { role: { key: "recepcao" } } } },
+          select: { id: true }
+        })
+      : Promise.resolve(null),
     prisma.user.findMany({
       where: { id: { in: monitorIds }, active: true, roles: { some: { role: { key: "professor" } } } },
       select: { id: true }
     })
   ]);
 
-  if (!receptionist) {
+  if (receptionistId && !receptionist) {
     return redirectPath(request, month, "error", "Seleciona um recepcionista valido.");
   }
 
@@ -78,7 +77,7 @@ export async function POST(request: Request) {
         monitorRequirement,
         monitors: { createMany: { data: monitorIds.map((teacherId) => ({ teacherId })) } },
         partyDate,
-        receptionistId,
+        receptionistId: receptionist?.id || null,
         responsibleContact,
         responsibleEmail,
         responsibleName,

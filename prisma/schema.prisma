@@ -168,8 +168,8 @@ model BirthdayParty {
   childCount          Int
   monitorRequirement  Int
   paymentStatus       String                    @default("not_paid")
-  receptionistId      String
-  receptionist         User                      @relation("BirthdayPartyReceptionist", fields: [receptionistId], references: [id], onDelete: Restrict)
+  receptionistId      String?
+  receptionist         User?                     @relation("BirthdayPartyReceptionist", fields: [receptionistId], references: [id], onDelete: SetNull)
   createdById         String?
   createdBy           User?                     @relation("BirthdayPartyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   monitors            BirthdayPartyMonitor[]
