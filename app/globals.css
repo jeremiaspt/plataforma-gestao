@@ -2907,22 +2907,23 @@ h1 {
   color: #be123c;
 }
 
-.birthday-overview-slot summary {
+.birthday-overview-button {
+  background: transparent;
+  border: 0;
+  color: inherit;
   cursor: pointer;
   display: grid;
   gap: 1px;
-  list-style: none;
+  padding: 0;
+  text-align: left;
+  width: 100%;
 }
 
-.birthday-overview-slot summary::-webkit-details-marker {
-  display: none;
-}
-
-.birthday-overview-slot summary strong,
-.birthday-overview-slot summary span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.birthday-overview-button strong,
+.birthday-overview-button span {
+  line-height: 1.18;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .birthday-overview-slot small {
@@ -2933,14 +2934,47 @@ h1 {
 
 .birthday-detail-popover {
   background: #ffffff;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.16);
   color: #10233f;
   display: grid;
   gap: 8px;
-  margin-top: 8px;
-  padding: 10px;
+}
+
+.birthday-dialog {
+  border: 0;
+  border-radius: 10px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+  max-height: min(88vh, 760px);
+  max-width: min(940px, calc(100vw - 28px));
+  overflow: auto;
+  padding: 14px;
+  width: 760px;
+}
+
+.birthday-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.36);
+}
+
+.birthday-dialog-head {
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+}
+
+.birthday-dialog-head small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.birthday-dialog-head strong {
+  color: #0f172a;
+  display: block;
+  font-size: 18px;
 }
 
 .birthday-day-card {

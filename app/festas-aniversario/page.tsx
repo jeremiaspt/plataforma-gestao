@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { BirthdayMonitorSelectGuard } from "@/components/BirthdayMonitorSelectGuard";
+import { BirthdayPartyDialog } from "@/components/BirthdayPartyDialog";
 import { hasRole, requireUser } from "@/lib/auth";
 import {
   birthdayAgeGroups,
@@ -70,6 +71,7 @@ export default async function BirthdayPartiesPage({
   return (
     <AppShell userName={user.name} roles={roleKeys}>
       <BirthdayMonitorSelectGuard />
+      <BirthdayPartyDialog />
       <section className="panel birthday-panel">
         <div className="topbar">
           <div>
@@ -193,15 +195,25 @@ export default async function BirthdayPartiesPage({
                   const selectedMonitorIds = new Set(party?.monitors.map((monitor) => monitor.teacherId) || []);
 
                   return party ? (
-                    <details className={party.paymentStatus === "paid" ? "birthday-overview-slot occupied paid" : "birthday-overview-slot occupied not-paid"} key={slot.key}>
-                      <summary>
+                    <div className={party.paymentStatus === "paid" ? "birthday-overview-slot occupied paid" : "birthday-overview-slot occupied not-paid"} key={slot.key}>
+                      <button className="birthday-overview-button" data-open-birthday-dialog={`birthday-dialog-${party.id}`} type="button">
                         <small>{slot.label}</small>
                         <strong>{party.responsibleName}</strong>
                         <span>{party.childCount} criancas</span>
                         <span>{party.receptionist?.name || "Sem recepcionista"}</span>
                         <span>{party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Sem monitores"}</span>
-                      </summary>
-                      <div className="birthday-detail-popover">
+                      </button>
+                      <dialog className="birthday-dialog" id={`birthday-dialog-${party.id}`}>
+                        <div className="birthday-dialog-head">
+                          <div>
+                            <small>{formatDateLabel(party.partyDate)} - {slot.label}</small>
+                            <strong>{party.responsibleName}</strong>
+                          </div>
+                          <button className="button secondary compact-button" data-close-birthday-dialog type="button">
+                            Fechar
+                          </button>
+                        </div>
+                        <div className="birthday-detail-popover">
                         <div className="birthday-slot-head">
                           <strong>{paymentStatusLabel(party.paymentStatus)}</strong>
                           <span className={party.paymentStatus === "paid" ? "status active" : "status inactive"}>{slot.label}</span>
@@ -306,8 +318,9 @@ export default async function BirthdayPartiesPage({
                               </div>
                             ) : null}
                           </>
-                      </div>
-                    </details>
+                        </div>
+                      </dialog>
+                    </div>
                   ) : (
                     <div className="birthday-overview-slot" key={slot.key}>
                       <small>{slot.label}</small>
