@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const quantity = Number(formData.get("quantity"));
   const basePath = `/treinos-personalizados/pagamentos?teacherId=${teacherId}`;
   const errorPath = `${basePath}&error=1`;
+  const duplicateStudentPath = `${basePath}&duplicateStudent=1`;
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: basePath });
 
   if (maintenanceBlock) {
@@ -69,6 +70,17 @@ export async function POST(request: Request) {
     } else {
       if (!memberNumber || !fullName) {
         return NextResponse.redirect(appRedirectUrl(errorPath, request));
+      }
+
+      const existingTeacherStudent = await prisma.personalTrainingStudent.findFirst({
+        where: {
+          memberNumber,
+          payments: { some: { teacherId } }
+        }
+      });
+
+      if (existingTeacherStudent) {
+        return NextResponse.redirect(appRedirectUrl(duplicateStudentPath, request));
       }
 
       const student = await prisma.personalTrainingStudent.upsert({
