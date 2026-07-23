@@ -58,6 +58,7 @@ export async function getGroupClassOptions(): Promise<GroupClassOption[]> {
   const blocks = await prisma.poolScheduleBlock.findMany({
     where: {
       active: true,
+      poolKey: { not: "apoio_cais" },
       type: "aula",
       teacherId: { not: null }
     },
