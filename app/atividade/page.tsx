@@ -5,7 +5,7 @@ import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
-type ActivityTab = "overview" | "payments" | "bookings" | "credits" | "emails" | "maintenance";
+type ActivityTab = "overview" | "payments" | "bookings" | "credits" | "classes" | "emails" | "maintenance";
 
 function startOfCurrentMonth() {
   const now = new Date();
@@ -104,6 +104,7 @@ export default async function ActivityPage({
     params.tab === "payments" ||
     params.tab === "bookings" ||
     params.tab === "credits" ||
+    params.tab === "classes" ||
     params.tab === "emails" ||
     params.tab === "maintenance"
       ? params.tab
@@ -198,6 +199,8 @@ export default async function ActivityPage({
   const createdPayments = paymentLogs.filter((log) => log.action === "created");
   const cancelledPayments = paymentLogs.filter((log) => log.action === "cancelled");
   const failedEmails = emailLogs.filter((log) => log.status === "failed");
+  const classActivityLogs = emailLogs.filter((log) => log.type === "class_student_change" || log.type === "class_student_enrollment");
+  const generalEmailLogs = emailLogs.filter((log) => log.type !== "class_student_change" && log.type !== "class_student_enrollment");
   const paymentCreditsTotal = paymentLogs.reduce((total, log) => {
     if (log.action === "created") return total + log.totalCredits;
     if (log.action === "cancelled") return total - log.totalCredits;
@@ -246,7 +249,15 @@ export default async function ActivityPage({
       detail: log.trainingTypeName,
       actor: log.createdByName
     })),
-    ...emailLogs.map((log) => ({
+    ...classActivityLogs.map((log) => ({
+      id: `class-${log.id}`,
+      date: log.createdAt,
+      type: "Turmas",
+      title: log.type === "class_student_change" ? "Troca de turma" : "Nova inscricao",
+      detail: log.subject,
+      actor: log.toEmail
+    })),
+    ...generalEmailLogs.map((log) => ({
       id: `email-${log.id}`,
       date: log.createdAt,
       type: "Email",
@@ -320,6 +331,9 @@ export default async function ActivityPage({
           </a>
           <a className={activeTab === "credits" ? "tab active" : "tab"} href={tabHref("credits")}>
             Créditos
+          </a>
+          <a className={activeTab === "classes" ? "tab active" : "tab"} href={tabHref("classes")}>
+            Turmas
           </a>
           <a className={activeTab === "emails" ? "tab active" : "tab"} href={tabHref("emails")}>
             Emails
@@ -460,6 +474,32 @@ export default async function ActivityPage({
                 </span>
                 <span>{log.createdByName}</span>
                 <span>{log.reason || "-"}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {activeTab === "classes" ? (
+          <div className="activity-table email-activity-table">
+            <div className="email-activity-header">
+              <span>Data</span>
+              <span>Estado</span>
+              <span>Tipo</span>
+              <span>Destinatarios</span>
+              <span>Assunto</span>
+              <span>Erro</span>
+            </div>
+            {classActivityLogs.length === 0 ? <p className="muted">Nao existem trocas de turma ou novas inscricoes neste periodo.</p> : null}
+            {classActivityLogs.map((log) => (
+              <div className="email-activity-row" key={log.id}>
+                <span>{log.createdAt.toLocaleString("pt-PT")}</span>
+                <span className={log.status === "sent" ? "status active" : log.status === "failed" ? "status inactive" : "status"}>
+                  {log.status}
+                </span>
+                <span>{log.type === "class_student_change" ? "Troca de turma" : "Nova inscricao"}</span>
+                <span>{log.toEmail}</span>
+                <span>{log.subject}</span>
+                <span>{log.error || "-"}</span>
               </div>
             ))}
           </div>

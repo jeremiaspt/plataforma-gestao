@@ -205,6 +205,35 @@ select {
   padding: 14px 16px;
 }
 
+.user-month-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.user-month-summary span {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 2px;
+  min-width: 130px;
+  padding: 8px 10px;
+}
+
+.user-month-summary small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.user-month-summary strong {
+  color: #0f766e;
+  font-size: 16px;
+}
+
 .maintenance-banner {
   align-items: center;
   background: #fff7ed;
@@ -2730,7 +2759,7 @@ h1 {
 .class-student-panel {
   display: grid;
   gap: 14px;
-  max-width: 1100px;
+  width: 100%;
 }
 
 .class-student-panel > .topbar {

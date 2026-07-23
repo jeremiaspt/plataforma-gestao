@@ -18,7 +18,12 @@ import {
   Wrench
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { getSessionUser } from "@/lib/auth";
+import { currentBillingMonthValue } from "@/lib/billingCycles";
+import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { getSystemSettings } from "@/lib/maintenance";
+import { formatCurrency } from "@/lib/money";
+import { calculatePersonalTrainingTimesheet } from "@/lib/personalTrainingTimesheet";
 
 type NavItem = {
   href: string;
@@ -67,6 +72,26 @@ export async function AppShell({
   const canUseCleaning = roles.includes("limpeza");
   const canUseMaintenance = roles.includes("manutencao");
   const systemSettings = await getSystemSettings();
+  const currentUser = isProfessor ? await getSessionUser() : null;
+  const monthValue = currentBillingMonthValue();
+  const summary =
+    isProfessor && currentUser
+      ? await Promise.all([
+          calculateGroupClassTimesheet({
+            excludeDockSupportOverlapWithClasses: systemSettings.excludeDockSupportOverlapWithClasses,
+            holidayOptions: {
+              includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
+              includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
+              includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
+            },
+            month: monthValue,
+            teacherId: currentUser.id
+          }),
+          calculatePersonalTrainingTimesheet({ month: monthValue, teacherId: currentUser.id })
+        ]).catch(() => [null, null] as const)
+      : null;
+  const groupHoursTotal = summary?.[0]?.rows.reduce((total, row) => total + row.totalValue, 0) || 0;
+  const personalTrainingTotal = summary?.[1]?.rows.reduce((total, row) => total + row.totalValue, 0) || 0;
 
   const mainItems: NavItem[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tone: "general" }];
   const adminItems: NavItem[] = isAdmin
@@ -164,6 +189,18 @@ export async function AppShell({
             <p className="eyebrow">Sessão iniciada</p>
             <h1>{userName}</h1>
           </div>
+          {isProfessor ? (
+            <div className="user-month-summary">
+              <span>
+                <small>Folha horas</small>
+                <strong>{formatCurrency(groupHoursTotal)}</strong>
+              </span>
+              <span>
+                <small>Treinos ciclo</small>
+                <strong>{formatCurrency(personalTrainingTotal)}</strong>
+              </span>
+            </div>
+          ) : null}
         </div>
         {children}
       </main>

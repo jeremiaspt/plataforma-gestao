@@ -71,11 +71,11 @@ function groupAbsenceDetails(
     title: string;
   }>
 ) {
-  const groups = new Map<string, { date: string; substituteTeacherName: string; classes: typeof items }>();
+  const groups = new Map<string, { date: string; classes: typeof items }>();
 
   for (const item of items) {
-    const key = `${item.date}:${item.substituteTeacherName}`;
-    const group = groups.get(key) || { date: item.date, substituteTeacherName: item.substituteTeacherName, classes: [] };
+    const key = item.date;
+    const group = groups.get(key) || { date: item.date, classes: [] };
     group.classes.push(item);
     groups.set(key, group);
   }
@@ -83,9 +83,14 @@ function groupAbsenceDetails(
   return Array.from(groups.values())
     .map((group) => ({
       ...group,
-      classes: group.classes.sort((left, right) => left.startMinutes - right.startMinutes || left.title.localeCompare(right.title, "pt"))
+      classes: group.classes.sort(
+        (left, right) =>
+          left.startMinutes - right.startMinutes ||
+          left.substituteTeacherName.localeCompare(right.substituteTeacherName, "pt") ||
+          left.title.localeCompare(right.title, "pt")
+      )
     }))
-    .sort((left, right) => left.date.localeCompare(right.date) || left.substituteTeacherName.localeCompare(right.substituteTeacherName, "pt"));
+    .sort((left, right) => left.date.localeCompare(right.date));
 }
 
 function groupExtraDetails(
@@ -288,12 +293,14 @@ export default async function GroupClassTimesheetPage({
                 </div>
                 <div className="timesheet-detail-grid">
                   {groupedAbsences.map((group) => (
-                    <div className="timesheet-detail-card" key={`${group.date}-${group.substituteTeacherName}`}>
-                      <strong>{formatDateValue(group.date)} - Substituto: {group.substituteTeacherName}</strong>
+                    <div className="timesheet-detail-card" key={group.date}>
+                      <strong>{formatDateValue(group.date)}</strong>
                       {group.classes.map((item, index) => (
                         <span key={`${item.title}-${index}`}>
                           {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)} - {item.title}
                           {item.accumulation ? " (ACUM.)" : ""} - {classLabel(item)}
+                          {" - Substituto: "}
+                          {item.substituteTeacherName}
                           {dockSupportTimeLabel(item)}
                         </span>
                       ))}
