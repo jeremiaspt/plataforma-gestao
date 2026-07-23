@@ -2468,6 +2468,22 @@ h1 {
   padding: 12px;
 }
 
+.live-search-row {
+  align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  padding: 12px;
+}
+
+.live-search-row .field {
+  max-width: 520px;
+  width: min(520px, 100%);
+}
+
 .period-summary {
   background: #ffffff;
   border: 1px solid var(--line);

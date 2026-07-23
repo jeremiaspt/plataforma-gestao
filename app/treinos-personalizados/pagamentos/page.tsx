@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { PaymentLaunchForm } from "@/components/PaymentLaunchForm";
+import { PersonalTrainingCreditSearch } from "@/components/PersonalTrainingCreditSearch";
+import { PersonalTrainingStudentPaymentsSearch } from "@/components/PersonalTrainingStudentPaymentsSearch";
 import { TeacherAutoSubmitFilter } from "@/components/TeacherAutoSubmitFilter";
 import { requireUser } from "@/lib/auth";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel, getBillingPeriod } from "@/lib/billingCycles";
@@ -36,8 +38,6 @@ export default async function PersonalTrainingPaymentsPage({
     tab?: string;
     month?: string;
     globalMonth?: string;
-    creditSearch?: string;
-    studentSearch?: string;
     duplicateStudent?: string;
   }>;
 }) {
@@ -67,8 +67,6 @@ export default async function PersonalTrainingPaymentsPage({
   const selectedBillingCycle = isReceptionOnly ? "calendar_month" : selectedTeacher?.billingCycle || user.billingCycle || "calendar_month";
   const selectedMonth = params.month || currentBillingMonthValue();
   const selectedGlobalMonth = params.globalMonth || currentBillingMonthValue();
-  const creditSearch = String(params.creditSearch || "").trim();
-  const studentSearch = String(params.studentSearch || "").trim();
   const activeTab =
     isAdmin && params.tab === "global"
       ? "global"
@@ -91,12 +89,6 @@ export default async function PersonalTrainingPaymentsPage({
     query.set("tab", tab);
     query.set("month", selectedMonth);
     query.set("globalMonth", selectedGlobalMonth);
-    if (creditSearch) {
-      query.set("creditSearch", creditSearch);
-    }
-    if (studentSearch) {
-      query.set("studentSearch", studentSearch);
-    }
 
     return `/treinos-personalizados/pagamentos?${query.toString()}`;
   };
@@ -109,16 +101,6 @@ export default async function PersonalTrainingPaymentsPage({
     return `/api/personal-training/reports/${type}?${query.toString()}`;
   };
 
-  const studentPaymentSearchWhere = studentSearch
-    ? {
-        student: {
-          OR: [
-            { fullName: { contains: studentSearch, mode: "insensitive" as const } },
-            { memberNumber: { contains: studentSearch, mode: "insensitive" as const } }
-          ]
-        }
-      }
-    : {};
   const [paymentTypes, teacherStudents, payments, creditBalances, globalPayments, paymentCancelLogs, studentPayments] = await Promise.all([
     prisma.personalTrainingPaymentType.findMany({
       where: { active: true },
@@ -186,8 +168,7 @@ export default async function PersonalTrainingPaymentsPage({
     selectedTeacherId
       ? prisma.personalTrainingPayment.findMany({
           where: {
-            ...(isAdmin || isReception ? { teacherId: selectedTeacherId } : { teacherId: user.id }),
-            ...studentPaymentSearchWhere
+            ...(isAdmin || isReception ? {} : { teacherId: user.id })
           },
           orderBy: [{ student: { fullName: "asc" } }, { createdAt: "desc" }],
           include: {
@@ -202,15 +183,28 @@ export default async function PersonalTrainingPaymentsPage({
 
   const activePayments = payments.filter((payment) => payment.status !== "cancelled");
   const activeGlobalPayments = globalPayments.filter((payment) => payment.status !== "cancelled");
-  const normalizedCreditSearch = creditSearch.toLocaleLowerCase("pt");
-  const filteredCreditBalances = normalizedCreditSearch
-    ? creditBalances.filter(
-        (balance) =>
-          balance.fullName.toLocaleLowerCase("pt").includes(normalizedCreditSearch) ||
-          balance.memberNumber.toLocaleLowerCase("pt").includes(normalizedCreditSearch)
-      )
-    : creditBalances;
   const canCancelPayments = isAdmin || isReception;
+  const studentPaymentRows = studentPayments.map((payment) => {
+    const isCancelled = payment.status === "cancelled";
+
+    return {
+      canCancel: canCancelPayments && !isCancelled && (isAdmin || payment.createdById === user.id),
+      cancelledByName: payment.cancelledByName,
+      createdAtLabel: payment.createdAt.toLocaleDateString("pt-PT"),
+      createdByName: payment.createdBy?.name || "-",
+      id: payment.id,
+      isCancelled,
+      paymentTypeDescription: payment.paymentType.description,
+      quantity: payment.quantity,
+      studentFullName: payment.student.fullName,
+      studentMemberNumber: payment.student.memberNumber,
+      teacherId: payment.teacherId,
+      teacherName: payment.teacher.name,
+      teacherTotalLabel: formatCurrency(payment.teacherTotal),
+      totalCredits: payment.totalCredits,
+      totalPriceLabel: formatCurrency(payment.totalPrice)
+    };
+  });
 
   const paymentStats = activePayments.reduce(
     (stats, payment) => ({
@@ -357,65 +351,8 @@ export default async function PersonalTrainingPaymentsPage({
             </a>
           ) : null}
         </div>
-
         {activeTab === "credits" ? (
-          <div className="tab-content">
-            <form className="period-filter" method="get" action="/treinos-personalizados/pagamentos">
-              {canCreate ? <input type="hidden" name="teacherId" value={selectedTeacherId} /> : null}
-              <input type="hidden" name="tab" value="credits" />
-              <input type="hidden" name="month" value={selectedMonth} />
-              <input type="hidden" name="globalMonth" value={selectedGlobalMonth} />
-              <div className="field wide">
-                <label htmlFor="creditSearch">Pesquisar utente</label>
-                <input id="creditSearch" name="creditSearch" placeholder="N. utente ou nome" defaultValue={creditSearch} />
-              </div>
-              <button className="button secondary" type="submit">
-                Pesquisar
-              </button>
-            </form>
-
-            <div className="credits-table">
-            <div className={isAdmin ? "credits-header admin-credits-row" : "credits-header"}>
-              <span>Utente</span>
-              <span>Tipo</span>
-              <span>Comprados</span>
-              <span>Ajustes</span>
-              <span>Usados</span>
-              <span>Saldo</span>
-              <span>Estado</span>
-              {isAdmin ? <span>Corrigir saldo</span> : null}
-            </div>
-            {filteredCreditBalances.length === 0 ? <p className="muted">Ainda não existem saldos para este professor.</p> : null}
-            {filteredCreditBalances.map((balance) => (
-              <div className={isAdmin ? "credits-row admin-credits-row" : "credits-row"} key={`${balance.studentId}-${balance.trainingTypeName}`}>
-                <span>
-                  {balance.fullName}
-                  <small>{balance.memberNumber}</small>
-                </span>
-                <span>{balance.trainingTypeName}</span>
-                <span>{balance.purchasedCredits}</span>
-                <span className={balance.adjustedCredits < 0 ? "negative-balance" : ""}>{balance.adjustedCredits}</span>
-                <span>{balance.usedCredits}</span>
-                <span className={balance.availableCredits < 0 ? "negative-balance" : ""}>{balance.availableCredits}</span>
-                <span className={balance.canBook ? "status active" : "status inactive"}>
-                  {balance.canBook ? "Pode marcar" : "Sem margem"}
-                </span>
-                {isAdmin ? (
-                  <form className="credit-adjust-form" action="/api/personal-training/credit-adjustments" method="post">
-                    <input type="hidden" name="teacherId" value={selectedTeacherId} />
-                    <input type="hidden" name="studentId" value={balance.studentId} />
-                    <input type="hidden" name="trainingTypeKey" value={balance.trainingTypeKey} />
-                    <input name="targetAvailableCredits" type="number" step="1" defaultValue={balance.availableCredits} title="Saldo pretendido" />
-                    <input name="reason" placeholder="Motivo" title="Motivo" />
-                    <button className="button secondary" type="submit">
-                      Guardar
-                    </button>
-                  </form>
-                ) : null}
-              </div>
-            ))}
-            </div>
-          </div>
+          <PersonalTrainingCreditSearch balances={creditBalances} isAdmin={isAdmin} teacherId={selectedTeacherId} />
         ) : null}
 
         {activeTab === "payments" ? (
@@ -606,89 +543,14 @@ export default async function PersonalTrainingPaymentsPage({
             ) : null}
           </div>
         ) : null}
-
         {activeTab === "students" ? (
-          <div className="tab-content">
-            <form className="period-filter" method="get" action="/treinos-personalizados/pagamentos">
-              {canCreate ? <input type="hidden" name="teacherId" value={selectedTeacherId} /> : null}
-              <input type="hidden" name="tab" value="students" />
-              <input type="hidden" name="month" value={selectedMonth} />
-              <input type="hidden" name="globalMonth" value={selectedGlobalMonth} />
-              <div className="field wide">
-                <label htmlFor="studentSearch">Pesquisar utente</label>
-                <input id="studentSearch" name="studentSearch" placeholder="N. utente ou nome" defaultValue={studentSearch} />
-              </div>
-              <button className="button secondary" type="submit">
-                Pesquisar
-              </button>
-            </form>
-
-            <div className="payments-table">
-              <div className={`${isAdmin ? "payments-header" : "payments-header teacher-values"} ${canCancelPayments ? "with-actions" : ""}`}>
-                <span>Data</span>
-                {isAdmin ? <span>Professor</span> : null}
-                <span>Utente</span>
-                <span>Lancado por</span>
-                <span>Tipo</span>
-                <span>Qtd./Cred.</span>
-                <span>Valores</span>
-                <span>Estado</span>
-                {canCancelPayments ? <span>Acao</span> : null}
-              </div>
-              {studentPayments.length === 0 ? <p className="muted">Nao existem pagamentos para esta pesquisa.</p> : null}
-              {studentPayments.map((payment) => {
-                const isCancelled = payment.status === "cancelled";
-                const canCancelPayment = canCancelPayments && !isCancelled && (isAdmin || payment.createdById === user.id);
-
-                return (
-                  <div
-                    className={`${isAdmin ? "payments-row" : "payments-row teacher-values"} ${
-                      canCancelPayments ? "with-actions" : ""
-                    } ${isCancelled ? "cancelled-payment" : ""}`}
-                    key={payment.id}
-                  >
-                    <span>{payment.createdAt.toLocaleDateString("pt-PT")}</span>
-                    {isAdmin ? <span>{payment.teacher.name}</span> : null}
-                    <span>
-                      {payment.student.fullName}
-                      <small>{payment.student.memberNumber}</small>
-                    </span>
-                    <span>{payment.createdBy?.name || "-"}</span>
-                    <span>{payment.paymentType.description}</span>
-                    <span>
-                      {payment.quantity} qtd.
-                      <small>{payment.totalCredits} creditos</small>
-                    </span>
-                    <span>
-                      {formatCurrency(payment.teacherTotal)}
-                      {isAdmin ? <small>{formatCurrency(payment.totalPrice)} utente</small> : null}
-                    </span>
-                    <span className="payment-status-cell">
-                      <span className={isCancelled ? "status inactive" : "status active"}>{isCancelled ? "Anulado" : "Ativo"}</span>
-                      {isCancelled && payment.cancelledByName ? <small>por {payment.cancelledByName}</small> : null}
-                    </span>
-                    {canCancelPayments ? (
-                      <span>
-                        {canCancelPayment ? (
-                          <form className="payment-cancel-form" action="/api/personal-training/payments/cancel" method="post">
-                            <input type="hidden" name="paymentId" value={payment.id} />
-                            <input type="hidden" name="teacherId" value={selectedTeacherId} />
-                            <input type="hidden" name="month" value={selectedMonth} />
-                            <input name="reason" placeholder="Motivo" />
-                            <button className="button danger" type="submit">
-                              Anular
-                            </button>
-                          </form>
-                        ) : (
-                          <small className="muted">Sem permissao</small>
-                        )}
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <PersonalTrainingStudentPaymentsSearch
+            canCancelPayments={canCancelPayments}
+            isAdmin={isAdmin}
+            month={selectedMonth}
+            payments={studentPaymentRows}
+            showTeacherColumn={isAdmin || isReception}
+          />
         ) : null}
 
         {activeTab === "global" && isAdmin ? (
