@@ -30,7 +30,7 @@ function ageGroupLabel(value: string) {
 export default async function BirthdayPartiesPage({
   searchParams
 }: {
-  searchParams: Promise<{ error?: string; maintenance?: string; message?: string; month?: string; success?: string }>;
+  searchParams: Promise<{ error?: string; maintenance?: string; message?: string; month?: string; success?: string; tab?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -43,17 +43,31 @@ export default async function BirthdayPartiesPage({
   }
 
   const selectedMonth = params.month || currentMonthValue();
+  const activeTab = params.tab === "upcoming" || params.tab === "history" ? params.tab : "map";
   const period = monthPeriod(selectedMonth);
   const weekendDates = weekendDatesForMonth(selectedMonth);
-  const [parties, teachers, receptionists] = await Promise.all([
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const partyInclude = {
+    monitors: { include: { teacher: { select: { id: true, name: true } } }, orderBy: { teacher: { name: "asc" as const } } },
+    paymentLogs: { orderBy: { createdAt: "desc" as const }, take: 5 },
+    receptionist: { select: { id: true, name: true } }
+  };
+  const [parties, upcomingParties, historyParties, teachers, receptionists] = await Promise.all([
     prisma.birthdayParty.findMany({
       where: { partyDate: { gte: period.start, lt: period.endExclusive } },
-      include: {
-        monitors: { include: { teacher: { select: { id: true, name: true } } }, orderBy: { teacher: { name: "asc" } } },
-        paymentLogs: { orderBy: { createdAt: "desc" }, take: 5 },
-        receptionist: { select: { id: true, name: true } }
-      },
+      include: partyInclude,
       orderBy: [{ partyDate: "asc" }, { startMinutes: "asc" }]
+    }),
+    prisma.birthdayParty.findMany({
+      where: { partyDate: { gte: today } },
+      include: partyInclude,
+      orderBy: [{ partyDate: "asc" }, { startMinutes: "asc" }]
+    }),
+    prisma.birthdayParty.findMany({
+      where: { partyDate: { lt: today } },
+      include: partyInclude,
+      orderBy: [{ partyDate: "desc" }, { startMinutes: "desc" }]
     }),
     prisma.user.findMany({
       where: { active: true, roles: { some: { role: { key: "professor" } } } },
@@ -67,6 +81,8 @@ export default async function BirthdayPartiesPage({
     })
   ]);
   const partiesBySlot = new Map(parties.map((party) => [`${dateInputValue(party.partyDate)}:${party.slotKey}`, party]));
+  const tabHref = (tab: "map" | "upcoming" | "history") => `/festas-aniversario?tab=${tab}&month=${selectedMonth}`;
+  const activePartyCount = activeTab === "upcoming" ? upcomingParties.length : activeTab === "history" ? historyParties.length : parties.length;
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
@@ -79,14 +95,28 @@ export default async function BirthdayPartiesPage({
             <h1>Mapa de festas</h1>
             <p className="muted">Sabados e domingos com horarios disponiveis entre as 15:00 e as 19:30.</p>
           </div>
-          <span className="status active">{parties.length} festas</span>
+          <span className="status active">{activePartyCount} festas</span>
         </div>
 
         {params.success ? <p className="success">Operacao guardada.</p> : null}
         {params.error ? <p className="error">{params.message || "Nao foi possivel guardar a operacao."}</p> : null}
         {params.maintenance ? <p className="error">A plataforma esta em manutencao. Apenas administradores podem alterar registos.</p> : null}
 
-        <form className="birthday-filter" method="get" action="/festas-aniversario">
+        <div className="tabs">
+          <a className={activeTab === "map" ? "tab active" : "tab"} href={tabHref("map")}>
+            Mapa do mes
+          </a>
+          <a className={activeTab === "upcoming" ? "tab active" : "tab"} href={tabHref("upcoming")}>
+            Proximas festas
+          </a>
+          <a className={activeTab === "history" ? "tab active" : "tab"} href={tabHref("history")}>
+            Historico
+          </a>
+        </div>
+
+        {activeTab === "map" ? (
+          <form className="birthday-filter" method="get" action="/festas-aniversario">
+          <input type="hidden" name="tab" value="map" />
           <div className="field">
             <label htmlFor="month">Mes</label>
             <input id="month" name="month" type="month" defaultValue={selectedMonth} />
@@ -94,9 +124,10 @@ export default async function BirthdayPartiesPage({
           <button className="button secondary" type="submit">
             Ver mes
           </button>
-        </form>
+          </form>
+        ) : null}
 
-        {isAdmin ? (
+        {activeTab === "map" && isAdmin ? (
           <form className="birthday-create-form" action="/api/birthday-parties" method="post">
             <input type="hidden" name="month" value={selectedMonth} />
             <div className="field">
@@ -180,6 +211,8 @@ export default async function BirthdayPartiesPage({
           </form>
         ) : null}
 
+        {activeTab === "map" ? (
+          <>
         <div className="birthday-month-head">
           <h2>{formatMonthLabel(period.start)}</h2>
           <p className="muted">Cada dia permite uma festa das 15:00 as 18:00 e outra das 16:30 as 19:30.</p>
@@ -343,6 +376,44 @@ export default async function BirthdayPartiesPage({
             );
           })}
         </div>
+          </>
+        ) : null}
+
+        {activeTab === "upcoming" ? (
+          <div className="birthday-list">
+            {upcomingParties.length === 0 ? <p className="muted">Nao existem proximas festas registadas.</p> : null}
+            {upcomingParties.map((party) => (
+              <div className={party.paymentStatus === "paid" ? "birthday-list-row paid" : "birthday-list-row not-paid"} key={party.id}>
+                <div>
+                  <strong>{formatDateLabel(party.partyDate)} - {birthdayPartySlots.find((slot) => slot.key === party.slotKey)?.label}</strong>
+                  <span>{party.responsibleName}</span>
+                </div>
+                <span>{party.childCount} criancas</span>
+                <span>{party.receptionist?.name || "Sem recepcionista"}</span>
+                <span>{party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Sem monitores"}</span>
+                <span className={party.paymentStatus === "paid" ? "status active" : "status inactive"}>{paymentStatusLabel(party.paymentStatus)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        {activeTab === "history" ? (
+          <div className="birthday-list">
+            {historyParties.length === 0 ? <p className="muted">Ainda nao existem festas antigas registadas.</p> : null}
+            {historyParties.map((party) => (
+              <div className={party.paymentStatus === "paid" ? "birthday-list-row paid" : "birthday-list-row not-paid"} key={party.id}>
+                <div>
+                  <strong>{formatDateLabel(party.partyDate)} - {birthdayPartySlots.find((slot) => slot.key === party.slotKey)?.label}</strong>
+                  <span>{party.responsibleName}</span>
+                </div>
+                <span>{party.childCount} criancas</span>
+                <span>{party.receptionist?.name || "Sem recepcionista"}</span>
+                <span>{party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Sem monitores"}</span>
+                <span className={party.paymentStatus === "paid" ? "status active" : "status inactive"}>{paymentStatusLabel(party.paymentStatus)}</span>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
     </AppShell>
   );

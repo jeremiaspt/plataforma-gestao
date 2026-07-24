@@ -3056,6 +3056,48 @@ h1 {
   font-weight: 800;
 }
 
+.birthday-list {
+  display: grid;
+  gap: 8px;
+}
+
+.birthday-list-row {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-left: 4px solid #cbd5e1;
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(190px, 1.15fr) 95px minmax(150px, 0.85fr) minmax(220px, 1.35fr) auto;
+  padding: 9px 10px;
+}
+
+.birthday-list-row.paid {
+  border-left-color: #0f766e;
+}
+
+.birthday-list-row.not-paid {
+  border-left-color: var(--danger);
+}
+
+.birthday-list-row div {
+  display: grid;
+  gap: 2px;
+}
+
+.birthday-list-row strong {
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.birthday-list-row div span,
+.birthday-list-row > span:not(.status) {
+  color: var(--muted);
+  font-size: 12px;
+  min-width: 0;
+}
+
 .email-log-table {
   background: #ffffff;
   border: 1px solid var(--line);
@@ -3346,6 +3388,7 @@ h1 {
   .birthday-create-form,
   .birthday-edit-form,
   .birthday-filter,
+  .birthday-list-row,
   .birthday-monitor-selects,
   .birthday-slots {
     grid-template-columns: 1fr;
