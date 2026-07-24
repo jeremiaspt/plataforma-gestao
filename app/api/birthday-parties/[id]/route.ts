@@ -5,8 +5,9 @@ import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
-function redirectPath(request: Request, month: string, status: "success" | "error", message?: string) {
+function redirectPath(request: Request, month: string, tab: string, status: "success" | "error", message?: string) {
   const params = new URLSearchParams({ month, [status]: "1" });
+  if (tab) params.set("tab", tab);
   if (message) params.set("message", message);
   return NextResponse.redirect(appRedirectUrl(`/festas-aniversario?${params.toString()}`, request));
 }
@@ -23,13 +24,16 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const formData = await request.formData();
   const month = String(formData.get("month") || "");
+  const tab = String(formData.get("tab") || "");
   const action = String(formData.get("action") || "");
-  const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: `/festas-aniversario?month=${month}` });
+  const maintenanceParams = new URLSearchParams({ month });
+  if (tab) maintenanceParams.set("tab", tab);
+  const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: `/festas-aniversario?${maintenanceParams.toString()}` });
   if (maintenanceBlock) return maintenanceBlock;
 
   const party = await prisma.birthdayParty.findUnique({ where: { id }, include: { monitors: true } });
   if (!party) {
-    return redirectPath(request, month, "error", "A festa selecionada ja nao existe.");
+    return redirectPath(request, month, tab, "error", "A festa selecionada ja nao existe.");
   }
 
   if (action === "payment") {
@@ -53,7 +57,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       ]);
     }
 
-    return redirectPath(request, month, "success");
+    return redirectPath(request, month, tab, "success");
   }
 
   if (!isAdmin) {
@@ -62,7 +66,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (action === "delete") {
     await prisma.birthdayParty.delete({ where: { id } });
-    return redirectPath(request, month, "success");
+    return redirectPath(request, month, tab, "success");
   }
 
   const responsibleName = String(formData.get("responsibleName") || "").trim();
@@ -75,13 +79,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const monitorIds = Array.from(new Set(rawMonitorIds));
 
   if (!responsibleName || !responsibleContact || !responsibleEmail || !ageGroup || !Number.isInteger(childCount) || childCount < 1) {
-    return redirectPath(request, month, "error", "Preenche todos os campos obrigatorios da festa.");
+    return redirectPath(request, month, tab, "error", "Preenche todos os campos obrigatorios da festa.");
   }
 
   const monitorRequirement = requiredBirthdayMonitors(ageGroup, childCount);
 
   if (rawMonitorIds.length !== monitorIds.length) {
-    return redirectPath(request, month, "error", "Nao podes selecionar o mesmo professor em mais do que um campo de monitor.");
+    return redirectPath(request, month, tab, "error", "Nao podes selecionar o mesmo professor em mais do que um campo de monitor.");
   }
 
   const [receptionist, monitors] = await Promise.all([
@@ -98,7 +102,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   ]);
 
   if ((receptionistId && !receptionist) || monitors.length !== monitorIds.length) {
-    return redirectPath(request, month, "error", "Seleciona recepcionista e monitores validos.");
+    return redirectPath(request, month, tab, "error", "Seleciona recepcionista e monitores validos.");
   }
 
   await prisma.$transaction([
@@ -118,5 +122,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     prisma.birthdayPartyMonitor.createMany({ data: monitorIds.map((teacherId) => ({ partyId: id, teacherId })) })
   ]);
 
-  return redirectPath(request, month, "success");
+  return redirectPath(request, month, tab, "success");
 }

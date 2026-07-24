@@ -3062,15 +3062,11 @@ h1 {
 }
 
 .birthday-list-row {
-  align-items: center;
   background: #ffffff;
   border: 1px solid var(--line);
   border-left: 4px solid #cbd5e1;
   border-radius: 8px;
-  display: grid;
-  gap: 10px;
-  grid-template-columns: minmax(190px, 1.15fr) 95px minmax(150px, 0.85fr) minmax(220px, 1.35fr) auto;
-  padding: 9px 10px;
+  overflow: hidden;
 }
 
 .birthday-list-row.paid {
@@ -3081,18 +3077,36 @@ h1 {
   border-left-color: var(--danger);
 }
 
-.birthday-list-row div {
+.birthday-list-button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(190px, 1.15fr) 95px minmax(150px, 0.85fr) minmax(220px, 1.35fr) auto;
+  padding: 9px 10px;
+  text-align: left;
+  width: 100%;
+}
+
+.birthday-list-button:hover {
+  background: #f8fafc;
+}
+
+.birthday-list-button div {
   display: grid;
   gap: 2px;
 }
 
-.birthday-list-row strong {
+.birthday-list-button strong {
   color: #0f172a;
   font-size: 13px;
 }
 
-.birthday-list-row div span,
-.birthday-list-row > span:not(.status) {
+.birthday-list-button div span,
+.birthday-list-button > span:not(.status) {
   color: var(--muted);
   font-size: 12px;
   min-width: 0;
@@ -3388,7 +3402,7 @@ h1 {
   .birthday-create-form,
   .birthday-edit-form,
   .birthday-filter,
-  .birthday-list-row,
+  .birthday-list-button,
   .birthday-monitor-selects,
   .birthday-slots {
     grid-template-columns: 1fr;
