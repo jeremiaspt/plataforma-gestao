@@ -143,7 +143,9 @@ export default async function BirthdayPartiesPage({
               </select>
             </div>
             <div className="field compact-number-field">
-              <label htmlFor="childCount">Criancas</label>
+              <label htmlFor="childCount" data-birthday-child-count-label>
+                Crianças (2 monitores necessários)
+              </label>
               <input id="childCount" name="childCount" min="1" type="number" required />
             </div>
             <div className="field">
@@ -199,7 +201,7 @@ export default async function BirthdayPartiesPage({
                       <button className="birthday-overview-button" data-open-birthday-dialog={`birthday-dialog-${party.id}`} type="button">
                         <small>{slot.label}</small>
                         <strong>{party.responsibleName}</strong>
-                        <span>{party.childCount} criancas</span>
+                        <span>{party.childCount} crianças</span>
                         <span>{party.receptionist?.name || "Sem recepcionista"}</span>
                         <span>{party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Sem monitores"}</span>
                       </button>
@@ -223,7 +225,7 @@ export default async function BirthdayPartiesPage({
                               <span>{party.responsibleName}</span>
                               <small>{party.responsibleContact} - {party.responsibleEmail}</small>
                               <small>
-                                {ageGroupLabel(party.ageGroup)} - {party.childCount} criancas - {party.monitorRequirement} monitores
+                                {ageGroupLabel(party.ageGroup)} - {party.childCount} crianças - {party.monitorRequirement} monitores
                               </small>
                               <small>Recepcionista: {party.receptionist?.name || "Por atribuir"}</small>
                               <small>Monitores: {party.monitors.map((monitor) => monitor.teacher.name).join(", ") || "Por atribuir"}</small>
@@ -267,9 +269,10 @@ export default async function BirthdayPartiesPage({
                                   </select>
                                 </div>
                                 <div className="field compact-number-field">
-                                  <label>Criancas</label>
+                                  <label data-birthday-child-count-label>
+                                    Crianças ({requiredBirthdayMonitors(party.ageGroup, party.childCount)} monitores necessários)
+                                  </label>
                                   <input name="childCount" min="1" type="number" defaultValue={party.childCount} required />
-                                  <small>{requiredBirthdayMonitors(party.ageGroup, party.childCount)} monitores</small>
                                 </div>
                                 <div className="field">
                                   <label>Recepcionista</label>
@@ -312,7 +315,15 @@ export default async function BirthdayPartiesPage({
                               <div className="birthday-log-list">
                                 {party.paymentLogs.map((log) => (
                                   <small key={log.id}>
-                                    {log.createdAt.toLocaleString("pt-PT")} - {paymentStatusLabel(log.previousStatus)} para {paymentStatusLabel(log.newStatus)} por {log.changedByName}
+                                    {log.createdAt.toLocaleString("pt-PT")} -{" "}
+                                    <span className={log.previousStatus === "paid" ? "birthday-log-status paid" : "birthday-log-status not-paid"}>
+                                      {paymentStatusLabel(log.previousStatus)}
+                                    </span>{" "}
+                                    para{" "}
+                                    <span className={log.newStatus === "paid" ? "birthday-log-status paid" : "birthday-log-status not-paid"}>
+                                      {paymentStatusLabel(log.newStatus)}
+                                    </span>{" "}
+                                    por {log.changedByName}
                                   </small>
                                 ))}
                               </div>

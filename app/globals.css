@@ -3034,6 +3034,23 @@ h1 {
   gap: 3px;
 }
 
+.birthday-log-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-weight: 800;
+  padding: 1px 6px;
+}
+
+.birthday-log-status.paid {
+  background: #e6f5f2;
+  color: #0f766e;
+}
+
+.birthday-log-status.not-paid {
+  background: #fee4e2;
+  color: var(--danger);
+}
+
 .birthday-summary span {
   color: #0f172a;
   font-weight: 800;
