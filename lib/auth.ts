@@ -1,9 +1,13 @@
 import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import crypto from "node:crypto";
+import { recordUserAccess } from "@/lib/loginAudit";
 import { prisma } from "@/lib/prisma";
 
 const cookieName = "plataforma_session";
+const sessionMaxAgeSeconds = 60 * 60 * 24 * 30;
+const sessionMaxAgeMs = sessionMaxAgeSeconds * 1000;
 
 function getSecret() {
   if (process.env.SESSION_SECRET) {
@@ -33,7 +37,7 @@ export async function setSession(userId: string) {
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: 60 * 60 * 24 * 7
+    maxAge: sessionMaxAgeSeconds
   });
 }
 
@@ -68,12 +72,19 @@ export async function getSessionUser() {
       createdAt: number;
     };
 
-    if (Date.now() - data.createdAt > 60 * 60 * 24 * 7 * 1000) return null;
+    if (Date.now() - data.createdAt > sessionMaxAgeMs) return null;
 
-    return prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: data.userId, active: true },
       include: { roles: { include: { role: true } } }
     });
+
+    if (user) {
+      const requestHeaders = await headers();
+      await recordUserAccess(requestHeaders, user.id).catch(() => null);
+    }
+
+    return user;
   } catch {
     return null;
   }
