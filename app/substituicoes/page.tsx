@@ -327,6 +327,7 @@ export default async function SubstitutionsPage({
           {currentList.length === 0 ? <p className="muted">Sem substituições registadas para estes filtros.</p> : null}
           {currentList.map((request) => {
             const canCancel = request.status !== "cancelled" && activeTab !== "historico" && (isAdmin || request.absentTeacherId === user.id);
+            const pendingItemsForUser = request.items.filter((item) => item.status === "pending" && item.substituteTeacherId === user.id);
 
             return (
               <article className="substitution-request-card" key={request.id}>
@@ -358,30 +359,32 @@ export default async function SubstitutionsPage({
                       </small>
                       <div className="substitution-item-actions">
                         <span className={statusClass(item.status)}>{itemStatusText(item.status)}</span>
-                        {item.status === "pending" && item.substituteTeacherId === user.id ? (
-                          <>
-                            <form action="/api/group-class-substitutions/respond" method="post">
-                              <input type="hidden" name="itemId" value={item.id} />
-                              <input type="hidden" name="action" value="approved" />
-                              <input type="hidden" name="date" value={selectedDateValue} />
-                              <button className="button compact-button" type="submit">
-                                Aceitar
-                              </button>
-                            </form>
-                            <form action="/api/group-class-substitutions/respond" method="post">
-                              <input type="hidden" name="itemId" value={item.id} />
-                              <input type="hidden" name="action" value="rejected" />
-                              <input type="hidden" name="date" value={selectedDateValue} />
-                              <button className="button danger compact-button" type="submit">
-                                Rejeitar
-                              </button>
-                            </form>
-                          </>
-                        ) : null}
                       </div>
                     </div>
                   ))}
                 </div>
+
+                {pendingItemsForUser.length > 0 ? (
+                  <div className="substitution-response-actions">
+                    <span className="muted">{pendingItemsForUser.length} aula(s) pendente(s) para resposta.</span>
+                    <form action="/api/group-class-substitutions/respond" method="post">
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <input type="hidden" name="action" value="approved" />
+                      <input type="hidden" name="date" value={selectedDateValue} />
+                      <button className="button compact-button" type="submit">
+                        Aceitar pedido
+                      </button>
+                    </form>
+                    <form action="/api/group-class-substitutions/respond" method="post">
+                      <input type="hidden" name="requestId" value={request.id} />
+                      <input type="hidden" name="action" value="rejected" />
+                      <input type="hidden" name="date" value={selectedDateValue} />
+                      <button className="button danger compact-button" type="submit">
+                        Rejeitar pedido
+                      </button>
+                    </form>
+                  </div>
+                ) : null}
 
                 {request.status === "cancelled" ? (
                   <div className="substitution-cancel-note">

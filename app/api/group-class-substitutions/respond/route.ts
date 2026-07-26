@@ -31,6 +31,7 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const itemId = String(formData.get("itemId") || "");
+  const requestId = String(formData.get("requestId") || "");
   const action = String(formData.get("action") || "");
   const dateValue = String(formData.get("date") || "");
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: `/substituicoes?date=${dateValue}` });
@@ -39,8 +40,65 @@ export async function POST(request: Request) {
     return maintenanceBlock;
   }
 
-  if (!itemId || (action !== "approved" && action !== "rejected")) {
+  if ((!itemId && !requestId) || (action !== "approved" && action !== "rejected")) {
     return redirectPath(request, "error", dateValue);
+  }
+
+  if (requestId) {
+    const substitutionRequest = await prisma.groupClassSubstitutionRequest.findUnique({
+      where: { id: requestId },
+      include: {
+        absentTeacher: { select: { email: true, name: true } },
+        items: {
+          include: { substituteTeacher: { select: { name: true } } },
+          orderBy: { startMinutes: "asc" }
+        }
+      }
+    });
+
+    if (!substitutionRequest || substitutionRequest.status === "cancelled") {
+      return redirectPath(request, "error", dateValue);
+    }
+
+    const responseItems = substitutionRequest.items.filter((item) => item.substituteTeacherId === user.id && item.status === "pending");
+
+    if (responseItems.length === 0) {
+      return redirectPath(request, "error", dateValue || dateToInputValue(substitutionRequest.substitutionDate));
+    }
+
+    const updatedItems = substitutionRequest.items.map((requestItem) =>
+      responseItems.some((item) => item.id === requestItem.id) ? { ...requestItem, status: action } : requestItem
+    );
+    const nextRequestStatus = requestStatusFromItems(updatedItems);
+
+    await prisma.$transaction([
+      prisma.groupClassSubstitutionItem.updateMany({
+        where: { requestId, substituteTeacherId: user.id, status: "pending" },
+        data: { status: action }
+      }),
+      prisma.groupClassSubstitutionRequest.update({
+        where: { id: requestId },
+        data: { status: nextRequestStatus }
+      })
+    ]);
+
+    const actionUrl = appRedirectUrl(
+      `/substituicoes?tab=gerir&date=${dateToInputValue(substitutionRequest.substitutionDate)}`,
+      request
+    ).toString();
+
+    await sendSubstitutionResponseEmail({
+      requestId,
+      absentTeacherEmail: substitutionRequest.absentTeacher.email,
+      absentTeacherName: substitutionRequest.absentTeacher.name,
+      substituteTeacherName: responseItems[0].substituteTeacher.name,
+      substitutionDate: substitutionRequest.substitutionDate,
+      items: responseItems,
+      response: action,
+      actionUrl
+    });
+
+    return redirectPath(request, "success", dateValue || dateToInputValue(substitutionRequest.substitutionDate));
   }
 
   const item = await prisma.groupClassSubstitutionItem.findUnique({

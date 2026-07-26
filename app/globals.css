@@ -538,6 +538,16 @@ select {
   gap: 8px;
 }
 
+.substitution-response-actions {
+  align-items: center;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
 .substitution-item-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -624,6 +634,11 @@ select {
 
   .substitution-item-actions {
     justify-content: flex-start;
+  }
+
+  .substitution-response-actions {
+    align-items: stretch;
+    flex-direction: column;
   }
 }
 
