@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
+import { LoginActivitySearch } from "@/components/LoginActivitySearch";
 import { PersonalTrainingImportForm } from "@/components/PersonalTrainingImportForm";
 import { hasRole, requireUser } from "@/lib/auth";
 import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
-type ActivityTab = "overview" | "payments" | "bookings" | "credits" | "classes" | "emails" | "maintenance";
+type ActivityTab = "overview" | "payments" | "bookings" | "credits" | "classes" | "emails" | "logins" | "maintenance";
 
 function startOfCurrentMonth() {
   const now = new Date();
@@ -106,6 +107,7 @@ export default async function ActivityPage({
     params.tab === "credits" ||
     params.tab === "classes" ||
     params.tab === "emails" ||
+    params.tab === "logins" ||
     params.tab === "maintenance"
       ? params.tab
       : "overview";
@@ -125,7 +127,7 @@ export default async function ActivityPage({
     return `/atividade?${query.toString()}`;
   };
 
-  const [rawPaymentLogs, bookingLogs, creditAdjustments, emailLogs, payments] = await Promise.all([
+  const [rawPaymentLogs, bookingLogs, creditAdjustments, emailLogs, loginLogs, payments] = await Promise.all([
     prisma.personalTrainingPaymentLog.findMany({
       where: {
         createdAt: { gte: fromDate, lt: endExclusive }
@@ -153,6 +155,14 @@ export default async function ActivityPage({
       },
       orderBy: { createdAt: "desc" },
       take: 120
+    }),
+    prisma.userLoginLog.findMany({
+      where: {
+        createdAt: { gte: fromDate, lt: endExclusive }
+      },
+      include: { user: { select: { email: true, name: true } } },
+      orderBy: { createdAt: "desc" },
+      take: 300
     }),
     prisma.personalTrainingPayment.findMany({
       where: {
@@ -264,10 +274,29 @@ export default async function ActivityPage({
       title: log.status === "sent" ? "Email enviado" : "Falha no email",
       detail: log.subject,
       actor: log.toEmail
+    })),
+    ...loginLogs.map((log) => ({
+      id: `login-${log.id}`,
+      date: log.createdAt,
+      type: "Login",
+      title: "Entrada na plataforma",
+      detail: `${log.ipAddress || "IP desconhecido"} - ${log.browser || "Browser desconhecido"}`,
+      actor: log.user.name
     }))
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 40);
+  const loginRows = loginLogs.map((log) => ({
+    id: log.id,
+    browser: log.browser || "Desconhecido",
+    city: log.city || "",
+    country: log.country || "",
+    createdAtLabel: log.createdAt.toLocaleString("pt-PT"),
+    ipAddress: log.ipAddress || "Desconhecido",
+    platform: log.platform || "Desconhecida",
+    userEmail: log.user.email,
+    userName: log.user.name
+  }));
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
@@ -317,6 +346,10 @@ export default async function ActivityPage({
             <span>Emails falhados</span>
             <strong>{failedEmails.length}</strong>
           </div>
+          <div className="stat-card">
+            <span>Logins</span>
+            <strong>{loginLogs.length}</strong>
+          </div>
         </div>
 
         <div className="tabs">
@@ -337,6 +370,9 @@ export default async function ActivityPage({
           </a>
           <a className={activeTab === "emails" ? "tab active" : "tab"} href={tabHref("emails")}>
             Emails
+          </a>
+          <a className={activeTab === "logins" ? "tab active" : "tab"} href={tabHref("logins")}>
+            Logins
           </a>
           <a className={activeTab === "maintenance" ? "tab active" : "tab"} href={tabHref("maintenance")}>
             Manutenção
@@ -530,6 +566,8 @@ export default async function ActivityPage({
             ))}
           </div>
         ) : null}
+
+        {activeTab === "logins" ? <LoginActivitySearch logs={loginRows} /> : null}
 
         {activeTab === "maintenance" ? (
           <div className="maintenance-grid">
