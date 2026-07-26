@@ -286,17 +286,46 @@ export default async function ActivityPage({
   ]
     .sort((a, b) => b.date.getTime() - a.date.getTime())
     .slice(0, 40);
-  const loginRows = loginLogs.map((log) => ({
-    id: log.id,
-    browser: log.browser || "Desconhecido",
-    city: log.city || "",
-    country: log.country || "",
-    createdAtLabel: log.createdAt.toLocaleString("pt-PT"),
-    ipAddress: log.ipAddress || "Desconhecido",
-    platform: log.platform || "Desconhecida",
-    userEmail: log.user.email,
-    userName: log.user.name
-  }));
+  const loginRowsByAccess = new Map<
+    string,
+    {
+      id: string;
+      browser: string;
+      city: string;
+      country: string;
+      createdAt: Date;
+      createdAtLabel: string;
+      ipAddress: string;
+      platform: string;
+      userEmail: string;
+      userName: string;
+    }
+  >();
+
+  for (const log of loginLogs) {
+    const row = {
+      id: log.id,
+      browser: log.browser || "Desconhecido",
+      city: log.city || "",
+      country: log.country || "",
+      createdAt: log.createdAt,
+      createdAtLabel: log.createdAt.toLocaleString("pt-PT"),
+      ipAddress: log.ipAddress || "Desconhecido",
+      platform: log.platform || "Desconhecida",
+      userEmail: log.user.email,
+      userName: log.user.name
+    };
+    const key = [log.userId, row.ipAddress, row.browser, row.platform, row.city, row.country].join("|");
+    const existing = loginRowsByAccess.get(key);
+
+    if (!existing || row.createdAt > existing.createdAt) {
+      loginRowsByAccess.set(key, row);
+    }
+  }
+
+  const loginRows = Array.from(loginRowsByAccess.values())
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+    .map(({ createdAt, ...row }) => row);
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
