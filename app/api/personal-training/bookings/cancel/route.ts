@@ -61,7 +61,7 @@ export async function POST(request: Request) {
         bookingGroupId,
         bookingDate: booking.bookingDate,
         teacherName: user.name,
-        studentNames: bookings.map((item) => item.student.fullName).join(", "),
+        studentNames: bookings.map((item) => item.experimentalStudentName || item.student.fullName).join(", "),
         paymentType: booking.paymentType?.description || null,
         poolBlockTitle: booking.poolBlock.title,
         laneNumber: booking.poolBlock.laneNumber,

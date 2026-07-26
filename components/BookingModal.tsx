@@ -18,6 +18,11 @@ type CreditBalanceOption = {
   canBook: boolean;
 };
 
+type TeacherOption = {
+  id: string;
+  name: string;
+};
+
 export function BookingModal({
   date,
   poolBlockId,
@@ -32,6 +37,8 @@ export function BookingModal({
   closeHref,
   trainingTypes,
   creditBalances,
+  isAdmin,
+  teachers,
   editBooking
 }: {
   date: string;
@@ -47,6 +54,8 @@ export function BookingModal({
   closeHref: string;
   trainingTypes: TrainingTypeOption[];
   creditBalances: CreditBalanceOption[];
+  isAdmin?: boolean;
+  teachers?: TeacherOption[];
   editBooking?: {
     groupId: string;
     startMinutes: number;
@@ -63,6 +72,7 @@ export function BookingModal({
   );
   const [trainingTypeKey, setTrainingTypeKey] = useState(editBooking?.trainingTypeKey || filteredTypes[0]?.key || "");
   const [selectedStudentIds, setSelectedStudentIds] = useState(editBooking?.studentIds || []);
+  const experimentalMode = Boolean(isAdmin && !editBooking);
   const selectedType = filteredTypes.find((type) => type.key === trainingTypeKey) || filteredTypes[0];
   const selectedTypeKey = selectedType?.key || "";
   const requiredParticipants = requiredParticipantsForType(selectedType?.name);
@@ -116,9 +126,9 @@ export function BookingModal({
       <section className="booking-modal">
         <div className="topbar">
           <div>
-            <p className="eyebrow">Marcação PT</p>
+            <p className="eyebrow">Marcacao PT</p>
             <h1>
-              {blockTitle} · {laneLabel}
+              {blockTitle} - {laneLabel}
             </h1>
             <p className="muted">
               {startLabel} - {endLabel}
@@ -137,9 +147,27 @@ export function BookingModal({
           <input type="hidden" name="durationMinutes" value={durationMinutes} />
           <input type="hidden" name="trainingTypeKey" value={selectedTypeKey} />
           <input type="hidden" name="startMinutes" value={startMinutes} />
+          {experimentalMode ? <input type="hidden" name="experimentalBooking" value="1" /> : null}
+
+          {isAdmin && !editBooking ? (
+            <>
+              <div className="field">
+                <label>Professor</label>
+                <select name="teacherId" required>
+                  <option value="">Selecionar professor</option>
+                  {(teachers || []).map((teacher) => (
+                    <option value={teacher.id} key={teacher.id}>
+                      {teacher.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="muted booking-experimental-note">Marcacao experimental sem numero de utente e sem consumo de creditos.</p>
+            </>
+          ) : null}
 
           <div className="field">
-            <label>Duração</label>
+            <label>Duracao</label>
             <select value={durationMinutes} onChange={(event) => handleDurationChange(event.target.value)}>
               {availableDurations.map((duration) => (
                 <option value={duration} key={duration}>
@@ -150,7 +178,7 @@ export function BookingModal({
           </div>
 
           <div className="field">
-            <label>Início</label>
+            <label>Inicio</label>
             <select value={startMinutes} onChange={(event) => setStartMinutes(Number(event.target.value))}>
               {startOptions.map((minutes) => (
                 <option value={minutes} key={minutes}>
@@ -171,32 +199,39 @@ export function BookingModal({
             </select>
           </div>
 
-          {Array.from({ length: requiredParticipants }).map((_, index) => (
-            <div className="field" key={index}>
-              <label>Utente {index + 1}</label>
-              <select
-                name="studentIds"
-                value={selectedStudentIds[index] || ""}
-                onChange={(event) => handleStudentChange(index, event.target.value)}
-                required
-              >
-                <option value="">Selecionar utente</option>
-                {eligibleBalances
-                  .filter(
-                    (balance) =>
-                      !selectedStudentIds.some((studentId, studentIndex) => studentIndex !== index && studentId === balance.studentId)
-                  )
-                  .map((balance) => (
-                    <option value={balance.studentId} key={balance.studentId}>
-                      {balance.fullName} · saldo {balance.availableCredits}
-                    </option>
-                  ))}
-              </select>
+          {experimentalMode ? (
+            <div className="field">
+              <label>Nome do utente experimental</label>
+              <input name="experimentalStudentName" placeholder="Ex.: Aula experimental" required />
             </div>
-          ))}
+          ) : (
+            Array.from({ length: requiredParticipants }).map((_, index) => (
+              <div className="field" key={index}>
+                <label>Utente {index + 1}</label>
+                <select
+                  name="studentIds"
+                  value={selectedStudentIds[index] || ""}
+                  onChange={(event) => handleStudentChange(index, event.target.value)}
+                  required
+                >
+                  <option value="">Selecionar utente</option>
+                  {eligibleBalances
+                    .filter(
+                      (balance) =>
+                        !selectedStudentIds.some((studentId, studentIndex) => studentIndex !== index && studentId === balance.studentId)
+                    )
+                    .map((balance) => (
+                      <option value={balance.studentId} key={balance.studentId}>
+                        {balance.fullName} - saldo {balance.availableCredits}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            ))
+          )}
 
-          <button className="button" type="submit" disabled={!selectedTypeKey || eligibleBalances.length < requiredParticipants}>
-            {editBooking ? "Guardar alteração" : "Marcar aula"}
+          <button className="button" type="submit" disabled={!selectedTypeKey || (!experimentalMode && eligibleBalances.length < requiredParticipants)}>
+            {editBooking ? "Guardar alteracao" : "Marcar aula"}
           </button>
         </form>
       </section>

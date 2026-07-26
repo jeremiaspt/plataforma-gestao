@@ -19,18 +19,35 @@ model User {
   poolScheduleBlocks                PoolScheduleBlock[]
   poolClassesAsTeacher              PoolScheduleBlock[]             @relation("PoolClassTeacher")
   passwordResetTokens               PasswordResetToken[]
+  loginLogs                         UserLoginLog[]
   personalTrainingPaymentsAsTeacher PersonalTrainingPayment[]       @relation("PersonalTrainingTeacher")
   personalTrainingPaymentsCreated   PersonalTrainingPayment[]       @relation("PersonalTrainingCreatedBy")
   personalTrainingBookingsAsTeacher PersonalTrainingBooking[]       @relation("PersonalTrainingBookingTeacher")
+  personalTrainingAvailabilities    PersonalTrainingAvailability[]  @relation("PersonalTrainingAvailabilityTeacher")
   substitutionRequestsAsAbsent      GroupClassSubstitutionRequest[] @relation("SubstitutionAbsentTeacher")
   substitutionRequestsCreated       GroupClassSubstitutionRequest[] @relation("SubstitutionRequestedBy")
   substitutionItemsAsSubstitute     GroupClassSubstitutionItem[]    @relation("SubstitutionSubstituteTeacher")
   birthdayPartiesCreated            BirthdayParty[]                 @relation("BirthdayPartyCreatedBy")
-  birthdayPartiesReceptionist        BirthdayParty[]                 @relation("BirthdayPartyReceptionist")
-  birthdayPartyMonitors              BirthdayPartyMonitor[]          @relation("BirthdayPartyMonitorTeacher")
-  birthdayPartyPaymentLogs           BirthdayPartyPaymentLog[]       @relation("BirthdayPartyPaymentLogChangedBy")
+  birthdayPartiesReceptionist       BirthdayParty[]                 @relation("BirthdayPartyReceptionist")
+  birthdayPartyMonitors             BirthdayPartyMonitor[]          @relation("BirthdayPartyMonitorTeacher")
+  birthdayPartyPaymentLogs          BirthdayPartyPaymentLog[]       @relation("BirthdayPartyPaymentLogChangedBy")
   createdAt                         DateTime                        @default(now())
   updatedAt                         DateTime                        @updatedAt
+}
+
+model UserLoginLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipAddress String?
+  platform  String?
+  browser   String?
+  city      String?
+  country   String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
 
 model Role {
@@ -156,26 +173,26 @@ model GroupClassHourlyRate {
 }
 
 model BirthdayParty {
-  id                  String                    @id @default(cuid())
-  partyDate           DateTime                  @db.Date
-  slotKey             String
-  startMinutes        Int
-  endMinutes          Int
-  responsibleName     String
-  responsibleContact  String
-  responsibleEmail    String
-  ageGroup            String
-  childCount          Int
-  monitorRequirement  Int
-  paymentStatus       String                    @default("not_paid")
-  receptionistId      String?
-  receptionist         User?                     @relation("BirthdayPartyReceptionist", fields: [receptionistId], references: [id], onDelete: SetNull)
-  createdById         String?
-  createdBy           User?                     @relation("BirthdayPartyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  monitors            BirthdayPartyMonitor[]
-  paymentLogs         BirthdayPartyPaymentLog[]
-  createdAt           DateTime                  @default(now())
-  updatedAt           DateTime                  @updatedAt
+  id                 String                    @id @default(cuid())
+  partyDate          DateTime                  @db.Date
+  slotKey            String
+  startMinutes       Int
+  endMinutes         Int
+  responsibleName    String
+  responsibleContact String
+  responsibleEmail   String
+  ageGroup           String
+  childCount         Int
+  monitorRequirement Int
+  paymentStatus      String                    @default("not_paid")
+  receptionistId     String?
+  receptionist       User?                     @relation("BirthdayPartyReceptionist", fields: [receptionistId], references: [id], onDelete: SetNull)
+  createdById        String?
+  createdBy          User?                     @relation("BirthdayPartyCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  monitors           BirthdayPartyMonitor[]
+  paymentLogs        BirthdayPartyPaymentLog[]
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
 
   @@unique([partyDate, slotKey])
   @@index([partyDate])
@@ -195,15 +212,15 @@ model BirthdayPartyMonitor {
 }
 
 model BirthdayPartyPaymentLog {
-  id              String        @id @default(cuid())
-  partyId         String
-  party           BirthdayParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
-  previousStatus  String
-  newStatus       String
-  changedById     String?
-  changedBy       User?         @relation("BirthdayPartyPaymentLogChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
-  changedByName   String
-  createdAt       DateTime      @default(now())
+  id             String        @id @default(cuid())
+  partyId        String
+  party          BirthdayParty @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  previousStatus String
+  newStatus      String
+  changedById    String?
+  changedBy      User?         @relation("BirthdayPartyPaymentLogChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+  changedByName  String
+  createdAt      DateTime      @default(now())
 
   @@index([partyId])
   @@index([createdAt])
@@ -223,17 +240,17 @@ model PasswordResetToken {
 }
 
 model PersonalTrainingPaymentType {
-  id           String                    @id @default(cuid())
-  description  String                    @unique
-  credits      Int
-  price        Decimal                   @default(0) @db.Decimal(10, 2)
-  teacherPrice Decimal                   @default(0) @db.Decimal(10, 2)
-  active       Boolean                   @default(true)
-  payments     PersonalTrainingPayment[]
-  bookings     PersonalTrainingBooking[]
+  id                 String                              @id @default(cuid())
+  description        String                              @unique
+  credits            Int
+  price              Decimal                             @default(0) @db.Decimal(10, 2)
+  teacherPrice       Decimal                             @default(0) @db.Decimal(10, 2)
+  active             Boolean                             @default(true)
+  payments           PersonalTrainingPayment[]
+  bookings           PersonalTrainingBooking[]
   timesheetRuleItems PersonalTrainingTimesheetRuleItem[]
-  createdAt    DateTime                  @default(now())
-  updatedAt    DateTime                  @updatedAt
+  createdAt          DateTime                            @default(now())
+  updatedAt          DateTime                            @updatedAt
 }
 
 model PersonalTrainingTimesheetRule {
@@ -342,29 +359,47 @@ model PersonalTrainingCreditAdjustment {
 }
 
 model PersonalTrainingBooking {
-  id              String                       @id @default(cuid())
-  bookingGroupId  String                       @default(cuid())
-  bookingDate     DateTime                     @db.Date
-  poolBlockId     String
-  poolBlock       PoolScheduleBlock            @relation(fields: [poolBlockId], references: [id], onDelete: Restrict)
-  teacherId       String
-  teacher         User                         @relation("PersonalTrainingBookingTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
-  studentId       String
-  student         PersonalTrainingStudent      @relation(fields: [studentId], references: [id], onDelete: Restrict)
-  paymentTypeId   String?
-  paymentType     PersonalTrainingPaymentType? @relation(fields: [paymentTypeId], references: [id], onDelete: SetNull)
-  startMinutes    Int
-  endMinutes      Int
-  durationMinutes Int
-  creditsUsed     Int                          @default(1)
-  status          String                       @default("scheduled")
-  createdAt       DateTime                     @default(now())
-  updatedAt       DateTime                     @updatedAt
+  id                      String                       @id @default(cuid())
+  bookingGroupId          String                       @default(cuid())
+  bookingDate             DateTime                     @db.Date
+  poolBlockId             String
+  poolBlock               PoolScheduleBlock            @relation(fields: [poolBlockId], references: [id], onDelete: Restrict)
+  teacherId               String
+  teacher                 User                         @relation("PersonalTrainingBookingTeacher", fields: [teacherId], references: [id], onDelete: Restrict)
+  studentId               String
+  student                 PersonalTrainingStudent      @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  paymentTypeId           String?
+  paymentType             PersonalTrainingPaymentType? @relation(fields: [paymentTypeId], references: [id], onDelete: SetNull)
+  isExperimental          Boolean                      @default(false)
+  experimentalStudentName String?
+  startMinutes            Int
+  endMinutes              Int
+  durationMinutes         Int
+  creditsUsed             Int                          @default(1)
+  status                  String                       @default("scheduled")
+  createdAt               DateTime                     @default(now())
+  updatedAt               DateTime                     @updatedAt
 
   @@index([bookingDate, poolBlockId])
   @@index([bookingGroupId])
   @@index([teacherId, bookingDate])
   @@index([studentId, bookingDate])
+}
+
+model PersonalTrainingAvailability {
+  id           String   @id @default(cuid())
+  teacherId    String
+  teacher      User     @relation("PersonalTrainingAvailabilityTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  weekday      Int
+  startMinutes Int
+  endMinutes   Int
+  notes        String?
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([teacherId, weekday])
+  @@index([weekday, startMinutes, endMinutes])
 }
 
 model PersonalTrainingBookingLog {

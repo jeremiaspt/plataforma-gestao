@@ -68,6 +68,13 @@ export async function POST(
     return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
   }
 
+  const protectedEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
+  const existingUser = await prisma.user.findUnique({ where: { id }, select: { email: true } });
+
+  if (protectedEmail && existingUser?.email.toLowerCase() === protectedEmail && email !== protectedEmail) {
+    return NextResponse.redirect(appRedirectUrl("/utilizadores?protected=1", request));
+  }
+
   const roles = await prisma.role.findMany({ where: { key: { in: roleKeys } } });
 
   await prisma.user.update({

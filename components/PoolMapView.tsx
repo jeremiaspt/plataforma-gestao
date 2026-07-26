@@ -145,15 +145,23 @@ export async function PoolMapView({
       })
     : [];
 
-  const [creditBalances, paymentTypes] = isProfessor
+  const canBookPersonalTraining = isProfessor || isAdmin;
+  const [creditBalances, paymentTypes, bookingTeachers] = canBookPersonalTraining
     ? await Promise.all([
-        getCreditBalancesForTeacher(user.id),
+        isProfessor ? getCreditBalancesForTeacher(user.id) : Promise.resolve([]),
         prisma.personalTrainingPaymentType.findMany({
           where: { active: true },
           orderBy: { description: "asc" }
-        })
+        }),
+        isAdmin
+          ? prisma.user.findMany({
+              where: { active: true, roles: { some: { role: { key: "professor" } } } },
+              orderBy: { name: "asc" },
+              select: { id: true, name: true }
+            })
+          : Promise.resolve([])
       ])
-    : [[], []];
+    : [[], [], []];
   const trainingTypeMap = new Map<string, { key: string; name: string; durationMinutes: number }>();
 
   for (const paymentType of paymentTypes) {
@@ -208,7 +216,7 @@ export async function PoolMapView({
         };
 
       current.studentIds.push(booking.studentId);
-      current.studentNames.push(booking.student.fullName);
+      current.studentNames.push(booking.experimentalStudentName || booking.student.fullName);
       teacherBookingGroups.set(booking.bookingGroupId, current);
     }
   }
@@ -248,7 +256,7 @@ export async function PoolMapView({
           studentNames: []
         };
 
-      current.studentNames.push(booking.student.fullName);
+      current.studentNames.push(booking.experimentalStudentName || booking.student.fullName);
       futureBookingGroups.set(booking.bookingGroupId, current);
     }
   }
@@ -310,7 +318,7 @@ export async function PoolMapView({
         startMinutes: booking.startMinutes,
         endMinutes: booking.endMinutes
       };
-      current.studentNames.push(booking.student.fullName);
+      current.studentNames.push(booking.experimentalStudentName || booking.student.fullName);
       grouped.set(booking.bookingGroupId, current);
     }
 
@@ -338,7 +346,7 @@ export async function PoolMapView({
         startMinutes: booking.startMinutes,
         endMinutes: booking.endMinutes
       };
-      current.studentNames.push(booking.student.fullName);
+      current.studentNames.push(booking.experimentalStudentName || booking.student.fullName);
       grouped.set(booking.bookingGroupId, current);
     }
 
@@ -501,7 +509,7 @@ export async function PoolMapView({
                         ? hasBlockVacancy(block.id, block.startMinutes, block.endMinutes)
                         : false;
                     const canBookBlock = Boolean(
-                      isProfessor &&
+                      canBookPersonalTraining &&
                         canSubmitChanges &&
                         canBookSelectedDate &&
                         block?.type === "treino" &&
@@ -571,7 +579,7 @@ export async function PoolMapView({
         ) : null}
       </section>
 
-      {isProfessor && canSubmitChanges && canBookSelectedDate && selectedBookingBlock ? (
+      {canBookPersonalTraining && canSubmitChanges && canBookSelectedDate && selectedBookingBlock ? (
         <BookingModal
           date={selectedDateValue}
           poolBlockId={selectedBookingBlock.id}
@@ -586,6 +594,8 @@ export async function PoolMapView({
           closeHref={`${mapConfig.basePath}?date=${selectedDateValue}`}
           trainingTypes={trainingTypes}
           creditBalances={creditBalances}
+          isAdmin={isAdmin}
+          teachers={bookingTeachers}
           editBooking={
             editBookingGroup
               ? {

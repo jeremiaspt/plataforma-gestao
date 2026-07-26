@@ -11,7 +11,7 @@ const usersPerPage = 10;
 export default async function UsersPage({
   searchParams
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ protected?: string; q?: string; page?: string }>;
 }) {
   const currentUser = await requireUser();
   const params = await searchParams;
@@ -41,7 +41,10 @@ export default async function UsersPage({
       orderBy: { name: "asc" },
       skip: (currentPage - 1) * usersPerPage,
       take: usersPerPage,
-      include: { roles: { include: { role: true } } }
+      include: {
+        loginLogs: { orderBy: { createdAt: "desc" }, take: 10 },
+        roles: { include: { role: true } }
+      }
     }),
     prisma.user.count({ where })
   ]);
@@ -59,6 +62,7 @@ export default async function UsersPage({
             <p className="muted">Cria utilizadores, gere categorias, ciclos de faturação e estado de acesso.</p>
           </div>
         </div>
+        {params.protected ? <p className="error">O email do superadmin definido em ambiente nao pode ser alterado.</p> : null}
 
         <form className="form user-create-form" action="/api/users" method="post">
           <div className="grid">
@@ -155,6 +159,16 @@ export default async function UsersPage({
                   Remover
                 </button>
               </div>
+              <details className="user-login-details">
+                <summary>Ultimos acessos</summary>
+                {user.loginLogs.length === 0 ? <small className="muted">Sem acessos registados.</small> : null}
+                {user.loginLogs.map((log) => (
+                  <small key={log.id}>
+                    {log.createdAt.toLocaleString("pt-PT")} - {log.ipAddress || "IP desconhecido"} - {log.browser || "Browser desconhecido"} /{" "}
+                    {log.platform || "Plataforma desconhecida"} - {[log.city, log.country].filter(Boolean).join(", ") || "Localidade desconhecida"}
+                  </small>
+                ))}
+              </details>
             </form>
           ))}
         </div>

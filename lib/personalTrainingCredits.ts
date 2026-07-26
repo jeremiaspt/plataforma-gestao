@@ -69,6 +69,7 @@ export async function getCreditBalancesForTeacher(teacherId: string): Promise<Pe
   }
 
   for (const booking of bookings) {
+    if (booking.isExperimental) continue;
     if (!booking.paymentType) continue;
 
     const trainingTypeKey = getTrainingTypeKey(booking.paymentType.description);

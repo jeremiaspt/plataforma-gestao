@@ -4,6 +4,7 @@ import {
   Brush,
   Cake,
   CalendarCheck,
+  CalendarClock,
   CalendarDays,
   Dumbbell,
   FileSpreadsheet,
@@ -204,6 +205,14 @@ const sections: ToolSection[] = [
         roles: ["admin", "professor", "recepcao"],
         href: "/treinos-personalizados/pagamentos",
         icon: Dumbbell,
+        tone: "payments"
+      },
+      {
+        title: "Disponibilidade TP",
+        description: "Registar e consultar janelas para novos TP.",
+        roles: ["admin", "professor"],
+        href: "/disponibilidade-tp",
+        icon: CalendarClock,
         tone: "payments"
       },
       {

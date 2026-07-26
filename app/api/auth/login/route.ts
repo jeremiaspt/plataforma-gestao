@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { setSession } from "@/lib/auth";
+import { recordLogin } from "@/lib/loginAudit";
 import { getClientIp, isRateLimited } from "@/lib/rateLimit";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -22,6 +23,7 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl("/login?error=1", request));
   }
 
+  await recordLogin(request, user.id);
   await setSession(user.id);
   return NextResponse.redirect(appRedirectUrl("/dashboard", request));
 }

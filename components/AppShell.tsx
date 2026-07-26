@@ -4,6 +4,7 @@ import {
   Brush,
   Cake,
   CalendarCheck,
+  CalendarClock,
   CalendarDays,
   Dumbbell,
   FileSpreadsheet,
@@ -126,6 +127,7 @@ export async function AppShell({
   const paymentItems: NavItem[] = canUsePayments
     ? [
         { href: "/treinos-personalizados/pagamentos", icon: Dumbbell, label: "Pagamento TP", tone: "payments" },
+        ...(isAdmin || isProfessor ? [{ href: "/disponibilidade-tp", icon: CalendarClock, label: "Disponibilidade TP", tone: "payments" as const }] : []),
         ...(isAdmin || isProfessor ? [{ href: "/folha-treinos", icon: FileSpreadsheet, label: "Folha de treinos", tone: "payments" as const }] : [])
       ]
     : [];

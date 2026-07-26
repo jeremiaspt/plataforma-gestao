@@ -18,8 +18,10 @@ import { appRedirectUrl } from "@/lib/url";
 
 export async function POST(request: Request) {
   const user = await requireUser();
+  const isAdmin = hasRole(user, "admin");
+  const isProfessor = hasRole(user, "professor");
 
-  if (!hasRole(user, "professor")) {
+  if (!isAdmin && !isProfessor) {
     return NextResponse.redirect(appRedirectUrl("/dashboard", request));
   }
 
@@ -28,6 +30,10 @@ export async function POST(request: Request) {
   const poolMap = getPoolMapByKey(String(formData.get("poolKey") || "piscina_25m"));
   const poolBlockId = String(formData.get("poolBlockId") || "");
   const existingBookingGroupId = String(formData.get("bookingGroupId") || "");
+  const selectedTeacherId = String(formData.get("teacherId") || "");
+  const isExperimentalBooking = isAdmin && String(formData.get("experimentalBooking") || "") === "1" && !existingBookingGroupId;
+  const experimentalStudentName = String(formData.get("experimentalStudentName") || "").trim();
+  const teacherId = isAdmin && selectedTeacherId ? selectedTeacherId : user.id;
   const studentIds = Array.from(new Set(formData.getAll("studentIds").map(String).filter(Boolean)));
   const trainingTypeKey = String(formData.get("trainingTypeKey") || "");
   const durationMinutes = Number(formData.get("durationMinutes"));
@@ -54,7 +60,8 @@ export async function POST(request: Request) {
   if (
     !dateValue ||
     !poolBlockId ||
-    studentIds.length === 0 ||
+    (!isExperimentalBooking && studentIds.length === 0) ||
+    (isExperimentalBooking && !experimentalStudentName) ||
     !trainingTypeKey ||
     !trainingDurationOptions.includes(durationMinutes) ||
     !Number.isInteger(requestedStartMinutes) ||
@@ -68,6 +75,7 @@ export async function POST(request: Request) {
     bookingGroupId: string;
     creditsUsed: number;
     endMinutes: number;
+    experimentalStudentName: string | null;
     paymentTypeId: string | null;
     startMinutes: number;
     studentId: string;
@@ -83,12 +91,20 @@ export async function POST(request: Request) {
       orderBy: { credits: "desc" }
     })
   ]);
+  const bookingTeacher = await prisma.user.findFirst({
+    where: { id: teacherId, active: true, roles: { some: { role: { key: "professor" } } } },
+    select: { id: true, name: true }
+  });
+
+  if (!bookingTeacher) {
+    return NextResponse.redirect(appRedirectUrl(errorPath, request));
+  }
 
   if (existingBookingGroupId) {
     existingBookingsForEdit = await prisma.personalTrainingBooking.findMany({
       where: {
         bookingGroupId: existingBookingGroupId,
-        teacherId: user.id,
+        teacherId,
         status: { not: "cancelled" }
       },
       include: { student: true, paymentType: true, poolBlock: true }
@@ -123,20 +139,20 @@ export async function POST(request: Request) {
 
   const requiredParticipants = requiredParticipantsForType(trainingTypeName);
 
-  if (studentIds.length !== requiredParticipants) {
+  if (!isExperimentalBooking && studentIds.length !== requiredParticipants) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
-  const balances = await Promise.all(
-    studentIds.map((studentId) => getCreditBalanceForTeacherStudentTrainingType(user.id, studentId, trainingTypeKey))
-  );
+  const balances = isExperimentalBooking
+    ? []
+    : await Promise.all(studentIds.map((studentId) => getCreditBalanceForTeacherStudentTrainingType(teacherId, studentId, trainingTypeKey)));
 
   const existingCreditsByStudent = new Map(
     existingBookingsForEdit
       .filter((booking) => booking.paymentTypeId === paymentType.id)
       .map((booking) => [booking.studentId, booking.creditsUsed])
   );
-  const hasEnoughCredits = balances.every((balance, index) => {
+  const hasEnoughCredits = isExperimentalBooking || balances.every((balance, index) => {
     if (!balance) return false;
     const restoredCredits = existingCreditsByStudent.get(studentIds[index]) || 0;
     return balance.availableCredits + restoredCredits > -2;
@@ -164,7 +180,7 @@ export async function POST(request: Request) {
 
   const overlappingGroups = new Set(overlappingBookings.map((booking) => booking.bookingGroupId));
   const sameTeacherOrStudent = overlappingBookings.some(
-    (booking) => booking.teacherId === user.id || studentIds.includes(booking.studentId)
+    (booking) => booking.teacherId === teacherId || (!isExperimentalBooking && studentIds.includes(booking.studentId))
   );
   const existingExclusive = overlappingBookings.some((booking) => isExclusiveTrainingType(booking.paymentType?.description));
   const newExclusive = isExclusiveTrainingType(trainingTypeName);
@@ -183,7 +199,7 @@ export async function POST(request: Request) {
       await tx.personalTrainingBooking.updateMany({
         where: {
           bookingGroupId: existingBookingGroupId,
-          teacherId: user.id,
+          teacherId,
           status: { not: "cancelled" }
         },
         data: { status: "cancelled" }
@@ -195,8 +211,8 @@ export async function POST(request: Request) {
             action: "alteracao_cancelou_anterior",
             bookingGroupId: existingBookingGroupId,
             bookingDate: existingBooking.bookingDate,
-            teacherName: user.name,
-            studentNames: existingBookingsForEdit.map((booking) => booking.student.fullName).join(", "),
+            teacherName: bookingTeacher.name,
+            studentNames: existingBookingsForEdit.map((booking) => booking.experimentalStudentName || booking.student.fullName).join(", "),
             paymentType: existingBooking.paymentType?.description || null,
             poolBlockTitle: existingBooking.poolBlock.title,
             laneNumber: existingBooking.poolBlock.laneNumber,
@@ -209,23 +225,39 @@ export async function POST(request: Request) {
       }
     }
 
+    const bookingStudentIds = isExperimentalBooking
+      ? [
+          (
+            await tx.personalTrainingStudent.create({
+              data: {
+                fullName: experimentalStudentName,
+                memberNumber: `EXP-${crypto.randomUUID()}`
+              },
+              select: { id: true }
+            })
+          ).id
+        ]
+      : studentIds;
+
     await tx.personalTrainingBooking.createMany({
-      data: studentIds.map((studentId) => ({
+      data: bookingStudentIds.map((studentId) => ({
         bookingGroupId,
         bookingDate: bookingDateValue,
         poolBlockId,
-        teacherId: user.id,
+        teacherId,
         studentId,
         paymentTypeId: paymentType.id,
+        experimentalStudentName: isExperimentalBooking ? experimentalStudentName : null,
+        isExperimental: isExperimentalBooking,
         startMinutes,
         endMinutes,
         durationMinutes,
-        creditsUsed: 1
+        creditsUsed: isExperimentalBooking ? 0 : 1
       }))
     });
 
     const students = await tx.personalTrainingStudent.findMany({
-      where: { id: { in: studentIds } },
+      where: { id: { in: bookingStudentIds } },
       orderBy: { fullName: "asc" }
     });
 
@@ -234,8 +266,8 @@ export async function POST(request: Request) {
         action: existingBookingGroupId ? "alteracao_criou_nova" : "criacao",
         bookingGroupId,
         bookingDate: bookingDateValue,
-        teacherName: user.name,
-        studentNames: students.map((student) => student.fullName).join(", "),
+        teacherName: bookingTeacher.name,
+        studentNames: isExperimentalBooking ? experimentalStudentName : students.map((student) => student.fullName).join(", "),
         paymentType: paymentType.description,
         poolBlockTitle: block.title,
         laneNumber: block.laneNumber,

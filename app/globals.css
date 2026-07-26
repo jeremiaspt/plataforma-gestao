@@ -1444,6 +1444,29 @@ h1 {
   grid-column: 1 / -1;
 }
 
+.user-login-details {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 5px;
+  grid-column: 1 / -1;
+  padding: 8px 10px;
+}
+
+.user-login-details summary {
+  color: #10233f;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.user-login-details small {
+  color: var(--muted);
+  display: block;
+  font-size: 12px;
+}
+
 .pagination {
   align-items: center;
   display: flex;
@@ -1939,6 +1962,14 @@ h1 {
   border-bottom: 1px solid var(--line);
   margin-bottom: 14px;
   padding-bottom: 14px;
+}
+
+.booking-experimental-note {
+  align-self: center;
+  background: #ecfdf5;
+  border: 1px solid #99d8d0;
+  border-radius: 8px;
+  padding: 9px 10px;
 }
 
 .booking-popup-form {
@@ -3112,6 +3143,105 @@ h1 {
   min-width: 0;
 }
 
+.availability-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.availability-form {
+  align-items: end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(120px, 1fr)) auto;
+  padding: 12px;
+}
+
+.availability-list {
+  display: grid;
+  gap: 8px;
+}
+
+.availability-row {
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  padding: 9px 10px;
+}
+
+.availability-row div {
+  display: grid;
+  gap: 2px;
+}
+
+.availability-row small {
+  color: var(--muted);
+}
+
+.availability-map-wrap {
+  overflow-x: auto;
+}
+
+.availability-map {
+  border-collapse: collapse;
+  min-width: 980px;
+  width: 100%;
+}
+
+.availability-map th,
+.availability-map td {
+  border: 1px solid #d7e0ea;
+  padding: 6px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.availability-map th {
+  background: #0f4c81;
+  color: #ffffff;
+  font-size: 12px;
+}
+
+.availability-map td {
+  background: #ffffff;
+  min-height: 42px;
+}
+
+.availability-map td.outside-hours {
+  background: #f1f5f9;
+}
+
+.availability-map td.has-availability {
+  background: #ecfdf5;
+}
+
+.availability-chip {
+  background: #ffffff;
+  border: 1px solid #99d8d0;
+  border-left: 3px solid #0f766e;
+  border-radius: 6px;
+  display: grid;
+  gap: 1px;
+  margin-bottom: 4px;
+  padding: 5px 6px;
+}
+
+.availability-chip strong {
+  color: #0f172a;
+  font-size: 12px;
+}
+
+.availability-chip small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
 .email-log-table {
   background: #ffffff;
   border: 1px solid var(--line);
@@ -3459,7 +3589,8 @@ h1 {
 
   .weekly-tools,
   .weekly-tool-card,
-  .weekly-tool-card.danger-zone {
+  .weekly-tool-card.danger-zone,
+  .availability-form {
     grid-template-columns: 1fr;
   }
 
