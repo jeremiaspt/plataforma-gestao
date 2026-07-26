@@ -11,6 +11,7 @@ function timeValue(minutes: number) {
 function availabilityForSlot(
   items: Array<{
     endMinutes: number;
+    id: string;
     startMinutes: number;
     teacher: { name: string };
     notes: string | null;
@@ -20,6 +21,21 @@ function availabilityForSlot(
   slot: number
 ) {
   return items.filter((item) => item.weekday === weekday && item.startMinutes <= slot && item.endMinutes > slot);
+}
+
+function availabilityStartingAt(
+  items: Array<{
+    endMinutes: number;
+    id: string;
+    startMinutes: number;
+    teacher: { name: string };
+    notes: string | null;
+    weekday: number;
+  }>,
+  weekday: number,
+  slot: number
+) {
+  return items.filter((item) => item.weekday === weekday && item.startMinutes === slot);
 }
 
 export default async function PersonalTrainingAvailabilityPage({
@@ -172,19 +188,28 @@ export default async function PersonalTrainingAvailabilityPage({
                     {poolWeekdays.map((weekday) => {
                       const bounds = dayBounds(weekday.key);
                       const outsideBounds = slot < bounds.start || slot >= bounds.end;
-                      const items = availabilityForSlot(allAvailability, weekday.key, slot);
+                      const itemsInSlot = availabilityForSlot(allAvailability, weekday.key, slot);
+                      const startingItems = availabilityStartingAt(allAvailability, weekday.key, slot);
 
                       return (
-                        <td className={outsideBounds ? "outside-hours" : items.length > 0 ? "has-availability" : ""} key={weekday.key}>
-                          {items.map((item) => (
-                            <span className="availability-chip" key={`${item.teacher.name}-${item.startMinutes}-${item.endMinutes}`}>
-                              <strong>{item.teacher.name}</strong>
-                              <small>
-                                {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)}
-                              </small>
-                              {item.notes ? <small>{item.notes}</small> : null}
-                            </span>
-                          ))}
+                        <td className={outsideBounds ? "outside-hours" : itemsInSlot.length > 0 ? "has-availability" : ""} key={weekday.key}>
+                          {startingItems.length > 0 ? (
+                            <div className="availability-chip-stack">
+                              {startingItems.map((item) => (
+                                <span
+                                  className="availability-chip"
+                                  key={item.id}
+                                  style={{ minHeight: `${Math.max(34, ((item.endMinutes - item.startMinutes) / 30) * 36 - 10)}px` }}
+                                >
+                                  <strong>{item.teacher.name}</strong>
+                                  <small>
+                                    {formatMinutes(item.startMinutes)} - {formatMinutes(item.endMinutes)}
+                                  </small>
+                                  {item.notes ? <small>{item.notes}</small> : null}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
                         </td>
                       );
                     })}
