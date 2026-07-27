@@ -17,8 +17,22 @@ export async function POST(
   const { id } = await params;
   const formData = await request.formData();
   const action = String(formData.get("action") || "update");
+  const protectedEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
+
+  async function isProtectedSuperadmin(userId: string) {
+    if (!protectedEmail) {
+      return false;
+    }
+
+    const protectedUser = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+    return protectedUser?.email.toLowerCase() === protectedEmail;
+  }
 
   if (action === "delete") {
+    if (await isProtectedSuperadmin(id)) {
+      return NextResponse.redirect(appRedirectUrl("/utilizadores?protected=1", request));
+    }
+
     if (id !== currentUser.id) {
       const [teacherPayments, teacherBookings] = await Promise.all([
         prisma.personalTrainingPayment.count({ where: { teacherId: id } }),
@@ -44,6 +58,10 @@ export async function POST(
   }
 
   if (action === "toggle-active") {
+    if (await isProtectedSuperadmin(id)) {
+      return NextResponse.redirect(appRedirectUrl("/utilizadores?protected=1", request));
+    }
+
     if (id !== currentUser.id) {
       const user = await prisma.user.findUnique({ where: { id }, select: { active: true } });
 
@@ -68,7 +86,6 @@ export async function POST(
     return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
   }
 
-  const protectedEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
   const existingUser = await prisma.user.findUnique({ where: { id }, select: { email: true } });
 
   if (protectedEmail && existingUser?.email.toLowerCase() === protectedEmail && email !== protectedEmail) {

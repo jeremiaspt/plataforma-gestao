@@ -149,10 +149,13 @@ export async function AppShell({
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <span className="brand-mark">PG</span>
+          <span className="brand-mark">
+            <span>PM</span>
+            <span>CO</span>
+          </span>
           <span>
-            <strong>Plataforma</strong>
-            <small>Gestão operacional</small>
+            <strong>gestao.gpc.ad</strong>
+            <small>gestão operacional</small>
           </span>
         </div>
         <input className="sidebar-toggle-input" id="sidebar-toggle" type="checkbox" />

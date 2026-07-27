@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Plataforma de Gestão",
-  description: "Gestão de utilizadores, categorias e ferramentas autorizadas."
+  title: "gestao.gpc.ad - gestão operacional",
+  description: "gestao.gpc.ad - gestão operacional"
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

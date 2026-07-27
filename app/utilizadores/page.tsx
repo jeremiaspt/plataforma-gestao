@@ -59,7 +59,7 @@ export default async function UsersPage({
             <p className="muted">Cria utilizadores, gere categorias, ciclos de faturação e estado de acesso.</p>
           </div>
         </div>
-        {params.protected ? <p className="error">O email do superadmin definido em ambiente nao pode ser alterado.</p> : null}
+        {params.protected ? <p className="error">O superadmin definido em ambiente não pode ser alterado, removido ou desativado.</p> : null}
 
         <form className="form user-create-form" action="/api/users" method="post">
           <div className="grid">
