@@ -82,7 +82,7 @@ export async function POST(request: Request) {
   }
 
   if (selectedTargets.has("lostFound")) {
-    operations.push(prisma.lostFoundItemLog.deleteMany({}), prisma.lostFoundItem.deleteMany({}));
+    operations.push(prisma.lostFoundItemLog.deleteMany({}), prisma.lostFoundItemPhoto.deleteMany({}), prisma.lostFoundItem.deleteMany({}));
   }
 
   if (selectedTargets.has("substitutions")) {

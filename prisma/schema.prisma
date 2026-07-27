@@ -237,6 +237,7 @@ model LostFoundItem {
   photoDataUrl          String?
   photoUrl              String?
   photoPublicId         String?
+  photos                LostFoundItemPhoto[]
   status                String             @default("in_reception")
   deliveredToUserName   String?
   deliveredToUserAt     DateTime?
@@ -268,6 +269,17 @@ model LostFoundItemLog {
 
   @@index([itemId])
   @@index([createdAt])
+}
+
+model LostFoundItemPhoto {
+  id        String        @id @default(cuid())
+  itemId    String
+  item      LostFoundItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  url       String
+  publicId  String
+  createdAt DateTime      @default(now())
+
+  @@index([itemId])
 }
 
 model PasswordResetToken {

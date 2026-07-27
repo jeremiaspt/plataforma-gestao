@@ -62,7 +62,10 @@ export default async function LostFoundPage({
     params.tab === "alerts" || params.tab === "director" || params.tab === "history" || params.tab === "open" ? params.tab : "register";
   const items = await prisma.lostFoundItem.findMany({
     orderBy: [{ foundAt: "desc" }, { createdAt: "desc" }],
-    include: { logs: { orderBy: { createdAt: "desc" } } }
+    include: {
+      logs: { orderBy: { createdAt: "desc" } },
+      photos: { orderBy: { createdAt: "asc" } }
+    }
   });
   const openItems = items.filter((item) => item.status === "in_reception");
   const alertItems = openItems.filter((item) => item.valuable && daysSince(item.foundAt) >= 7);
@@ -87,8 +90,9 @@ export default async function LostFoundPage({
         {params.success ? <p className="success">Operação registada com sucesso.</p> : null}
         {params.error === "required" ? <p className="error">Preenche os campos obrigatórios.</p> : null}
         {params.error === "photo" ? <p className="error">A fotografia deve ser JPG, PNG ou WebP e ter no máximo 5 MB.</p> : null}
+        {params.error === "photo-count" ? <p className="error">Podes adicionar no máximo 5 fotografias por item.</p> : null}
         {params.error === "cloudinary" ? <p className="error">Cloudinary não está configurado. Confirma as variáveis de ambiente.</p> : null}
-        {params.error && !["required", "photo", "cloudinary"].includes(params.error) ? <p className="error">Não foi possível concluir a operação.</p> : null}
+        {params.error && !["required", "photo", "photo-count", "cloudinary"].includes(params.error) ? <p className="error">Não foi possível concluir a operação.</p> : null}
 
         <div className="tabs">
           <a className={activeTab === "register" ? "tab active" : "tab"} href={tabHref("register")}>
@@ -131,8 +135,9 @@ export default async function LostFoundPage({
               <textarea id="description" name="description" rows={3} required />
             </div>
             <div className="field">
-              <label htmlFor="photo">Fotografia</label>
-              <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
+              <label htmlFor="photos">Fotografias</label>
+              <input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple />
+              <small className="muted">Até 5 fotografias.</small>
             </div>
             <label className="checkbox lost-found-check">
               <input type="checkbox" name="valuable" />
@@ -148,11 +153,31 @@ export default async function LostFoundPage({
             {visibleItems.map((item) => {
               const itemDays = daysSince(item.foundAt);
               const isOverdue = item.valuable && item.status === "in_reception" && itemDays >= 7;
-              const photoSource = item.photoUrl || item.photoDataUrl;
+              const photoSources = item.photos.length
+                ? item.photos.map((photo) => photo.url)
+                : [item.photoUrl || item.photoDataUrl].filter((photo): photo is string => Boolean(photo));
+              const photoSource = photoSources[0];
 
               return (
                 <article className={`lost-found-item ${isOverdue ? "overdue" : ""}`} key={item.id}>
-                  {photoSource ? <img alt={`Fotografia de ${item.description}`} src={photoSource} /> : <div className="lost-found-photo-empty">Sem foto</div>}
+                  <div className="lost-found-gallery">
+                    {photoSource ? (
+                      <a href={photoSource} target="_blank" rel="noreferrer" title="Abrir fotografia maior">
+                        <img alt={`Fotografia de ${item.description}`} src={photoSource} />
+                      </a>
+                    ) : (
+                      <div className="lost-found-photo-empty">Sem foto</div>
+                    )}
+                    {photoSources.length > 1 ? (
+                      <div className="lost-found-thumbnails">
+                        {photoSources.map((source, index) => (
+                          <a href={source} key={source} target="_blank" rel="noreferrer" title="Abrir fotografia maior">
+                            <img alt={`Fotografia ${index + 1} de ${item.description}`} src={source} />
+                          </a>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
                   <div className="lost-found-main">
                     <div className="lost-found-title">
                       <div>

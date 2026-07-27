@@ -11,6 +11,10 @@ function parseDateTime(value: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function selectedPhotoFiles(formData: FormData) {
+  return formData.getAll("photos").filter((entry) => entry instanceof File && entry.size > 0);
+}
+
 export async function POST(request: Request) {
   const user = await requireUser();
   const canCreate = hasRole(user, "admin") || hasRole(user, "recepcao");
@@ -34,7 +38,15 @@ export async function POST(request: Request) {
   }
 
   try {
-    const uploadedPhoto = await uploadLostFoundPhoto(formData.get("photo"));
+    const photoFiles = selectedPhotoFiles(formData);
+
+    if (photoFiles.length > 5) {
+      return NextResponse.redirect(appRedirectUrl("/perdidos-achados?error=photo-count", request));
+    }
+
+    const uploadedPhotos = await Promise.all(photoFiles.map((file) => uploadLostFoundPhoto(file)));
+    const validPhotos = uploadedPhotos.filter((photo): photo is { publicId: string; url: string } => Boolean(photo));
+    const firstPhoto = validPhotos[0] || null;
 
     await prisma.lostFoundItem.create({
       data: {
@@ -44,8 +56,14 @@ export async function POST(request: Request) {
         foundAt,
         foundBy,
         location,
-        photoPublicId: uploadedPhoto?.publicId || null,
-        photoUrl: uploadedPhoto?.url || null,
+        photoPublicId: firstPhoto?.publicId || null,
+        photoUrl: firstPhoto?.url || null,
+        photos: {
+          create: validPhotos.map((photo) => ({
+            publicId: photo.publicId,
+            url: photo.url
+          }))
+        },
         receptionReceiver: user.name,
         valuable,
         logs: {

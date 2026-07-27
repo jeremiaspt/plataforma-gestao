@@ -25,7 +25,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const formData = await request.formData();
   const action = String(formData.get("action") || "");
-  const item = await prisma.lostFoundItem.findUnique({ where: { id } });
+  const item = await prisma.lostFoundItem.findUnique({ where: { id }, include: { photos: true } });
 
   if (!item) {
     return redirectToList(request, "error", "not-found");
@@ -37,7 +37,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
 
     await prisma.lostFoundItem.delete({ where: { id } });
-    await deleteCloudinaryPhoto(item.photoPublicId).catch(() => null);
+    const publicIds = Array.from(new Set([item.photoPublicId, ...item.photos.map((photo) => photo.publicId)].filter(Boolean)));
+    await Promise.all(publicIds.map((publicId) => deleteCloudinaryPhoto(publicId).catch(() => null)));
 
     return redirectToList(request, "success", "deleted");
   }

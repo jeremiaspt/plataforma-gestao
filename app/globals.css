@@ -3382,13 +3382,36 @@ h1 {
   background: #fff8f7;
 }
 
-.lost-found-item img,
+.lost-found-gallery {
+  display: grid;
+  gap: 6px;
+}
+
+.lost-found-gallery > a {
+  display: block;
+}
+
+.lost-found-gallery img,
 .lost-found-photo-empty {
   aspect-ratio: 1;
   border: 1px solid var(--line);
   border-radius: 8px;
   object-fit: cover;
   width: 100%;
+}
+
+.lost-found-gallery a:hover img {
+  border-color: var(--primary);
+}
+
+.lost-found-thumbnails {
+  display: grid;
+  gap: 5px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.lost-found-thumbnails img {
+  border-radius: 6px;
 }
 
 .lost-found-photo-empty {
@@ -3834,7 +3857,7 @@ h1 {
     grid-column: auto;
   }
 
-  .lost-found-item img,
+  .lost-found-gallery,
   .lost-found-photo-empty {
     max-width: 220px;
   }
