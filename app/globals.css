@@ -1242,6 +1242,15 @@ h1 {
   resize: vertical;
 }
 
+.readonly-field {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  color: #334155;
+  min-height: 40px;
+  padding: 9px 11px;
+}
+
 .button {
   align-items: center;
   background: var(--primary);

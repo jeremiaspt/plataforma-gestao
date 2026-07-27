@@ -235,6 +235,8 @@ model LostFoundItem {
   location              String?
   valuable              Boolean            @default(false)
   photoDataUrl          String?
+  photoUrl              String?
+  photoPublicId         String?
   status                String             @default("in_reception")
   deliveredToUserName   String?
   deliveredToUserAt     DateTime?

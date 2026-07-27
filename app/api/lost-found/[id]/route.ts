@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { deleteCloudinaryPhoto } from "@/lib/cloudinary";
 import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
@@ -28,6 +29,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (!item) {
     return redirectToList(request, "error", "not-found");
+  }
+
+  if (action === "delete") {
+    if (!isAdmin) {
+      return redirectToList(request, "error", "invalid-action");
+    }
+
+    await prisma.lostFoundItem.delete({ where: { id } });
+    await deleteCloudinaryPhoto(item.photoPublicId).catch(() => null);
+
+    return redirectToList(request, "success", "deleted");
   }
 
   if (action === "deliver-user") {

@@ -1,29 +1,14 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { uploadLostFoundPhoto } from "@/lib/cloudinary";
 import { blockNonAdminDuringMaintenance } from "@/lib/maintenance";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
-
-const maxPhotoBytes = 2 * 1024 * 1024;
-const allowedPhotoTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 function parseDateTime(value: string) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
-}
-
-async function photoDataUrl(file: FormDataEntryValue | null) {
-  if (!(file instanceof File) || file.size === 0) {
-    return null;
-  }
-
-  if (file.size > maxPhotoBytes || !allowedPhotoTypes.has(file.type)) {
-    throw new Error("photo");
-  }
-
-  const buffer = Buffer.from(await file.arrayBuffer());
-  return `data:${file.type};base64,${buffer.toString("base64")}`;
 }
 
 export async function POST(request: Request) {
@@ -40,17 +25,16 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const foundAt = parseDateTime(String(formData.get("foundAt") || ""));
   const foundBy = String(formData.get("foundBy") || "").trim();
-  const receptionReceiver = String(formData.get("receptionReceiver") || "").trim();
   const description = String(formData.get("description") || "").trim();
   const location = String(formData.get("location") || "").trim();
   const valuable = formData.get("valuable") === "on";
 
-  if (!foundAt || !foundBy || !receptionReceiver || !description) {
+  if (!foundAt || !foundBy || !location || !description) {
     return NextResponse.redirect(appRedirectUrl("/perdidos-achados?error=required", request));
   }
 
   try {
-    const itemPhotoDataUrl = await photoDataUrl(formData.get("photo"));
+    const uploadedPhoto = await uploadLostFoundPhoto(formData.get("photo"));
 
     await prisma.lostFoundItem.create({
       data: {
@@ -59,9 +43,10 @@ export async function POST(request: Request) {
         description,
         foundAt,
         foundBy,
-        location: location || null,
-        photoDataUrl: itemPhotoDataUrl,
-        receptionReceiver,
+        location,
+        photoPublicId: uploadedPhoto?.publicId || null,
+        photoUrl: uploadedPhoto?.url || null,
+        receptionReceiver: user.name,
         valuable,
         logs: {
           create: {
@@ -73,8 +58,9 @@ export async function POST(request: Request) {
         }
       }
     });
-  } catch {
-    return NextResponse.redirect(appRedirectUrl("/perdidos-achados?error=photo", request));
+  } catch (error) {
+    const errorCode = error instanceof Error && error.message === "cloudinary_config" ? "cloudinary" : "photo";
+    return NextResponse.redirect(appRedirectUrl(`/perdidos-achados?error=${errorCode}`, request));
   }
 
   return NextResponse.redirect(appRedirectUrl("/perdidos-achados?success=created", request));

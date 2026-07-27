@@ -86,8 +86,9 @@ export default async function LostFoundPage({
 
         {params.success ? <p className="success">Operação registada com sucesso.</p> : null}
         {params.error === "required" ? <p className="error">Preenche os campos obrigatórios.</p> : null}
-        {params.error === "photo" ? <p className="error">A fotografia deve ser JPG, PNG ou WebP e ter no máximo 2 MB.</p> : null}
-        {params.error && !["required", "photo"].includes(params.error) ? <p className="error">Não foi possível concluir a operação.</p> : null}
+        {params.error === "photo" ? <p className="error">A fotografia deve ser JPG, PNG ou WebP e ter no máximo 5 MB.</p> : null}
+        {params.error === "cloudinary" ? <p className="error">Cloudinary não está configurado. Confirma as variáveis de ambiente.</p> : null}
+        {params.error && !["required", "photo", "cloudinary"].includes(params.error) ? <p className="error">Não foi possível concluir a operação.</p> : null}
 
         <div className="tabs">
           <a className={activeTab === "register" ? "tab active" : "tab"} href={tabHref("register")}>
@@ -118,12 +119,12 @@ export default async function LostFoundPage({
               <input id="foundBy" name="foundBy" required />
             </div>
             <div className="field">
-              <label htmlFor="receptionReceiver">Entregue a quem na receção</label>
-              <input id="receptionReceiver" name="receptionReceiver" defaultValue={user.name} required />
+              <label>Entregue a quem na receção</label>
+              <div className="readonly-field">{user.name}</div>
             </div>
             <div className="field">
               <label htmlFor="location">Local encontrado</label>
-              <input id="location" name="location" />
+              <input id="location" name="location" required />
             </div>
             <div className="field lost-found-description">
               <label htmlFor="description">Descrição do item</label>
@@ -147,10 +148,11 @@ export default async function LostFoundPage({
             {visibleItems.map((item) => {
               const itemDays = daysSince(item.foundAt);
               const isOverdue = item.valuable && item.status === "in_reception" && itemDays >= 7;
+              const photoSource = item.photoUrl || item.photoDataUrl;
 
               return (
                 <article className={`lost-found-item ${isOverdue ? "overdue" : ""}`} key={item.id}>
-                  {item.photoDataUrl ? <img alt={`Fotografia de ${item.description}`} src={item.photoDataUrl} /> : <div className="lost-found-photo-empty">Sem foto</div>}
+                  {photoSource ? <img alt={`Fotografia de ${item.description}`} src={photoSource} /> : <div className="lost-found-photo-empty">Sem foto</div>}
                   <div className="lost-found-main">
                     <div className="lost-found-title">
                       <div>
@@ -163,7 +165,7 @@ export default async function LostFoundPage({
                       <span>Encontrado: {item.foundAt.toLocaleString("pt-PT")}</span>
                       <span>Por: {item.foundBy}</span>
                       <span>Receção: {item.receptionReceiver}</span>
-                      <span>{item.valuable ? `Valor · ${itemDays} dia(s)` : `${itemDays} dia(s)`}</span>
+                      <span>{item.valuable ? `Valor - ${itemDays} dia(s)` : `${itemDays} dia(s)`}</span>
                     </div>
                     {isOverdue ? <p className="error compact-message">Item de valor com 7 ou mais dias. Deve ser entregue ao diretor.</p> : null}
                     {item.status === "delivered_user" ? <p className="muted">Entregue ao utente: {item.deliveredToUserName}</p> : null}
@@ -172,8 +174,8 @@ export default async function LostFoundPage({
                       <summary>Histórico</summary>
                       {item.logs.map((log) => (
                         <p key={log.id}>
-                          {log.createdAt.toLocaleString("pt-PT")} · {actionLabel(log.action)} por {log.actionByName}
-                          {log.details ? ` · ${log.details}` : ""}
+                          {log.createdAt.toLocaleString("pt-PT")} - {actionLabel(log.action)} por {log.actionByName}
+                          {log.details ? ` - ${log.details}` : ""}
                         </p>
                       ))}
                     </details>
@@ -202,6 +204,14 @@ export default async function LostFoundPage({
                         <textarea name="directorCloseReason" placeholder="Motivo de fecho" rows={3} required />
                         <button className="button" type="submit">
                           Fechar ticket
+                        </button>
+                      </form>
+                    ) : null}
+                    {isAdmin ? (
+                      <form action={`/api/lost-found/${item.id}`} method="post">
+                        <input type="hidden" name="action" value="delete" />
+                        <button className="button danger" type="submit">
+                          Eliminar registo
                         </button>
                       </form>
                     ) : null}
