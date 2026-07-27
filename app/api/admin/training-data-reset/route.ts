@@ -11,6 +11,7 @@ const resetTargetValues = [
   "loginLogs",
   "substitutions",
   "birthdayParties",
+  "lostFound",
   "availability"
 ] as const;
 
@@ -78,6 +79,10 @@ export async function POST(request: Request) {
       prisma.birthdayPartyMonitor.deleteMany({}),
       prisma.birthdayParty.deleteMany({})
     );
+  }
+
+  if (selectedTargets.has("lostFound")) {
+    operations.push(prisma.lostFoundItemLog.deleteMany({}), prisma.lostFoundItem.deleteMany({}));
   }
 
   if (selectedTargets.has("substitutions")) {

@@ -226,6 +226,48 @@ model BirthdayPartyPaymentLog {
   @@index([createdAt])
 }
 
+model LostFoundItem {
+  id                    String             @id @default(cuid())
+  foundAt               DateTime
+  foundBy               String
+  receptionReceiver     String
+  description           String
+  location              String?
+  valuable              Boolean            @default(false)
+  photoDataUrl          String?
+  status                String             @default("in_reception")
+  deliveredToUserName   String?
+  deliveredToUserAt     DateTime?
+  deliveredToDirectorAt DateTime?
+  directorClosedAt      DateTime?
+  directorCloseReason   String?
+  createdById           String?
+  createdByName         String
+  updatedById           String?
+  updatedByName         String?
+  logs                  LostFoundItemLog[]
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+
+  @@index([foundAt])
+  @@index([status])
+  @@index([valuable, foundAt])
+}
+
+model LostFoundItemLog {
+  id           String        @id @default(cuid())
+  itemId       String
+  item         LostFoundItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  action       String
+  actionById   String?
+  actionByName String
+  details      String?
+  createdAt    DateTime      @default(now())
+
+  @@index([itemId])
+  @@index([createdAt])
+}
+
 model PasswordResetToken {
   id        String    @id @default(cuid())
   userId    String

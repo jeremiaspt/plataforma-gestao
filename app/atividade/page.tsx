@@ -695,6 +695,13 @@ export default async function ActivityPage({
                     </span>
                   </label>
                   <label className="checkbox">
+                    <input type="checkbox" name="resetTargets" value="lostFound" />
+                    <span>
+                      <strong>Perdidos e achados</strong>
+                      <small>Itens, fotografias e histórico de entregas</small>
+                    </span>
+                  </label>
+                  <label className="checkbox">
                     <input type="checkbox" name="resetTargets" value="substitutions" />
                     <span>
                       <strong>Substituições</strong>

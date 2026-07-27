@@ -13,6 +13,7 @@ import {
   Mail,
   Menu,
   Repeat2,
+  Search,
   Settings,
   UserPlus,
   UserRound,
@@ -134,7 +135,8 @@ export async function AppShell({
   const receptionItems: NavItem[] = canUseReceptionClasses
     ? [
         { href: "/troca-de-turma", icon: Repeat2, label: "Troca de turma", tone: "classes" },
-        { href: "/novas-inscricoes", icon: UserPlus, label: "Novas inscricoes", tone: "classes" }
+        { href: "/novas-inscricoes", icon: UserPlus, label: "Novas inscricoes", tone: "classes" },
+        { href: "/perdidos-achados", icon: Search, label: "Perdidos e achados", tone: "support" }
       ]
     : [];
   const birthdayItems: NavItem[] = canUseBirthdayParties

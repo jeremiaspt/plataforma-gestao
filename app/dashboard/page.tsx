@@ -10,6 +10,7 @@ import {
   FileSpreadsheet,
   Mail,
   Repeat2,
+  Search,
   Settings,
   UserPlus,
   UserRound,
@@ -178,6 +179,14 @@ const sections: ToolSection[] = [
         href: "/novas-inscricoes",
         icon: UserPlus,
         tone: "classes"
+      },
+      {
+        title: "Perdidos e achados",
+        description: "Registar itens encontrados e acompanhar entregas.",
+        roles: ["admin", "recepcao"],
+        href: "/perdidos-achados",
+        icon: Search,
+        tone: "support"
       }
     ]
   },
