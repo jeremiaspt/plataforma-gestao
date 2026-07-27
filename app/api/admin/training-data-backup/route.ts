@@ -29,6 +29,13 @@ export async function GET() {
     return NextResponse.json({ error: "Sem permissão." }, { status: 403 });
   }
 
+  const superadminEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
+  const isSuperadmin = Boolean(superadminEmail && user.email.toLowerCase() === superadminEmail);
+
+  if (!isSuperadmin) {
+    return NextResponse.json({ error: "Operação reservada ao superadmin." }, { status: 403 });
+  }
+
   const [
     payments,
     paymentLogs,

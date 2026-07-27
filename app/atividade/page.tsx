@@ -86,6 +86,7 @@ export default async function ActivityPage({
     resetError?: string;
     restoreSuccess?: string;
     restoreError?: string;
+    restoreUnauthorized?: string;
     paymentDeleteSuccess?: string;
     paymentDeleteError?: string;
     importSuccess?: string;
@@ -608,6 +609,7 @@ export default async function ActivityPage({
             {params.resetUnauthorized ? <p className="error">A limpeza da base de dados só pode ser feita pelo superadmin definido no ambiente.</p> : null}
             {params.restoreSuccess ? <p className="success">Backup reposto com sucesso.</p> : null}
             {params.restoreError ? <p className="error">Não foi possível repor o backup. Confirma o ficheiro e a frase de segurança.</p> : null}
+            {params.restoreUnauthorized ? <p className="error">A reposição de backup só pode ser feita pelo superadmin definido no ambiente.</p> : null}
 
             {params.paymentDeleteSuccess ? (
               <p className="success">
@@ -634,17 +636,27 @@ export default async function ActivityPage({
               </div>
             ) : null}
 
-            <div className="maintenance-card">
-              <div>
-                <h2>Backup antes da limpeza</h2>
-                <p className="muted">
-                  Exporta pagamentos, ajustes de créditos, marcações PT, histórico de emails e respetivos logs para um ficheiro JSON.
-                </p>
+            {isSuperadmin ? (
+              <div className="maintenance-card">
+                <div>
+                  <h2>Backup antes da limpeza</h2>
+                  <p className="muted">
+                    Exporta pagamentos, ajustes de créditos, marcações PT, histórico de emails e respetivos logs para um ficheiro JSON.
+                  </p>
+                </div>
+                <a className="button secondary" href="/api/admin/training-data-backup">
+                  Descarregar backup
+                </a>
               </div>
-              <a className="button secondary" href="/api/admin/training-data-backup">
-                Descarregar backup
-              </a>
-            </div>
+            ) : (
+              <div className="maintenance-card locked-maintenance-card">
+                <div>
+                  <h2>Backup operacional</h2>
+                  <p className="muted">O download de backup está reservado ao superadmin definido no ambiente da plataforma.</p>
+                </div>
+                <span className="status inactive">Restrito</span>
+              </div>
+            )}
 
             {isSuperadmin ? (
               <form className="maintenance-card danger-zone reset-maintenance-card" action="/api/admin/training-data-reset" method="post">
@@ -733,25 +745,35 @@ export default async function ActivityPage({
               </div>
             )}
 
-            <form className="maintenance-card" action="/api/admin/training-data-restore" method="post" encType="multipart/form-data">
-              <div>
-                <h2>Repor backup</h2>
-                <p className="muted">
-                  Carrega o ficheiro JSON exportado. A reposição substitui os dados TP operacionais atuais pelos dados do backup.
-                </p>
+            {isSuperadmin ? (
+              <form className="maintenance-card" action="/api/admin/training-data-restore" method="post" encType="multipart/form-data">
+                <div>
+                  <h2>Repor backup</h2>
+                  <p className="muted">
+                    Carrega o ficheiro JSON exportado. A reposição substitui os dados TP operacionais atuais pelos dados do backup.
+                  </p>
+                </div>
+                <div className="field">
+                  <label htmlFor="backupFile">Ficheiro de backup</label>
+                  <input id="backupFile" name="backupFile" type="file" accept="application/json,.json" required />
+                </div>
+                <div className="field">
+                  <label htmlFor="restoreConfirmation">Frase de segurança</label>
+                  <input id="restoreConfirmation" name="restoreConfirmation" placeholder="REPOR BACKUP TP" required />
+                </div>
+                <button className="button secondary" type="submit">
+                  Repor backup
+                </button>
+              </form>
+            ) : (
+              <div className="maintenance-card locked-maintenance-card">
+                <div>
+                  <h2>Repor backup</h2>
+                  <p className="muted">A reposição de backup está reservada ao superadmin definido no ambiente da plataforma.</p>
+                </div>
+                <span className="status inactive">Restrito</span>
               </div>
-              <div className="field">
-                <label htmlFor="backupFile">Ficheiro de backup</label>
-                <input id="backupFile" name="backupFile" type="file" accept="application/json,.json" required />
-              </div>
-              <div className="field">
-                <label htmlFor="restoreConfirmation">Frase de segurança</label>
-                <input id="restoreConfirmation" name="restoreConfirmation" placeholder="REPOR BACKUP TP" required />
-              </div>
-              <button className="button secondary" type="submit">
-                Repor backup
-              </button>
-            </form>
+            )}
 
             <form className="maintenance-card danger-zone" action="/api/admin/personal-training-payments/delete-months" method="post">
               <div>

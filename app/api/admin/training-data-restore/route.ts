@@ -156,6 +156,13 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl("/dashboard", request));
   }
 
+  const superadminEmail = process.env.SUPERADMIN_EMAIL?.toLowerCase().trim();
+  const isSuperadmin = Boolean(superadminEmail && user.email.toLowerCase() === superadminEmail);
+
+  if (!isSuperadmin) {
+    return NextResponse.redirect(appRedirectUrl("/atividade?tab=maintenance&restoreUnauthorized=1", request));
+  }
+
   const formData = await request.formData();
   const file = formData.get("backupFile");
   const typedConfirmation = String(formData.get("restoreConfirmation") || "").trim();
