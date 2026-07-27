@@ -600,8 +600,8 @@ export default async function ActivityPage({
 
         {activeTab === "maintenance" ? (
           <div className="maintenance-grid">
-            {params.resetSuccess ? <p className="success">Dados de treinos personalizados limpos com sucesso.</p> : null}
-            {params.resetError ? <p className="error">Não foi possível limpar. Confirma o backup e a frase de segurança.</p> : null}
+            {params.resetSuccess ? <p className="success">Dados operacionais limpos com sucesso. Os utilizadores foram preservados.</p> : null}
+            {params.resetError ? <p className="error">Não foi possível limpar. Confirma o backup, a seleção e a frase de segurança.</p> : null}
             {params.restoreSuccess ? <p className="success">Backup reposto com sucesso.</p> : null}
             {params.restoreError ? <p className="error">Não foi possível repor o backup. Confirma o ficheiro e a frase de segurança.</p> : null}
 
@@ -642,12 +642,69 @@ export default async function ActivityPage({
               </a>
             </div>
 
-            <form className="maintenance-card danger-zone" action="/api/admin/training-data-reset" method="post">
+            <form className="maintenance-card danger-zone reset-maintenance-card" action="/api/admin/training-data-reset" method="post">
               <div>
-                <h2>Limpar dados TP</h2>
+                <h2>Limpeza total ou seletiva</h2>
                 <p className="muted">
-                  Remove alunos, pagamentos, créditos manuais, marcações PT, histórico de emails e logs. Mantém utilizadores, tipos e ocupações semanais.
+                  Remove dados operacionais sem apagar utilizadores. As configurações, tipos, valores hora e ocupações semanais ficam preservados.
                 </p>
+              </div>
+              <div className="maintenance-inline-fields reset-mode-fields">
+                <label className="checkbox">
+                  <input type="radio" name="resetMode" value="selective" defaultChecked />
+                  Limpeza seletiva
+                </label>
+                <label className="checkbox">
+                  <input type="radio" name="resetMode" value="total" />
+                  Limpeza total operacional
+                </label>
+              </div>
+              <p className="muted reset-note">
+                Na limpeza seletiva contam apenas os grupos assinalados. Na limpeza total operacional são incluídos todos os grupos abaixo.
+              </p>
+              <div className="maintenance-target-grid" aria-label="Dados a limpar">
+                <label className="checkbox">
+                  <input type="checkbox" name="resetTargets" value="personalTraining" defaultChecked />
+                  <span>
+                    <strong>Treinos personalizados</strong>
+                    <small>Alunos, pagamentos, créditos, marcações e logs PT</small>
+                  </span>
+                </label>
+                <label className="checkbox">
+                  <input type="checkbox" name="resetTargets" value="birthdayParties" />
+                  <span>
+                    <strong>Festas de aniversário</strong>
+                    <small>Festas, monitores e histórico de pagamento</small>
+                  </span>
+                </label>
+                <label className="checkbox">
+                  <input type="checkbox" name="resetTargets" value="substitutions" />
+                  <span>
+                    <strong>Substituições</strong>
+                    <small>Pedidos e aulas associadas</small>
+                  </span>
+                </label>
+                <label className="checkbox">
+                  <input type="checkbox" name="resetTargets" value="availability" />
+                  <span>
+                    <strong>Disponibilidade novos TP</strong>
+                    <small>Janelas indicadas pelos professores</small>
+                  </span>
+                </label>
+                <label className="checkbox">
+                  <input type="checkbox" name="resetTargets" value="emailLogs" />
+                  <span>
+                    <strong>Histórico de emails</strong>
+                    <small>Registos de emails enviados ou falhados</small>
+                  </span>
+                </label>
+                <label className="checkbox">
+                  <input type="checkbox" name="resetTargets" value="loginLogs" />
+                  <span>
+                    <strong>Logs de acesso</strong>
+                    <small>Registos de atividade/login dos utilizadores</small>
+                  </span>
+                </label>
               </div>
               <label className="checkbox">
                 <input type="checkbox" name="backupConfirmed" required />
@@ -655,10 +712,10 @@ export default async function ActivityPage({
               </label>
               <div className="field">
                 <label htmlFor="typedConfirmation">Frase de segurança</label>
-                <input id="typedConfirmation" name="typedConfirmation" placeholder="LIMPAR TREINOS PERSONALIZADOS" required />
+                <input id="typedConfirmation" name="typedConfirmation" placeholder="LIMPAR DADOS OPERACIONAIS" required />
               </div>
               <button className="button danger" type="submit">
-                Limpar dados TP
+                Limpar dados selecionados
               </button>
             </form>
 
