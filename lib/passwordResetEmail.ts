@@ -27,7 +27,7 @@ export async function sendPasswordResetEmail({
   const text = [
     `Olá ${userName},`,
     "",
-    "Foi pedido um link para recuperar a password da gestao.gpc.ad - gestão operacional.",
+    "Foi pedido um link para recuperar a password da gestao.gcp.ad - gestão operacional.",
     "Este link é válido durante 1 hora:",
     resetUrl,
     "",
@@ -37,7 +37,7 @@ export async function sendPasswordResetEmail({
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
       <h2>Recuperação de password</h2>
       <p>Olá ${userName},</p>
-      <p>Foi pedido um link para recuperar a password da gestao.gpc.ad - gestão operacional.</p>
+      <p>Foi pedido um link para recuperar a password da gestao.gcp.ad - gestão operacional.</p>
       <p><a href="${resetUrl}" style="display:inline-block;background:#0f766e;color:#ffffff;padding:10px 14px;border-radius:6px;text-decoration:none;font-weight:bold;">Definir nova password</a></p>
       <p>Este link é válido durante 1 hora.</p>
       <p>Se não pediste esta recuperação, podes ignorar este email.</p>

@@ -15,7 +15,7 @@ export default async function LoginPage({
   return (
     <main className="login-page">
       <section className="login-box">
-        <p className="eyebrow">gestao.gpc.ad - gestão operacional</p>
+        <p className="eyebrow">gestao.gcp.ad - gestão operacional</p>
         <h1>Entrar</h1>
         <p className="muted">Acede às ferramentas autorizadas para a tua função.</p>
         <form className="form" action="/api/auth/login" method="post">

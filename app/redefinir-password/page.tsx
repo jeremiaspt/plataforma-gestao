@@ -32,7 +32,7 @@ export default async function ResetPasswordPage({
   return (
     <main className="login-page">
       <section className="login-box">
-        <p className="eyebrow">gestao.gpc.ad - gestão operacional</p>
+        <p className="eyebrow">gestao.gcp.ad - gestão operacional</p>
         <h1>Nova password</h1>
         {params.success ? (
           <>

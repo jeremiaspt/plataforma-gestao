@@ -154,7 +154,7 @@ export async function AppShell({
             <span>CO</span>
           </span>
           <span>
-            <strong>gestao.gpc.ad</strong>
+            <strong>gestao.gcp.ad</strong>
             <small>gestão operacional</small>
           </span>
         </div>

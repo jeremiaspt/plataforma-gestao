@@ -15,7 +15,7 @@ export default async function RecoverPasswordPage({
   return (
     <main className="login-page">
       <section className="login-box">
-        <p className="eyebrow">gestao.gpc.ad - gestão operacional</p>
+        <p className="eyebrow">gestao.gcp.ad - gestão operacional</p>
         <h1>Recuperar password</h1>
         <p className="muted">Indica o teu email para receberes um link de recuperação.</p>
         <form className="form" action="/api/auth/password-reset/request" method="post">
