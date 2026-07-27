@@ -11,6 +11,10 @@ function parseDateTime(value: string) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function redirectAfterPost(path: string, request: Request) {
+  return NextResponse.redirect(appRedirectUrl(path, request), 303);
+}
+
 function selectedPhotoFiles(formData: FormData) {
   return formData.getAll("photos").filter((entry) => entry instanceof File && entry.size > 0);
 }
@@ -20,7 +24,7 @@ export async function POST(request: Request) {
   const canCreate = hasRole(user, "admin") || hasRole(user, "recepcao");
 
   if (!canCreate) {
-    return NextResponse.redirect(appRedirectUrl("/dashboard", request));
+    return redirectAfterPost("/dashboard", request);
   }
 
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: "/perdidos-achados" });
@@ -34,14 +38,14 @@ export async function POST(request: Request) {
   const valuable = formData.get("valuable") === "on";
 
   if (!foundAt || !foundBy || !location || !description) {
-    return NextResponse.redirect(appRedirectUrl("/perdidos-achados?error=required", request));
+    return redirectAfterPost("/perdidos-achados?error=required", request);
   }
 
   try {
     const photoFiles = selectedPhotoFiles(formData);
 
     if (photoFiles.length > 5) {
-      return NextResponse.redirect(appRedirectUrl("/perdidos-achados?error=photo-count", request));
+      return redirectAfterPost("/perdidos-achados?error=photo-count", request);
     }
 
     const uploadedPhotos = await Promise.all(photoFiles.map((file) => uploadLostFoundPhoto(file)));
@@ -78,8 +82,8 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     const errorCode = error instanceof Error && error.message === "cloudinary_config" ? "cloudinary" : "photo";
-    return NextResponse.redirect(appRedirectUrl(`/perdidos-achados?error=${errorCode}`, request));
+    return redirectAfterPost(`/perdidos-achados?error=${errorCode}`, request);
   }
 
-  return NextResponse.redirect(appRedirectUrl("/perdidos-achados?success=created", request));
+  return redirectAfterPost("/perdidos-achados?success=created", request);
 }

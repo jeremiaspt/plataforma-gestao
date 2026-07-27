@@ -7,7 +7,7 @@ import { appRedirectUrl } from "@/lib/url";
 
 function redirectToList(request: Request, status: "success" | "error", message: string) {
   const params = new URLSearchParams({ [status]: message });
-  return NextResponse.redirect(appRedirectUrl(`/perdidos-achados?${params.toString()}`, request));
+  return NextResponse.redirect(appRedirectUrl(`/perdidos-achados?${params.toString()}`, request), 303);
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +16,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const isReception = hasRole(user, "recepcao");
 
   if (!isAdmin && !isReception) {
-    return NextResponse.redirect(appRedirectUrl("/dashboard", request));
+    return NextResponse.redirect(appRedirectUrl("/dashboard", request), 303);
   }
 
   const maintenanceBlock = await blockNonAdminDuringMaintenance({ user, request, redirectPath: "/perdidos-achados" });

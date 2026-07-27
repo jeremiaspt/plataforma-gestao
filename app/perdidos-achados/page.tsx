@@ -135,8 +135,12 @@ export default async function LostFoundPage({
               <textarea id="description" name="description" rows={3} required />
             </div>
             <div className="field">
-              <label htmlFor="photos">Fotografias</label>
-              <input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple />
+              <label>Fotografias</label>
+              <div className="lost-found-photo-inputs">
+                {[1, 2, 3, 4, 5].map((index) => (
+                  <input key={index} name="photos" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" aria-label={`Fotografia ${index}`} />
+                ))}
+              </div>
               <small className="muted">Até 5 fotografias.</small>
             </div>
             <label className="checkbox lost-found-check">
@@ -162,7 +166,7 @@ export default async function LostFoundPage({
                 <article className={`lost-found-item ${isOverdue ? "overdue" : ""}`} key={item.id}>
                   <div className="lost-found-gallery">
                     {photoSource ? (
-                      <a href={photoSource} target="_blank" rel="noreferrer" title="Abrir fotografia maior">
+                      <a href={`#foto-${item.id}-0`} title="Abrir fotografia maior">
                         <img alt={`Fotografia de ${item.description}`} src={photoSource} />
                       </a>
                     ) : (
@@ -171,13 +175,24 @@ export default async function LostFoundPage({
                     {photoSources.length > 1 ? (
                       <div className="lost-found-thumbnails">
                         {photoSources.map((source, index) => (
-                          <a href={source} key={source} target="_blank" rel="noreferrer" title="Abrir fotografia maior">
+                          <a href={`#foto-${item.id}-${index}`} key={source} title="Abrir fotografia maior">
                             <img alt={`Fotografia ${index + 1} de ${item.description}`} src={source} />
                           </a>
                         ))}
                       </div>
                     ) : null}
                   </div>
+                  {photoSources.map((source, index) => (
+                    <div className="image-lightbox" id={`foto-${item.id}-${index}`} key={`modal-${source}`}>
+                      <a className="image-lightbox-backdrop" href="#"></a>
+                      <div className="image-lightbox-dialog">
+                        <a className="image-lightbox-close" href="#" aria-label="Fechar imagem">
+                          X
+                        </a>
+                        <img alt={`Fotografia ${index + 1} de ${item.description}`} src={source} />
+                      </div>
+                    </div>
+                  ))}
                   <div className="lost-found-main">
                     <div className="lost-found-title">
                       <div>

@@ -3361,6 +3361,16 @@ h1 {
   align-self: end;
 }
 
+.lost-found-photo-inputs {
+  display: grid;
+  gap: 6px;
+}
+
+.lost-found-photo-inputs input {
+  font-size: 13px;
+  padding: 7px;
+}
+
 .lost-found-list {
   display: grid;
   gap: 10px;
@@ -3412,6 +3422,59 @@ h1 {
 
 .lost-found-thumbnails img {
   border-radius: 6px;
+}
+
+.image-lightbox {
+  align-items: center;
+  display: none;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 80;
+}
+
+.image-lightbox:target {
+  display: flex;
+}
+
+.image-lightbox-backdrop {
+  background: rgba(15, 23, 42, 0.74);
+  inset: 0;
+  position: absolute;
+}
+
+.image-lightbox-dialog {
+  max-height: min(88vh, 760px);
+  max-width: min(92vw, 980px);
+  position: relative;
+  z-index: 1;
+}
+
+.image-lightbox-dialog img {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+  display: block;
+  max-height: min(88vh, 760px);
+  max-width: min(92vw, 980px);
+  object-fit: contain;
+}
+
+.image-lightbox-close {
+  align-items: center;
+  background: #ffffff;
+  border-radius: 999px;
+  color: #0f172a;
+  display: inline-flex;
+  font-weight: 800;
+  height: 34px;
+  justify-content: center;
+  position: absolute;
+  right: -12px;
+  top: -12px;
+  width: 34px;
+  z-index: 2;
 }
 
 .lost-found-photo-empty {
