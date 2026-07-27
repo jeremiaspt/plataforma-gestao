@@ -103,6 +103,8 @@ function bookingData(booking: Record<string, unknown>) {
     teacherId: String(booking.teacherId),
     studentId: String(booking.studentId),
     paymentTypeId: booking.paymentTypeId ? String(booking.paymentTypeId) : null,
+    isExperimental: Boolean(booking.isExperimental),
+    experimentalStudentName: booking.experimentalStudentName ? String(booking.experimentalStudentName) : null,
     startMinutes: Number(booking.startMinutes),
     endMinutes: Number(booking.endMinutes),
     durationMinutes: Number(booking.durationMinutes),

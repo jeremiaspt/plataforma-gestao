@@ -35,7 +35,19 @@ export async function GET() {
     creditAdjustments,
     bookings,
     bookingLogs,
+    personalTrainingAvailabilities,
+    personalTrainingTimesheetRules,
+    personalTrainingTimesheetRuleItems,
+    loginLogs,
+    substitutionRequests,
+    substitutionItems,
+    birthdayParties,
+    birthdayPartyMonitors,
+    birthdayPartyPaymentLogs,
+    groupClassHourlyRates,
     emailLogs,
+    emailSettings,
+    systemSettings,
     students,
     paymentTypes,
     poolBlocks,
@@ -62,7 +74,46 @@ export async function GET() {
       }
     }),
     prisma.personalTrainingBookingLog.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.personalTrainingAvailability.findMany({
+      orderBy: [{ weekday: "asc" }, { startMinutes: "asc" }],
+      include: { teacher: { select: { id: true, name: true, email: true } } }
+    }),
+    prisma.personalTrainingTimesheetRule.findMany({ orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }),
+    prisma.personalTrainingTimesheetRuleItem.findMany({ orderBy: [{ ruleId: "asc" }, { paymentTypeId: "asc" }] }),
+    prisma.userLoginLog.findMany({
+      orderBy: [{ userId: "asc" }, { createdAt: "asc" }],
+      include: { user: { select: { id: true, name: true, email: true } } }
+    }),
+    prisma.groupClassSubstitutionRequest.findMany({
+      orderBy: [{ substitutionDate: "asc" }, { createdAt: "asc" }],
+      include: {
+        absentTeacher: { select: { id: true, name: true, email: true } },
+        requestedBy: { select: { id: true, name: true, email: true } }
+      }
+    }),
+    prisma.groupClassSubstitutionItem.findMany({
+      orderBy: [{ requestId: "asc" }, { startMinutes: "asc" }],
+      include: {
+        substituteTeacher: { select: { id: true, name: true, email: true } },
+        poolScheduleBlock: true
+      }
+    }),
+    prisma.birthdayParty.findMany({
+      orderBy: [{ partyDate: "asc" }, { startMinutes: "asc" }],
+      include: {
+        createdBy: { select: { id: true, name: true, email: true } },
+        receptionist: { select: { id: true, name: true, email: true } }
+      }
+    }),
+    prisma.birthdayPartyMonitor.findMany({
+      orderBy: [{ partyId: "asc" }, { createdAt: "asc" }],
+      include: { teacher: { select: { id: true, name: true, email: true } } }
+    }),
+    prisma.birthdayPartyPaymentLog.findMany({ orderBy: [{ partyId: "asc" }, { createdAt: "asc" }] }),
+    prisma.groupClassHourlyRate.findMany({ orderBy: [{ displayOrder: "asc" }, { name: "asc" }] }),
     prisma.emailLog.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.emailSettings.findMany({ orderBy: { key: "asc" } }),
+    prisma.systemSettings.findMany({ orderBy: { key: "asc" } }),
     prisma.personalTrainingStudent.findMany({ orderBy: { fullName: "asc" } }),
     prisma.personalTrainingPaymentType.findMany({ orderBy: { description: "asc" } }),
     prisma.poolScheduleBlock.findMany({ orderBy: [{ weekday: "asc" }, { laneNumber: "asc" }, { startMinutes: "asc" }] }),
@@ -78,14 +129,26 @@ export async function GET() {
     exportedAt,
     exportedBy: { id: user.id, name: user.name, email: user.email },
     scope: "personal-training-operational-data",
-    note: "Backup dos dados antes da limpeza: alunos, pagamentos TP, créditos manuais, marcações PT, histórico de emails e respetivos logs. Inclui tipos, professores e blocos como contexto.",
+    note: "Backup dos dados antes da limpeza: alunos, pagamentos TP, créditos manuais, marcações PT, histórico de emails e respetivos logs. Inclui também disponibilidades TP, logins, substituições, festas, configurações, tipos, professores e blocos como contexto.",
     counts: {
       payments: payments.length,
       paymentLogs: paymentLogs.length,
       creditAdjustments: creditAdjustments.length,
       bookings: bookings.length,
       bookingLogs: bookingLogs.length,
+      personalTrainingAvailabilities: personalTrainingAvailabilities.length,
+      personalTrainingTimesheetRules: personalTrainingTimesheetRules.length,
+      personalTrainingTimesheetRuleItems: personalTrainingTimesheetRuleItems.length,
+      loginLogs: loginLogs.length,
+      substitutionRequests: substitutionRequests.length,
+      substitutionItems: substitutionItems.length,
+      birthdayParties: birthdayParties.length,
+      birthdayPartyMonitors: birthdayPartyMonitors.length,
+      birthdayPartyPaymentLogs: birthdayPartyPaymentLogs.length,
+      groupClassHourlyRates: groupClassHourlyRates.length,
       emailLogs: emailLogs.length,
+      emailSettings: emailSettings.length,
+      systemSettings: systemSettings.length,
       students: students.length,
       paymentTypes: paymentTypes.length,
       poolBlocks: poolBlocks.length,
@@ -97,7 +160,19 @@ export async function GET() {
       creditAdjustments,
       bookings,
       bookingLogs,
+      personalTrainingAvailabilities,
+      personalTrainingTimesheetRules,
+      personalTrainingTimesheetRuleItems,
+      loginLogs,
+      substitutionRequests,
+      substitutionItems,
+      birthdayParties,
+      birthdayPartyMonitors,
+      birthdayPartyPaymentLogs,
+      groupClassHourlyRates,
       emailLogs,
+      emailSettings,
+      systemSettings,
       students,
       paymentTypes,
       poolBlocks,
