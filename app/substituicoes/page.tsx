@@ -33,6 +33,16 @@ function itemStatusText(status: string) {
   return "Pendente";
 }
 
+function isAccumulationItem(item: { accumulation: boolean; substitutionMode?: string | null }) {
+  return item.accumulation && item.substitutionMode !== "full_class";
+}
+
+function substitutionModeText(item: { accumulation: boolean; substitutionMode?: string | null }) {
+  if (isAccumulationItem(item)) return "Acumulação";
+  if (item.substitutionMode === "full_class") return "Aula completa";
+  return "";
+}
+
 function formatDate(date: Date) {
   return date.toLocaleDateString("pt-PT");
 }
@@ -298,10 +308,14 @@ export default async function SubstitutionsPage({
                   </select>
                 </div>
                 {isAdmin ? (
-                  <label className="checkbox compact-checkbox">
-                    <input type="checkbox" name={`accumulation_${block.id}`} />
-                    Acumulação
-                  </label>
+                  <div className="field compact-field">
+                    <label htmlFor={`substitutionMode_${block.id}`}>Modo</label>
+                    <select id={`substitutionMode_${block.id}`} name={`substitutionMode_${block.id}`} defaultValue="normal">
+                      <option value="normal">Normal</option>
+                      <option value="accumulation">Acumulação</option>
+                      <option value="full_class">Aula completa</option>
+                    </select>
+                  </div>
                 ) : null}
               </div>
             ))}
@@ -355,7 +369,7 @@ export default async function SubstitutionsPage({
                       <strong>{item.substituteTeacher.name}</strong>
                       <small>
                         {classLabel(item)}
-                        {item.accumulation ? " · Acumulação" : ""}
+                        {substitutionModeText(item) ? ` · ${substitutionModeText(item)}` : ""}
                       </small>
                       <div className="substitution-item-actions">
                         <span className={statusClass(item.status)}>{itemStatusText(item.status)}</span>

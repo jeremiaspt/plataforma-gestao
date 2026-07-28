@@ -106,6 +106,10 @@ function mergeSameClassBlocks(blocks: Block[]) {
   return Array.from(merged.values());
 }
 
+function isAccumulationSubstitution(item: { accumulation: boolean; substitutionMode?: string | null }) {
+  return item.accumulation && item.substitutionMode !== "full_class";
+}
+
 function overlapMinutes(startMinutes: number, endMinutes: number, intervals: Array<{ startMinutes: number; endMinutes: number }>) {
   const normalizedIntervals = intervals
     .map((interval) => ({
@@ -246,6 +250,7 @@ export async function calculateGroupClassTimesheet({
   for (const item of incomingSubstitutions) {
     const dateValue = dateToInputValue(item.request.substitutionDate);
     const dayBlocks = incomingSubstitutionsByDate.get(dateValue) || [];
+    const isAccumulation = isAccumulationSubstitution(item);
 
     dayBlocks.push({
       id: item.id,
@@ -253,12 +258,12 @@ export async function calculateGroupClassTimesheet({
       weekday: item.request.substitutionDate.getDay(),
       startMinutes: item.startMinutes,
       endMinutes: item.endMinutes,
-      title: item.accumulation ? `ACUM. ${item.title}` : item.title,
+      title: isAccumulation ? `ACUM. ${item.title}` : item.title,
       notes: item.notes,
       recurrenceType: "substitution",
       validFrom: item.request.substitutionDate,
       validTo: item.request.substitutionDate,
-      groupKeySuffix: item.accumulation ? "accumulation" : undefined
+      groupKeySuffix: isAccumulation ? "accumulation" : undefined
     });
     incomingSubstitutionsByDate.set(dateValue, dayBlocks);
   }
@@ -381,7 +386,7 @@ export async function calculateGroupClassTimesheet({
 
   return {
     absenceDetails: outgoingSubstitutions.map((item) => ({
-      accumulation: item.accumulation,
+      accumulation: isAccumulationSubstitution(item),
       date: dateToInputValue(item.request.substitutionDate),
       endMinutes: item.endMinutes,
       laneNumber: item.laneNumber,
@@ -392,7 +397,7 @@ export async function calculateGroupClassTimesheet({
     })),
     extraDetails: incomingSubstitutions.map((item) => ({
       absentTeacherName: item.request.absentTeacher.name,
-      accumulation: item.accumulation,
+      accumulation: isAccumulationSubstitution(item),
       date: dateToInputValue(item.request.substitutionDate),
       endMinutes: item.endMinutes,
       laneNumber: item.laneNumber,

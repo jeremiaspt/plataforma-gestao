@@ -12,6 +12,24 @@ type ValidationMessage = {
   message: string;
 };
 
+const substitutionModes = ["normal", "accumulation", "full_class"] as const;
+type SubstitutionMode = (typeof substitutionModes)[number];
+
+function parseSubstitutionMode(value: FormDataEntryValue | null, isAdmin: boolean): SubstitutionMode {
+  if (!isAdmin) {
+    return "normal";
+  }
+
+  const mode = String(value || "normal");
+  return substitutionModes.includes(mode as SubstitutionMode) ? (mode as SubstitutionMode) : "normal";
+}
+
+function substitutionModeLabel(mode: SubstitutionMode) {
+  if (mode === "accumulation") return "com acumulação";
+  if (mode === "full_class") return "como aula completa";
+  return "";
+}
+
 function encodeValidation(messages: ValidationMessage[]) {
   return Buffer.from(JSON.stringify(messages)).toString("base64url");
 }
@@ -147,7 +165,8 @@ export async function POST(request: Request) {
 
   for (const block of blocks) {
     const substituteTeacherId = String(formData.get(`substituteTeacherId_${block.id}`) || "");
-    const accumulation = formData.get(`accumulation_${block.id}`) === "on";
+    const substitutionMode = parseSubstitutionMode(formData.get(`substitutionMode_${block.id}`), isAdmin);
+    const accumulation = substitutionMode === "accumulation";
     const blockLabel = `${block.title} · ${Math.floor(block.startMinutes / 60).toString().padStart(2, "0")}:${(block.startMinutes % 60).toString().padStart(2, "0")} - ${Math.floor(block.endMinutes / 60).toString().padStart(2, "0")}:${(block.endMinutes % 60).toString().padStart(2, "0")}`;
 
     if (!substituteTeacherId || substituteTeacherId === absentTeacherId || !validSubstituteIds.has(substituteTeacherId)) {
@@ -191,7 +210,7 @@ export async function POST(request: Request) {
         status: "error",
         label: blockLabel,
         message:
-          "O professor substituto jÃ¡ tem aula nesse horÃ¡rio. O pedido de substituiÃ§Ã£o com acumulaÃ§Ã£o tem de ser pedido ao Diretor ou Coordenador, uma vez que sÃ³ com autorizaÃ§Ã£o a substituiÃ§Ã£o pode ser feita."
+          "O professor substituto já tem aula nesse horário. O pedido de substituição com acumulação tem de ser pedido ao Diretor ou Coordenador, uma vez que só com autorização a substituição pode ser feita."
       });
       continue;
     }
@@ -201,25 +220,26 @@ export async function POST(request: Request) {
         status: "error",
         label: blockLabel,
         message:
-          "A acumulaÃ§Ã£o sÃ³ pode ser lanÃ§ada por um administrador. Este pedido deve ser encaminhado ao Diretor ou Coordenador para autorizaÃ§Ã£o."
+          "A acumulação só pode ser lançada por um administrador. Este pedido deve ser encaminhado ao Diretor ou Coordenador para autorização."
       });
       continue;
     }
 
-    if (substituteHasConflict && !accumulation) {
+    if (substituteHasConflict && substitutionMode === "normal") {
       validationMessages.push({
         status: "error",
         label: blockLabel,
-        message: "O professor substituto já tem aula nesse horário. Marca a opção Acumulação se for intencional."
+        message: "O professor substituto já tem aula nesse horário. O admin deve escolher Acumulação ou Aula completa se for intencional."
       });
       continue;
     }
 
     const substitute = substitutesById.get(substituteTeacherId);
+    const modeLabel = substitutionModeLabel(substitutionMode);
     validationMessages.push({
       status: "ok",
       label: blockLabel,
-      message: `OK para ${substitute?.name || "professor selecionado"}${accumulation ? " com acumulação" : ""}.`
+      message: `OK para ${substitute?.name || "professor selecionado"}${modeLabel ? ` ${modeLabel}` : ""}.`
     });
 
     items.push({
@@ -231,6 +251,7 @@ export async function POST(request: Request) {
       poolScheduleBlockId: block.id,
       startMinutes: block.startMinutes,
       status: isAdmin ? "approved" : "pending",
+      substitutionMode,
       substituteTeacherId,
       title: block.title
     });

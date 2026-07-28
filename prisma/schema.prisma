@@ -141,6 +141,7 @@ model GroupClassSubstitutionItem {
   substituteTeacher   User                          @relation("SubstitutionSubstituteTeacher", fields: [substituteTeacherId], references: [id], onDelete: Restrict)
   status              String                        @default("pending")
   accumulation        Boolean                       @default(false)
+  substitutionMode    String                        @default("normal")
   poolKey             String
   laneNumber          Int
   title               String
