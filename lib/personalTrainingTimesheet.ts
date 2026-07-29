@@ -89,7 +89,7 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     string,
     {
       dateValue: string;
-      payments: Array<{ id: string; createdAt: Date; student: { memberNumber: string; fullName: string } }>;
+      payments: Array<{ id: string; createdAt: Date; quantity: number; student: { memberNumber: string; fullName: string } }>;
       requiredParticipants: number;
       trainingLabel: string;
     }
@@ -104,7 +104,7 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
   >();
   const showDetailMonth = period.start.getMonth() !== addDays(period.endExclusive, -1).getMonth();
 
-  function addStudentDetail(students: Array<{ memberNumber: string; fullName: string }>, trainingLabel: string, dateValue: string) {
+  function addStudentDetail(students: Array<{ memberNumber: string; fullName: string }>, trainingLabel: string, dateValue: string, count: number) {
     const sortedStudents = students.sort((left, right) => left.fullName.localeCompare(right.fullName, "pt"));
     const detailKey = `${trainingLabel}:${sortedStudents.map((student) => student.memberNumber).join("|")}`;
     const studentDetail =
@@ -115,7 +115,7 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
         dayCounts: new Map<string, number>()
       };
 
-    studentDetail.dayCounts.set(dateValue, (studentDetail.dayCounts.get(dateValue) || 0) + 1);
+    studentDetail.dayCounts.set(dateValue, (studentDetail.dayCounts.get(dateValue) || 0) + count);
     studentDetailMap.set(detailKey, studentDetail);
   }
 
@@ -157,6 +157,7 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     detailBucket.payments.push({
       id: payment.id,
       createdAt: payment.createdAt,
+      quantity: payment.quantity,
       student: {
         memberNumber: payment.student.memberNumber,
         fullName: payment.student.fullName
@@ -174,8 +175,11 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     const chunkSize = Math.max(1, bucket.requiredParticipants);
 
     for (let index = 0; index < sortedPayments.length; index += chunkSize) {
-      const students = sortedPayments.slice(index, index + chunkSize).map((payment) => payment.student);
-      addStudentDetail(students, bucket.trainingLabel, bucket.dateValue);
+      const paymentGroup = sortedPayments.slice(index, index + chunkSize);
+      const students = paymentGroup.map((payment) => payment.student);
+      const detailCount = Math.max(...paymentGroup.map((payment) => payment.quantity));
+
+      addStudentDetail(students, bucket.trainingLabel, bucket.dateValue, detailCount);
     }
   }
 
