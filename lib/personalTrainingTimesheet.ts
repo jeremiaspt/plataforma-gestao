@@ -25,6 +25,17 @@ export function eachPeriodDate(start: Date, endExclusive: Date) {
   return dates;
 }
 
+function formatDetailDate(dateValue: string, showMonth: boolean) {
+  const date = new Date(`${dateValue}T00:00:00`);
+  const day = date.getDate().toString();
+
+  if (!showMonth) {
+    return day;
+  }
+
+  return `${day}/${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
 export async function calculatePersonalTrainingTimesheet({ month, teacherId }: { month?: string; teacherId: string }) {
   const teacher = await prisma.user.findUnique({
     where: { id: teacherId },
@@ -74,12 +85,13 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     };
   });
   const unmatched: Array<{ date: string; student: string; paymentType: string; lessons: number; value: number }> = [];
-  const detailEventMap = new Map<
+  const detailBuckets = new Map<
     string,
     {
-      students: Array<{ memberNumber: string; fullName: string }>;
+      dateValue: string;
+      payments: Array<{ id: string; createdAt: Date; student: { memberNumber: string; fullName: string } }>;
+      requiredParticipants: number;
       trainingLabel: string;
-      day: number;
     }
   >();
   const studentDetailMap = new Map<
@@ -87,9 +99,25 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     {
       students: Array<{ memberNumber: string; fullName: string }>;
       trainingLabel: string;
-      dayCounts: Map<number, number>;
+      dayCounts: Map<string, number>;
     }
   >();
+  const showDetailMonth = period.start.getMonth() !== addDays(period.endExclusive, -1).getMonth();
+
+  function addStudentDetail(students: Array<{ memberNumber: string; fullName: string }>, trainingLabel: string, dateValue: string) {
+    const sortedStudents = students.sort((left, right) => left.fullName.localeCompare(right.fullName, "pt"));
+    const detailKey = `${trainingLabel}:${sortedStudents.map((student) => student.memberNumber).join("|")}`;
+    const studentDetail =
+      studentDetailMap.get(detailKey) ||
+      {
+        students: sortedStudents,
+        trainingLabel,
+        dayCounts: new Map<string, number>()
+      };
+
+    studentDetail.dayCounts.set(dateValue, (studentDetail.dayCounts.get(dateValue) || 0) + 1);
+    studentDetailMap.set(detailKey, studentDetail);
+  }
 
   for (const payment of payments) {
     const dateValue = dateToInputValue(payment.createdAt);
@@ -113,52 +141,53 @@ export async function calculatePersonalTrainingTimesheet({ month, teacherId }: {
     const lessonCount = paidLessons / row.studentCount;
     const trainingLabel = getTrainingDurationLabel(payment.paymentType.description);
     const requiredParticipants = requiredParticipantsForType(payment.paymentType.description);
-    const detailEventKey =
-      requiredParticipants > 1
-        ? `${payment.paymentTypeId}:${payment.quantity}:${payment.createdAt.getTime()}:${trainingLabel}`
-        : payment.id;
-    const detailEvent =
-      detailEventMap.get(detailEventKey) ||
+    const detailBucketKey = requiredParticipants > 1 ? `${dateValue}:${payment.paymentTypeId}:${payment.quantity}:${trainingLabel}` : payment.id;
+    const detailBucket =
+      detailBuckets.get(detailBucketKey) ||
       {
-        students: [],
-        trainingLabel,
-        day: payment.createdAt.getDate()
+        dateValue,
+        payments: [],
+        requiredParticipants,
+        trainingLabel
       };
-    const hasStudent = detailEvent.students.some((student) => student.memberNumber === payment.student.memberNumber);
 
     row.dayLessons.set(dateValue, (row.dayLessons.get(dateValue) || 0) + lessonCount);
     row.totalLessons += lessonCount;
     row.totalValue += paidLessons * row.valuePerStudent;
-    if (!hasStudent) {
-      detailEvent.students.push({
+    detailBucket.payments.push({
+      id: payment.id,
+      createdAt: payment.createdAt,
+      student: {
         memberNumber: payment.student.memberNumber,
         fullName: payment.student.fullName
-      });
-    }
-    detailEventMap.set(detailEventKey, detailEvent);
+      }
+    });
+    detailBuckets.set(detailBucketKey, detailBucket);
   }
 
-  for (const event of detailEventMap.values()) {
-    const sortedStudents = event.students.sort((left, right) => left.fullName.localeCompare(right.fullName, "pt"));
-    const detailKey = `${event.trainingLabel}:${sortedStudents.map((student) => student.memberNumber).join("|")}`;
-    const studentDetail =
-      studentDetailMap.get(detailKey) ||
-      {
-        students: sortedStudents,
-        trainingLabel: event.trainingLabel,
-        dayCounts: new Map<number, number>()
-      };
+  for (const bucket of detailBuckets.values()) {
+    const sortedPayments = bucket.payments.sort((left, right) => {
+      const dateOrder = left.createdAt.getTime() - right.createdAt.getTime();
+      if (dateOrder !== 0) return dateOrder;
+      return left.id.localeCompare(right.id);
+    });
+    const chunkSize = Math.max(1, bucket.requiredParticipants);
 
-    studentDetail.dayCounts.set(event.day, (studentDetail.dayCounts.get(event.day) || 0) + 1);
-    studentDetailMap.set(detailKey, studentDetail);
+    for (let index = 0; index < sortedPayments.length; index += chunkSize) {
+      const students = sortedPayments.slice(index, index + chunkSize).map((payment) => payment.student);
+      addStudentDetail(students, bucket.trainingLabel, bucket.dateValue);
+    }
   }
 
   const studentDetails = Array.from(studentDetailMap.values())
     .map((detail) => ({
       ...detail,
       days: Array.from(detail.dayCounts.entries())
-        .sort(([leftDay], [rightDay]) => leftDay - rightDay)
-        .map(([day, count]) => (count > 1 ? `${day}x${count}` : day.toString()))
+        .sort(([leftDay], [rightDay]) => leftDay.localeCompare(rightDay))
+        .map(([dateValue, count]) => {
+          const label = formatDetailDate(dateValue, showDetailMonth);
+          return count > 1 ? `${label}x${count}` : label;
+        })
     }))
     .sort((left, right) => {
       const leftFirstStudent = left.students[0];
