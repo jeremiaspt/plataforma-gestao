@@ -62,6 +62,7 @@ export async function POST(request: Request) {
     !poolBlockId ||
     (!isExperimentalBooking && studentIds.length === 0) ||
     (isExperimentalBooking && !experimentalStudentName) ||
+    (isAdmin && !isExperimentalBooking && selectedTeacherId && selectedTeacherId !== user.id) ||
     !trainingTypeKey ||
     !trainingDurationOptions.includes(durationMinutes) ||
     !Number.isInteger(requestedStartMinutes) ||

@@ -1982,6 +1982,11 @@ h1 {
   padding: 7px 10px;
 }
 
+.booking-experimental-toggle {
+  align-self: end;
+  min-height: 42px;
+}
+
 .booking-popup-form {
   align-items: flex-end;
   background: #f8fafc;

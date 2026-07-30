@@ -595,6 +595,8 @@ export async function PoolMapView({
           trainingTypes={trainingTypes}
           creditBalances={creditBalances}
           isAdmin={isAdmin}
+          isProfessor={isProfessor}
+          currentUserId={user.id}
           teachers={bookingTeachers}
           editBooking={
             editBookingGroup

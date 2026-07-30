@@ -38,6 +38,8 @@ export function BookingModal({
   trainingTypes,
   creditBalances,
   isAdmin,
+  isProfessor,
+  currentUserId,
   teachers,
   editBooking
 }: {
@@ -55,6 +57,8 @@ export function BookingModal({
   trainingTypes: TrainingTypeOption[];
   creditBalances: CreditBalanceOption[];
   isAdmin?: boolean;
+  isProfessor?: boolean;
+  currentUserId?: string;
   teachers?: TeacherOption[];
   editBooking?: {
     groupId: string;
@@ -72,10 +76,12 @@ export function BookingModal({
   );
   const [trainingTypeKey, setTrainingTypeKey] = useState(editBooking?.trainingTypeKey || filteredTypes[0]?.key || "");
   const [selectedStudentIds, setSelectedStudentIds] = useState(editBooking?.studentIds || []);
-  const experimentalMode = Boolean(isAdmin && !editBooking);
+  const [selectedTeacherId, setSelectedTeacherId] = useState(isAdmin && isProfessor && !editBooking ? currentUserId || "" : "");
+  const [experimentalMode, setExperimentalMode] = useState(Boolean(isAdmin && !isProfessor && !editBooking));
   const selectedType = filteredTypes.find((type) => type.key === trainingTypeKey) || filteredTypes[0];
   const selectedTypeKey = selectedType?.key || "";
   const requiredParticipants = requiredParticipantsForType(selectedType?.name);
+  const canUseStudentList = !experimentalMode && (!isAdmin || (isProfessor && selectedTeacherId === currentUserId));
   const eligibleBalances = creditBalances.filter(
     (balance) =>
       balance.trainingTypeKey === selectedTypeKey &&
@@ -113,6 +119,15 @@ export function BookingModal({
       next[index] = value;
       return next.slice(0, requiredParticipants);
     });
+  }
+
+  function handleTeacherChange(value: string) {
+    setSelectedTeacherId(value);
+    setSelectedStudentIds([]);
+
+    if (isAdmin && value !== currentUserId) {
+      setExperimentalMode(true);
+    }
   }
 
   function formatMinutes(totalMinutes: number) {
@@ -153,7 +168,7 @@ export function BookingModal({
             <>
               <div className="field">
                 <label>Professor</label>
-                <select name="teacherId" required>
+                <select name="teacherId" value={selectedTeacherId} onChange={(event) => handleTeacherChange(event.target.value)} required>
                   <option value="">Selecionar professor</option>
                   {(teachers || []).map((teacher) => (
                     <option value={teacher.id} key={teacher.id}>
@@ -162,7 +177,18 @@ export function BookingModal({
                   ))}
                 </select>
               </div>
-              <p className="muted booking-experimental-note">Marcacao experimental sem numero de utente e sem consumo de creditos.</p>
+              <label className="checkbox booking-experimental-toggle">
+                <input
+                  type="checkbox"
+                  checked={experimentalMode}
+                  disabled={!isProfessor || selectedTeacherId !== currentUserId}
+                  onChange={(event) => setExperimentalMode(event.target.checked)}
+                />
+                Marcação experimental
+              </label>
+              {experimentalMode ? (
+                <p className="muted booking-experimental-note">Marcação experimental sem número de utente e sem consumo de créditos.</p>
+              ) : null}
             </>
           ) : null}
 
@@ -204,7 +230,7 @@ export function BookingModal({
               <label>Nome do utente experimental</label>
               <input name="experimentalStudentName" placeholder="Ex.: Aula experimental" required />
             </div>
-          ) : (
+          ) : canUseStudentList ? (
             Array.from({ length: requiredParticipants }).map((_, index) => (
               <div className="field" key={index}>
                 <label>Utente {index + 1}</label>
@@ -228,9 +254,11 @@ export function BookingModal({
                 </select>
               </div>
             ))
+          ) : (
+            <p className="muted booking-experimental-note">Para marcar utentes reais, seleciona o teu próprio professor. Para outros professores, usa marcação experimental.</p>
           )}
 
-          <button className="button" type="submit" disabled={!selectedTypeKey || (!experimentalMode && eligibleBalances.length < requiredParticipants)}>
+          <button className="button" type="submit" disabled={!selectedTypeKey || (!experimentalMode && !canUseStudentList) || (!experimentalMode && eligibleBalances.length < requiredParticipants)}>
             {editBooking ? "Guardar alteracao" : "Marcar aula"}
           </button>
         </form>
