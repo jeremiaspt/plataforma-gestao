@@ -1973,11 +1973,13 @@ h1 {
 }
 
 .booking-experimental-note {
-  align-self: center;
   background: #ecfdf5;
   border: 1px solid #99d8d0;
   border-radius: 8px;
-  padding: 9px 10px;
+  grid-column: 1 / -1;
+  line-height: 1.35;
+  margin: 0;
+  padding: 7px 10px;
 }
 
 .booking-popup-form {
@@ -1987,7 +1989,7 @@ h1 {
   border-radius: 8px;
   display: grid;
   gap: 12px;
-  grid-template-columns: 120px 120px minmax(260px, 1fr);
+  grid-template-columns: minmax(150px, 0.8fr) 120px minmax(260px, 1fr);
   padding: 14px;
 }
 
