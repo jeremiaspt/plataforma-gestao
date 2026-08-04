@@ -113,6 +113,63 @@ function groupedDayBlocks(blocks: ScheduleBlock[], date: Date, weekday: number) 
   }));
 }
 
+type GroupedDayBlock = ReturnType<typeof groupedDayBlocks>[number];
+
+function renderClassItems(group: GroupedDayBlock) {
+  return group.classes
+    .map((classItem) => {
+      const lanes = classItem.laneNumbers.map((laneNumber) => laneLabel(group.poolKey, laneNumber)).join(", ");
+      const notes = classItem.notes ? `<div style="color:#64748b;font-size:11px;margin-top:2px;">${escapeHtml(classItem.notes)}</div>` : "";
+
+      return `
+        <div style="border-top:1px solid #e2e8f0;padding-top:6px;margin-top:6px;">
+          <div style="font-weight:700;color:#0f172a;">${escapeHtml(classItem.title)}</div>
+          <div style="font-size:12px;color:#475569;">${escapeHtml(lanes)}</div>
+          ${notes}
+        </div>
+      `;
+    })
+    .join("");
+}
+
+function renderGroupCard(group: GroupedDayBlock) {
+  return `
+    <div style="background:#ffffff;border:1px solid #d8e4ef;border-radius:7px;border-left:4px solid #0f766e;margin-top:8px;padding:8px;">
+      <div style="font-size:13px;font-weight:800;color:#0f766e;">${formatMinutes(group.startMinutes)} - ${formatMinutes(group.endMinutes)}</div>
+      <div style="font-size:12px;color:#475569;margin-top:2px;">${escapeHtml(poolLabel(group.poolKey))}</div>
+      ${renderClassItems(group)}
+    </div>
+  `;
+}
+
+function renderDayCard({
+  date,
+  dayBlocks,
+  holidayName,
+  weekdayLabel
+}: {
+  date: Date;
+  dayBlocks: GroupedDayBlock[];
+  holidayName?: string;
+  weekdayLabel: string;
+}) {
+  const body = holidayName
+    ? `<div style="background:#fee2e2;border:1px solid #fecaca;border-radius:7px;color:#991b1b;font-size:12px;margin-top:8px;padding:8px;">${escapeHtml(holidayName)}</div>`
+    : dayBlocks.length === 0
+      ? `<div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:7px;color:#64748b;font-size:12px;margin-top:8px;padding:8px;">Sem aulas.</div>`
+      : dayBlocks.map(renderGroupCard).join("");
+
+  return `
+    <td style="vertical-align:top;width:14.28%;padding:4px;">
+      <div style="background:#f8fafc;border:1px solid #d8e4ef;border-radius:8px;min-height:120px;padding:8px;">
+        <div style="font-size:13px;font-weight:800;color:#0f172a;">${escapeHtml(weekdayLabel)}</div>
+        <div style="font-size:12px;color:#64748b;">${date.toLocaleDateString("pt-PT")}</div>
+        ${body}
+      </div>
+    </td>
+  `;
+}
+
 async function logEmail({
   status,
   toEmail,
@@ -190,7 +247,7 @@ export async function sendGroupClassScheduleEmail({ teacherId, weekStart }: { te
   }
 
   const textLines = [`Olá ${teacher.name},`, "", `Segue o teu mapa de aulas de grupo de ${weekStart.toLocaleDateString("pt-PT")} a ${weekEnd.toLocaleDateString("pt-PT")}.`, ""];
-  const htmlDays: string[] = [];
+  const dayCells: string[] = [];
 
   for (const weekday of poolWeekdays) {
     const date = weekdayDate(weekStart, weekday.key);
@@ -201,36 +258,17 @@ export async function sendGroupClassScheduleEmail({ teacherId, weekStart }: { te
 
     if (holiday) {
       textLines.push(`- ${holiday.name}`);
-      htmlDays.push(`<h3>${escapeHtml(weekday.label)}, ${date.toLocaleDateString("pt-PT")}</h3><p>${escapeHtml(holiday.name)}</p>`);
+      dayCells.push(renderDayCard({ date, dayBlocks: [], holidayName: holiday.name, weekdayLabel: weekday.label }));
       continue;
     }
 
     if (dayBlocks.length === 0) {
       textLines.push("- Sem aulas.");
-      htmlDays.push(`<h3>${escapeHtml(weekday.label)}, ${date.toLocaleDateString("pt-PT")}</h3><p>Sem aulas.</p>`);
+      dayCells.push(renderDayCard({ date, dayBlocks, weekdayLabel: weekday.label }));
       continue;
     }
 
-    const htmlRows = dayBlocks
-      .map((group) => {
-        const classText = group.classes
-          .map((classItem) => {
-            const lanes = classItem.laneNumbers.map((laneNumber) => laneLabel(group.poolKey, laneNumber)).join(", ");
-            const notes = classItem.notes ? ` (${classItem.notes})` : "";
-            return `${escapeHtml(classItem.title)}${escapeHtml(notes)} - ${escapeHtml(lanes)}`;
-          })
-          .join("<br />");
-        return `<tr><td>${formatMinutes(group.startMinutes)} - ${formatMinutes(group.endMinutes)}</td><td>${escapeHtml(poolLabel(group.poolKey))}</td><td>${classText}</td></tr>`;
-      })
-      .join("");
-
-    htmlDays.push(`
-      <h3>${escapeHtml(weekday.label)}, ${date.toLocaleDateString("pt-PT")}</h3>
-      <table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
-        <thead><tr><th align="left">Hora</th><th align="left">Espaço</th><th align="left">Aula</th></tr></thead>
-        <tbody>${htmlRows}</tbody>
-      </table>
-    `);
+    dayCells.push(renderDayCard({ date, dayBlocks, weekdayLabel: weekday.label }));
 
     for (const group of dayBlocks) {
       textLines.push(`- ${formatMinutes(group.startMinutes)} - ${formatMinutes(group.endMinutes)} | ${poolLabel(group.poolKey)}`);
@@ -242,14 +280,20 @@ export async function sendGroupClassScheduleEmail({ teacherId, weekStart }: { te
   }
 
   const html = `
-    <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">
-      <h2>Mapa de aulas de grupo</h2>
-      <p>Olá ${escapeHtml(teacher.name)},</p>
-      <p>Segue o teu mapa de aulas de grupo de <strong>${weekStart.toLocaleDateString("pt-PT")}</strong> a <strong>${weekEnd.toLocaleDateString("pt-PT")}</strong>.</p>
-      ${htmlDays.join("")}
+    <div style="background:#eef3f7;font-family:Arial,sans-serif;line-height:1.45;padding:18px;color:#0f172a;">
+      <div style="background:#ffffff;border:1px solid #d8e4ef;border-radius:10px;padding:18px;">
+        <p style="color:#475569;font-size:13px;margin:0 0 4px;">Aulas de grupo</p>
+        <h2 style="font-size:24px;line-height:1.15;margin:0 0 8px;">Mapa semanal</h2>
+        <p style="color:#475569;margin:0 0 16px;">
+          Olá ${escapeHtml(teacher.name)}, segue o teu mapa de aulas de grupo de
+          <strong>${weekStart.toLocaleDateString("pt-PT")}</strong> a <strong>${weekEnd.toLocaleDateString("pt-PT")}</strong>.
+        </p>
+        <table role="presentation" style="border-collapse:separate;border-spacing:0;width:100%;">
+          <tr>${dayCells.join("")}</tr>
+        </table>
+      </div>
     </div>
   `;
-
   try {
     const providerId = await sendResendEmail({
       to: teacher.email,
