@@ -17,6 +17,8 @@ export async function POST(request: Request) {
   const substitutionCcEmails = String(formData.get("substitutionCcEmails") || "").trim();
   const classStudentEnabled = formData.get("classStudentEnabled") === "on";
   const classStudentCcEmails = String(formData.get("classStudentCcEmails") || "").trim();
+  const groupClassScheduleEnabled = formData.get("groupClassScheduleEnabled") === "on";
+  const groupClassScheduleCcEmails = String(formData.get("groupClassScheduleCcEmails") || "").trim();
 
   try {
     await prisma.$transaction([
@@ -54,6 +56,18 @@ export async function POST(request: Request) {
           key: "class_student_notifications",
           enabled: classStudentEnabled,
           ccEmails: classStudentCcEmails
+        }
+      }),
+      prisma.emailSettings.upsert({
+        where: { key: "group_class_schedule" },
+        update: {
+          enabled: groupClassScheduleEnabled,
+          ccEmails: groupClassScheduleCcEmails
+        },
+        create: {
+          key: "group_class_schedule",
+          enabled: groupClassScheduleEnabled,
+          ccEmails: groupClassScheduleCcEmails
         }
       })
     ]);

@@ -69,7 +69,7 @@ function mergeSameClassBlocks<
 export default async function GroupClassesPage({
   searchParams
 }: {
-  searchParams: Promise<{ teacherId?: string; tab?: string; week?: string }>;
+  searchParams: Promise<{ emailError?: string; emailSuccess?: string; teacherId?: string; tab?: string; week?: string }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -230,6 +230,9 @@ export default async function GroupClassesPage({
           ) : null}
         </div>
 
+        {params.emailSuccess ? <p className="success">Email enviado ao professor.</p> : null}
+        {params.emailError ? <p className="error">Não foi possível enviar o email ao professor. Confirma configurações e email do professor.</p> : null}
+
         <div className="group-classes-toolbar">
           <div className="date-nav group-week-nav">
             <a className="button secondary" href={`/aulas-grupo?tab=${activeTab}&teacherId=${selectedTeacherId}&week=${previousWeek}`}>
@@ -244,23 +247,32 @@ export default async function GroupClassesPage({
           </div>
 
           {activeTab === "professor" && isAdmin ? (
-            <form className="teacher-filter group-teacher-filter" method="get" action="/aulas-grupo">
-              <input type="hidden" name="tab" value="professor" />
-              <input type="hidden" name="week" value={selectedWeekValue} />
-              <div className="field">
-                <label htmlFor="teacherId">Professor</label>
-                <select id="teacherId" name="teacherId" defaultValue={selectedTeacherId}>
-                  {teachers.map((teacher) => (
-                    <option value={teacher.id} key={teacher.id}>
-                      {teacher.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <button className="button secondary" type="submit">
-                Ver
-              </button>
-            </form>
+            <div className="group-teacher-actions">
+              <form className="teacher-filter group-teacher-filter" method="get" action="/aulas-grupo">
+                <input type="hidden" name="tab" value="professor" />
+                <input type="hidden" name="week" value={selectedWeekValue} />
+                <div className="field">
+                  <label htmlFor="teacherId">Professor</label>
+                  <select id="teacherId" name="teacherId" defaultValue={selectedTeacherId}>
+                    {teachers.map((teacher) => (
+                      <option value={teacher.id} key={teacher.id}>
+                        {teacher.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button className="button secondary" type="submit">
+                  Ver
+                </button>
+              </form>
+              <form action="/api/group-class-schedule-email" method="post">
+                <input type="hidden" name="teacherId" value={selectedTeacherId} />
+                <input type="hidden" name="week" value={selectedWeekValue} />
+                <button className="button" type="submit">
+                  Enviar por email
+                </button>
+              </form>
+            </div>
           ) : null}
         </div>
 

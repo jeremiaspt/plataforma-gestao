@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 const paymentNotificationKey = "personal_training_payment";
 const substitutionNotificationKey = "group_class_substitution";
 const classStudentNotificationKey = "class_student_notifications";
+const groupClassScheduleNotificationKey = "group_class_schedule";
 
 export function parseEmailList(value?: string | null) {
   return (value || "")
@@ -41,6 +42,18 @@ export async function getClassStudentEmailSettings() {
     update: {},
     create: {
       key: classStudentNotificationKey,
+      enabled: true,
+      ccEmails: ""
+    }
+  });
+}
+
+export async function getGroupClassScheduleEmailSettings() {
+  return prisma.emailSettings.upsert({
+    where: { key: groupClassScheduleNotificationKey },
+    update: {},
+    create: {
+      key: groupClassScheduleNotificationKey,
       enabled: true,
       ccEmails: ""
     }

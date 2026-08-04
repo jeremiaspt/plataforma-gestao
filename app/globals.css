@@ -324,9 +324,17 @@ select {
 .group-classes-toolbar {
   align-items: flex-end;
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
   justify-content: space-between;
   min-width: 0;
+}
+
+.group-teacher-actions {
+  align-items: flex-end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .group-week-nav {

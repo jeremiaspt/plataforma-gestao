@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
-import { getClassStudentEmailSettings, getPaymentEmailSettings, getSubstitutionEmailSettings } from "@/lib/email";
+import { getClassStudentEmailSettings, getGroupClassScheduleEmailSettings, getPaymentEmailSettings, getSubstitutionEmailSettings } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export default async function EmailSettingsPage({
@@ -18,10 +18,11 @@ export default async function EmailSettingsPage({
     redirect("/dashboard");
   }
 
-  const [paymentSettings, substitutionSettings, classStudentSettings, logs] = await Promise.all([
+  const [paymentSettings, substitutionSettings, classStudentSettings, groupClassScheduleSettings, logs] = await Promise.all([
     getPaymentEmailSettings(),
     getSubstitutionEmailSettings(),
     getClassStudentEmailSettings(),
+    getGroupClassScheduleEmailSettings(),
     prisma.emailLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 100
@@ -107,6 +108,23 @@ export default async function EmailSettingsPage({
               </div>
             </div>
 
+            <div className="email-settings-section">
+              <h2>Mapa de aulas de grupo</h2>
+              <label className="checkbox">
+                <input type="checkbox" name="groupClassScheduleEnabled" defaultChecked={groupClassScheduleSettings.enabled} />
+                Permitir envio do mapa semanal de aulas ao professor
+              </label>
+              <div className="field">
+                <label htmlFor="groupClassScheduleCcEmails">CC diretor/coordenadores</label>
+                <textarea
+                  id="groupClassScheduleCcEmails"
+                  name="groupClassScheduleCcEmails"
+                  defaultValue={groupClassScheduleSettings.ccEmails || ""}
+                  placeholder="email1@exemplo.pt, email2@exemplo.pt"
+                  rows={3}
+                />
+              </div>
+            </div>
             <p className="muted">No Render devem estar definidas as variáveis RESEND_API_KEY e EMAIL_FROM.</p>
             <button className="button" type="submit">
               Guardar configuração
