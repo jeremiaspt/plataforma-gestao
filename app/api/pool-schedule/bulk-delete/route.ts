@@ -44,7 +44,18 @@ export async function POST(request: Request) {
     }
   });
 
-  if (activeFutureBookings > 0) {
+  const activeFutureSubstitutions = await prisma.groupClassSubstitutionItem.count({
+    where: {
+      poolScheduleBlockId: { in: blockIds },
+      status: { not: "cancelled" },
+      request: {
+        substitutionDate: { gte: today },
+        status: { not: "cancelled" }
+      }
+    }
+  });
+
+  if (activeFutureBookings > 0 || activeFutureSubstitutions > 0) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
@@ -53,7 +64,13 @@ export async function POST(request: Request) {
     where: { poolBlockId: { in: blockIds } },
     _count: { poolBlockId: true }
   });
+  const substitutionCounts = await prisma.groupClassSubstitutionItem.groupBy({
+    by: ["poolScheduleBlockId"],
+    where: { poolScheduleBlockId: { in: blockIds } },
+    _count: { poolScheduleBlockId: true }
+  });
   const blocksWithHistory = new Set(bookingCounts.map((booking) => booking.poolBlockId));
+  substitutionCounts.forEach((substitution) => blocksWithHistory.add(substitution.poolScheduleBlockId));
   const idsToArchive = blockIds.filter((id) => blocksWithHistory.has(id));
   const idsToDelete = blockIds.filter((id) => !blocksWithHistory.has(id));
 

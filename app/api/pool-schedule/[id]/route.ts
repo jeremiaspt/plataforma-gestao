@@ -40,7 +40,18 @@ export async function POST(
     }
   });
 
-  if (activeFutureBookings > 0) {
+  const activeFutureSubstitutions = await prisma.groupClassSubstitutionItem.count({
+    where: {
+      poolScheduleBlockId: id,
+      status: { not: "cancelled" },
+      request: {
+        substitutionDate: { gte: today },
+        status: { not: "cancelled" }
+      }
+    }
+  });
+
+  if (activeFutureBookings > 0 || activeFutureSubstitutions > 0) {
     return NextResponse.redirect(appRedirectUrl(errorPath, request));
   }
 
@@ -128,8 +139,11 @@ export async function POST(
     const bookingCount = await prisma.personalTrainingBooking.count({
       where: { poolBlockId: id }
     });
+    const substitutionCount = await prisma.groupClassSubstitutionItem.count({
+      where: { poolScheduleBlockId: id }
+    });
 
-    if (bookingCount > 0) {
+    if (bookingCount > 0 || substitutionCount > 0) {
       await prisma.$transaction([
         prisma.poolScheduleBlock.update({
           where: { id },
@@ -177,8 +191,11 @@ export async function POST(
   const bookingCount = await prisma.personalTrainingBooking.count({
     where: { poolBlockId: id }
   });
+  const substitutionCount = await prisma.groupClassSubstitutionItem.count({
+    where: { poolScheduleBlockId: id }
+  });
 
-  if (bookingCount > 0) {
+  if (bookingCount > 0 || substitutionCount > 0) {
     await prisma.poolScheduleBlock.update({
       where: { id },
       data: { active: false }
