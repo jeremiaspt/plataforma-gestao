@@ -259,10 +259,12 @@ export async function AppShell({
                 </span>
               </>
             ) : null}
-            <span className={`email-daily-summary email-daily-summary-${dailyEmailTone}`}>
-              <small>Emails hoje</small>
-              <strong>{dailyEmailCount}/100</strong>
-            </span>
+            {isAdmin ? (
+              <span className={`email-daily-summary email-daily-summary-${dailyEmailTone}`}>
+                <small>Emails hoje</small>
+                <strong>{dailyEmailCount}/100</strong>
+              </span>
+            ) : null}
           </div>
         </div>
         {children}
