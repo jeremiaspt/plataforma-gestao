@@ -105,6 +105,7 @@ function writeSectionTitle(doc: PDFKit.PDFDocument, title: string, subtitle?: st
 }
 
 function drawCell(doc: PDFKit.PDFDocument, text: string, x: number, y: number, width: number, height: number, options?: { align?: "left" | "center" | "right"; bold?: boolean; fill?: string }) {
+  const textTop = text.includes("\n") ? y + 1.4 : y + 4.2;
   if (options?.fill) {
     doc.rect(x, y, width, height).fill(options.fill);
   }
@@ -113,7 +114,7 @@ function drawCell(doc: PDFKit.PDFDocument, text: string, x: number, y: number, w
     .fillColor("#0f172a")
     .font(options?.bold ? "Helvetica-Bold" : "Helvetica")
     .fontSize(5.5)
-    .text(text, x + 2, y + 3, { align: options?.align || "center", height: height - 4, lineBreak: false, width: width - 4 });
+    .text(text, x + 2, textTop, { align: options?.align || "center", height: height - 4, lineBreak: false, width: width - 4 });
 }
 
 function drawTimesheetTable({
