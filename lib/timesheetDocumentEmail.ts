@@ -69,13 +69,22 @@ function ensureSpace(doc: PDFKit.PDFDocument, needed = 42) {
 }
 
 function writeHeading(doc: PDFKit.PDFDocument, title: string, subtitle: string, total: string) {
-  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(16).text(title);
-  doc.moveDown(0.2);
-  doc.fillColor("#475569").font("Helvetica").fontSize(9).text(subtitle);
-  doc.fillColor("#0f766e").font("Helvetica-Bold").fontSize(11).text(total, doc.page.width - doc.page.margins.right - 120, doc.page.margins.top, {
-    align: "right",
-    width: 120
+  const topY = doc.y;
+  const totalWidth = 120;
+  const contentWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(16).text(title, doc.page.margins.left, topY, {
+    width: contentWidth - totalWidth - 12
   });
+  doc.moveDown(0.2);
+  doc.fillColor("#475569").font("Helvetica").fontSize(9).text(subtitle, {
+    width: contentWidth - totalWidth - 12
+  });
+  const leftY = doc.y;
+  doc.fillColor("#0f766e").font("Helvetica-Bold").fontSize(11).text(total, doc.page.width - doc.page.margins.right - totalWidth, topY, {
+    align: "right",
+    width: totalWidth
+  });
+  doc.y = Math.max(leftY, topY + 24);
   doc.moveDown(0.8);
 }
 
@@ -97,7 +106,7 @@ function drawCell(doc: PDFKit.PDFDocument, text: string, x: number, y: number, w
   doc
     .fillColor("#0f172a")
     .font(options?.bold ? "Helvetica-Bold" : "Helvetica")
-    .fontSize(6.5)
+    .fontSize(6)
     .text(text, x + 2, y + 3, { align: options?.align || "center", height: height - 4, lineBreak: false, width: width - 4 });
 }
 
@@ -165,10 +174,24 @@ function drawTimesheetTable({
   doc.y = y + 8;
 }
 
+function chunkDates<T>(items: T[], size: number) {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
 function writeBulletLines(doc: PDFKit.PDFDocument, lines: string[]) {
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   for (const line of lines) {
-    ensureSpace(doc, 18);
-    doc.fillColor("#0f172a").font("Helvetica").fontSize(8).text(`- ${line}`, { continued: false });
+    const text = `- ${line}`;
+    const height = doc.heightOfString(text, { width });
+    ensureSpace(doc, height + 8);
+    doc.fillColor("#0f172a").font("Helvetica").fontSize(8).text(text, {
+      width
+    });
+    doc.moveDown(0.15);
   }
 }
 
@@ -189,39 +212,52 @@ export async function generateGroupHoursPdf({ month, teacherId }: { month?: stri
 
   const periodDates = eachPeriodDate(timesheet.period.start, timesheet.period.endExclusive);
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
-  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "landscape" });
+  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "portrait" });
   writeHeading(
     doc,
     "Folha de horas - aulas de grupo",
     `${timesheet.teacher.name} - ${formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)}`,
     formatCurrency(grandTotal)
   );
-  drawTimesheetTable({
-    doc,
-    firstColumns: [
-      { key: "name", label: "Caract.", width: 88 },
-      { key: "rate", label: "Valor/hora", width: 42 }
-    ],
-    periodDates,
-    rows: timesheet.rows.map((row) => {
-      const cells: Record<string, string> = {
-        name: row.name,
-        partial: formatCurrency(row.totalValue),
-        rate: row.hourlyRate.toFixed(2).replace(".", ","),
-        total: row.totalHours.toFixed(2).replace(".", ",")
-      };
-      for (const date of periodDates) {
-        const dateValue = dateToInputValue(date);
-        const count = row.dayCounts.get(dateValue) || 0;
-        const hours = row.dayHours.get(dateValue) || 0;
-        cells[dateValue] = row.calculationMode === "minutes" ? formatCellValue(hours) : formatCellValue(count);
-      }
-      return { id: row.id, cells };
-    }),
-    totalColumns: [
-      { key: "total", label: "Total horas", width: 44 },
-      { key: "partial", label: "Parcial", width: 48 }
-    ]
+  const groupRows = timesheet.rows.map((row) => {
+    const cells: Record<string, string> = {
+      name: row.name,
+      partial: formatCurrency(row.totalValue),
+      rate: row.hourlyRate.toFixed(2).replace(".", ","),
+      total: row.totalHours.toFixed(2).replace(".", ",")
+    };
+    for (const date of periodDates) {
+      const dateValue = dateToInputValue(date);
+      const count = row.dayCounts.get(dateValue) || 0;
+      const hours = row.dayHours.get(dateValue) || 0;
+      cells[dateValue] = row.calculationMode === "minutes" ? formatCellValue(hours) : formatCellValue(count);
+    }
+    return { id: row.id, cells };
+  });
+
+  chunkDates(periodDates, 14).forEach((dateChunk, index) => {
+    if (index > 0) {
+      doc.addPage();
+      writeHeading(
+        doc,
+        "Folha de horas - aulas de grupo",
+        `${timesheet.teacher.name} - ${formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)} - continuacao`,
+        formatCurrency(grandTotal)
+      );
+    }
+    drawTimesheetTable({
+      doc,
+      firstColumns: [
+        { key: "name", label: "Caract.", width: 92 },
+        { key: "rate", label: "Valor/hora", width: 44 }
+      ],
+      periodDates: dateChunk,
+      rows: groupRows,
+      totalColumns: [
+        { key: "total", label: "Total horas", width: 48 },
+        { key: "partial", label: "Parcial", width: 52 }
+      ]
+    });
   });
 
   if (timesheet.absenceDetails.length > 0) {
@@ -273,39 +309,52 @@ export async function generatePersonalTrainingPdf({ month, teacherId }: { month?
   const periodDates = eachPeriodDate(timesheet.period.start, timesheet.period.endExclusive);
   const periodMonthKeys = Array.from(new Set(periodDates.map((date) => monthKey(date))));
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
-  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "landscape" });
+  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "portrait" });
   writeHeading(
     doc,
     "Folha de treinos personalizados",
     `${timesheet.teacher.name} - ${formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)} - ${getBillingCycleLabel(timesheet.teacher.billingCycle)}`,
     formatCurrency(grandTotal)
   );
-  drawTimesheetTable({
-    doc,
-    firstColumns: [
-      { key: "name", label: "Caract.", width: 78 },
-      { key: "students", label: "N. alunos", width: 36 },
-      { key: "value", label: "Valor/aluno", width: 44 }
-    ],
-    periodDates,
-    rows: timesheet.rows.map((row) => {
-      const cells: Record<string, string> = {
-        name: row.name,
-        partial: formatCurrency(row.totalValue),
-        students: String(row.studentCount),
-        total: formatCellValue(row.totalLessons),
-        value: formatCurrency(row.valuePerStudent)
-      };
-      for (const date of periodDates) {
-        const dateValue = dateToInputValue(date);
-        cells[dateValue] = formatCellValue(row.dayLessons.get(dateValue) || 0);
-      }
-      return { id: row.id, cells };
-    }),
-    totalColumns: [
-      { key: "total", label: "Total aulas", width: 44 },
-      { key: "partial", label: "Parcial", width: 48 }
-    ]
+  const trainingRows = timesheet.rows.map((row) => {
+    const cells: Record<string, string> = {
+      name: row.name,
+      partial: formatCurrency(row.totalValue),
+      students: String(row.studentCount),
+      total: formatCellValue(row.totalLessons),
+      value: formatCurrency(row.valuePerStudent)
+    };
+    for (const date of periodDates) {
+      const dateValue = dateToInputValue(date);
+      cells[dateValue] = formatCellValue(row.dayLessons.get(dateValue) || 0);
+    }
+    return { id: row.id, cells };
+  });
+
+  chunkDates(periodDates, 12).forEach((dateChunk, index) => {
+    if (index > 0) {
+      doc.addPage();
+      writeHeading(
+        doc,
+        "Folha de treinos personalizados",
+        `${timesheet.teacher.name} - ${formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)} - continuacao`,
+        formatCurrency(grandTotal)
+      );
+    }
+    drawTimesheetTable({
+      doc,
+      firstColumns: [
+        { key: "name", label: "Caract.", width: 82 },
+        { key: "students", label: "N. alunos", width: 38 },
+        { key: "value", label: "Valor/aluno", width: 48 }
+      ],
+      periodDates: dateChunk,
+      rows: trainingRows,
+      totalColumns: [
+        { key: "total", label: "Total aulas", width: 48 },
+        { key: "partial", label: "Parcial", width: 52 }
+      ]
+    });
   });
 
   if (periodMonthKeys.length > 1) {
