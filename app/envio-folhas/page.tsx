@@ -6,7 +6,7 @@ import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
 import { calculatePersonalTrainingTimesheet, eachPeriodDate } from "@/lib/personalTrainingTimesheet";
-import { dateToInputValue } from "@/lib/pool";
+import { dateToInputValue, formatMinutes, getPoolMapByKey } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 
 type DocumentType = "both" | "group" | "personal";
@@ -25,6 +25,22 @@ function formatCellValue(value: number) {
   if (!value) return "";
   if (Number.isInteger(value)) return value.toString();
   return value.toFixed(2).replace(".", ",");
+}
+
+function formatDateValue(value: string) {
+  return new Date(`${value}T00:00:00`).toLocaleDateString("pt-PT");
+}
+
+function classLabel(block: { laneNumber: number; poolKey: string }) {
+  const poolMap = getPoolMapByKey(block.poolKey);
+  const lane = poolMap.lanes.find((item) => item.number === block.laneNumber);
+  return `${poolMap.eyebrow} - ${lane?.label || `${poolMap.laneFieldLabel} ${block.laneNumber}`}`;
+}
+
+function detailBase(item: { accumulation?: boolean; date: string; endMinutes: number; laneNumber: number; poolKey: string; startMinutes: number; title: string }) {
+  return `${formatDateValue(item.date)} - ${formatMinutes(item.startMinutes)}-${formatMinutes(item.endMinutes)} - ${item.title}${
+    item.accumulation ? " (ACUM.)" : ""
+  } - ${classLabel(item)}`;
 }
 
 function TimesheetHead({ periodDates }: { periodDates: Date[] }) {
@@ -93,6 +109,36 @@ function GroupHoursPreview({ timesheet }: { timesheet: GroupTimesheet }) {
           {timesheet.absenceDetails.length ? <p><strong>Faltas:</strong> {timesheet.absenceDetails.length} registo(s)</p> : null}
           {timesheet.extraDetails.length ? <p><strong>Extras/substituições:</strong> {timesheet.extraDetails.length} registo(s)</p> : null}
           {timesheet.otherDetails.length ? <p><strong>Outros:</strong> {timesheet.otherDetails.length} registo(s)</p> : null}
+          {timesheet.absenceDetails.length ? (
+            <div>
+              <strong>Detalhe faltas</strong>
+              {timesheet.absenceDetails.map((item, index) => (
+                <p key={`${item.date}-${item.startMinutes}-${item.title}-${index}`}>
+                  {detailBase(item)} - Substituto: {item.substituteTeacherName}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {timesheet.extraDetails.length ? (
+            <div>
+              <strong>Detalhe extras/substituicoes</strong>
+              {timesheet.extraDetails.map((item, index) => (
+                <p key={`${item.date}-${item.startMinutes}-${item.title}-${index}`}>
+                  {detailBase(item)} - Por: {item.absentTeacherName}
+                </p>
+              ))}
+            </div>
+          ) : null}
+          {timesheet.otherDetails.length ? (
+            <div>
+              <strong>Detalhe outros</strong>
+              {timesheet.otherDetails.map((item, index) => (
+                <p key={`${item.date}-${item.startMinutes}-${item.title}-${index}`}>
+                  {formatDateValue(item.date)} - {formatMinutes(item.startMinutes)}-{formatMinutes(item.endMinutes)} - {item.title} - {item.responsibleName}
+                </p>
+              ))}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </section>
@@ -146,11 +192,10 @@ function PersonalTrainingPreview({ timesheet }: { timesheet: PersonalTimesheet }
       {timesheet.studentDetails.length ? (
         <div className="timesheet-send-preview-details">
           <strong>Detalhe por utente</strong>
-          {timesheet.studentDetails.slice(0, 12).map((item, index) => {
+          {timesheet.studentDetails.map((item, index) => {
             const students = item.students.map((student) => `${student.memberNumber} - ${student.fullName}`).join(" / ");
             return <p key={`${students}-${index}`}>{students} {item.trainingLabel} ({item.days.join(", ")})</p>;
           })}
-          {timesheet.studentDetails.length > 12 ? <p className="muted">Mais {timesheet.studentDetails.length - 12} detalhe(s) no PDF.</p> : null}
         </div>
       ) : null}
     </section>
