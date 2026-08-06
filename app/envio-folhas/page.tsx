@@ -92,10 +92,15 @@ function GroupHoursPreview({ timesheet }: { timesheet: GroupTimesheet }) {
                 <td>{row.hourlyRate.toFixed(2)}</td>
                 {periodDates.map((date) => {
                   const dateValue = dateToInputValue(date);
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
                   const count = row.dayCounts.get(dateValue) || 0;
                   const hours = row.dayHours.get(dateValue) || 0;
                   const value = row.calculationMode === "minutes" ? formatCellValue(hours) : formatCellValue(count);
-                  return <td key={dateValue}>{value}</td>;
+                  return (
+                    <td className={isWeekend ? "timesheet-weekend-cell" : undefined} key={dateValue}>
+                      {value}
+                    </td>
+                  );
                 })}
                 <td>{row.totalHours.toFixed(2).replace(".", ",")}</td>
                 <td>{formatCurrency(row.totalValue)}</td>
@@ -180,7 +185,12 @@ function PersonalTrainingPreview({ timesheet }: { timesheet: PersonalTimesheet }
                 <td>{formatCurrency(row.valuePerStudent)}</td>
                 {periodDates.map((date) => {
                   const dateValue = dateToInputValue(date);
-                  return <td key={dateValue}>{formatCellValue(row.dayLessons.get(dateValue) || 0)}</td>;
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+                  return (
+                    <td className={isWeekend ? "timesheet-weekend-cell" : undefined} key={dateValue}>
+                      {formatCellValue(row.dayLessons.get(dateValue) || 0)}
+                    </td>
+                  );
                 })}
                 <td>{formatCellValue(row.totalLessons)}</td>
                 <td>{formatCurrency(row.totalValue)}</td>

@@ -104,17 +104,36 @@ function writeSectionTitle(doc: PDFKit.PDFDocument, title: string, subtitle?: st
   doc.moveDown(0.3);
 }
 
-function drawCell(doc: PDFKit.PDFDocument, text: string, x: number, y: number, width: number, height: number, options?: { align?: "left" | "center" | "right"; bold?: boolean; fill?: string }) {
-  const textTop = text.includes("\n") ? y + 1.4 : y + 4.2;
+function drawCell(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  options?: { align?: "left" | "center" | "right"; bold?: boolean; fill?: string; textColor?: string }
+) {
+  const isMultiline = text.includes("\n");
+  const textTop = isMultiline ? y + 1.6 : y + 4.4;
   if (options?.fill) {
     doc.rect(x, y, width, height).fill(options.fill);
   }
   doc.rect(x, y, width, height).strokeColor("#cbd5e1").lineWidth(0.4).stroke();
+  if (isMultiline) {
+    const lines = text.split("\n");
+    doc
+      .fillColor(options?.textColor || "#0f172a")
+      .font(options?.bold ? "Helvetica-Bold" : "Helvetica")
+      .fontSize(5.2)
+      .text(lines[0] || "", x + 2, y + 1.7, { align: options?.align || "center", lineBreak: false, width: width - 4 })
+      .text(lines[1] || "", x + 2, y + 8, { align: options?.align || "center", lineBreak: false, width: width - 4 });
+    return;
+  }
   doc
-    .fillColor("#0f172a")
+    .fillColor(options?.textColor || "#0f172a")
     .font(options?.bold ? "Helvetica-Bold" : "Helvetica")
     .fontSize(5.5)
-    .text(text, x + 2, textTop, { align: options?.align || "center", height: height - 4, lineBreak: false, width: width - 4 });
+    .text(text, x + 2, textTop, { align: options?.align || "center", height: height - 3, lineBreak: isMultiline, width: width - 4 });
 }
 
 function drawTimesheetTable({
@@ -134,7 +153,7 @@ function drawTimesheetTable({
   const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const fixedWidth = [...firstColumns, ...totalColumns].reduce((total, column) => total + column.width, 0);
   const dayWidth = Math.max(12, (usableWidth - fixedWidth) / periodDates.length);
-  const rowHeight = 14;
+  const rowHeight = 15;
   let y = doc.y;
 
   const drawHeader = () => {
@@ -145,7 +164,11 @@ function drawTimesheetTable({
     }
     for (const date of periodDates) {
       const dateValue = `${date.getDate()}\n${weekdayShortLabel(date)}`;
-      drawCell(doc, dateValue, x, y, dayWidth, rowHeight, { bold: true, fill: date.getDay() === 0 || date.getDay() === 6 ? "#cfe3f8" : "#15558a" });
+      drawCell(doc, dateValue, x, y, dayWidth, rowHeight, {
+        bold: true,
+        fill: date.getDay() === 0 || date.getDay() === 6 ? "#2563a6" : "#15558a",
+        textColor: "#ffffff"
+      });
       x += dayWidth;
     }
     for (const column of totalColumns) {
