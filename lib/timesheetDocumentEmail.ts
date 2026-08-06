@@ -91,9 +91,15 @@ function writeHeading(doc: PDFKit.PDFDocument, title: string, subtitle: string, 
 function writeSectionTitle(doc: PDFKit.PDFDocument, title: string, subtitle?: string) {
   ensureSpace(doc, 34);
   doc.moveDown(0.6);
-  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(11).text(title);
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  doc.x = doc.page.margins.left;
+  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(11).text(title, doc.page.margins.left, doc.y, {
+    width
+  });
   if (subtitle) {
-    doc.fillColor("#64748b").font("Helvetica").fontSize(8).text(subtitle);
+    doc.fillColor("#64748b").font("Helvetica").fontSize(8).text(subtitle, doc.page.margins.left, doc.y, {
+      width
+    });
   }
   doc.moveDown(0.3);
 }
@@ -106,7 +112,7 @@ function drawCell(doc: PDFKit.PDFDocument, text: string, x: number, y: number, w
   doc
     .fillColor("#0f172a")
     .font(options?.bold ? "Helvetica-Bold" : "Helvetica")
-    .fontSize(6)
+    .fontSize(5.5)
     .text(text, x + 2, y + 3, { align: options?.align || "center", height: height - 4, lineBreak: false, width: width - 4 });
 }
 
@@ -127,7 +133,7 @@ function drawTimesheetTable({
   const usableWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const fixedWidth = [...firstColumns, ...totalColumns].reduce((total, column) => total + column.width, 0);
   const dayWidth = Math.max(12, (usableWidth - fixedWidth) / periodDates.length);
-  const rowHeight = 18;
+  const rowHeight = 14;
   let y = doc.y;
 
   const drawHeader = () => {
@@ -174,25 +180,37 @@ function drawTimesheetTable({
   doc.y = y + 8;
 }
 
-function chunkDates<T>(items: T[], size: number) {
-  const chunks: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    chunks.push(items.slice(index, index + size));
-  }
-  return chunks;
-}
-
-function writeBulletLines(doc: PDFKit.PDFDocument, lines: string[]) {
+function writeBulletLines(doc: PDFKit.PDFDocument, lines: string[], columns = 1) {
   const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const gap = 10;
+  const columnCount = Math.max(1, columns);
+  const columnWidth = (width - gap * (columnCount - 1)) / columnCount;
+  let columnIndex = 0;
+  let y = doc.y;
+  const startY = doc.y;
+  let pageBottom = doc.page.height - doc.page.margins.bottom;
+
   for (const line of lines) {
     const text = `- ${line}`;
-    const height = doc.heightOfString(text, { width });
-    ensureSpace(doc, height + 8);
-    doc.fillColor("#0f172a").font("Helvetica").fontSize(8).text(text, {
-      width
+    const height = doc.heightOfString(text, { width: columnWidth }) + 3;
+    if (y + height > pageBottom) {
+      columnIndex += 1;
+      if (columnIndex >= columnCount) {
+        doc.addPage();
+        columnIndex = 0;
+        y = doc.page.margins.top;
+        pageBottom = doc.page.height - doc.page.margins.bottom;
+      } else {
+        y = startY;
+      }
+    }
+    const x = doc.page.margins.left + columnIndex * (columnWidth + gap);
+    doc.fillColor("#0f172a").font("Helvetica").fontSize(6.5).text(text, x, y, {
+      width: columnWidth
     });
-    doc.moveDown(0.15);
+    y += height;
   }
+  doc.y = y + 4;
 }
 
 export async function generateGroupHoursPdf({ month, teacherId }: { month?: string; teacherId: string }) {
@@ -212,7 +230,7 @@ export async function generateGroupHoursPdf({ month, teacherId }: { month?: stri
 
   const periodDates = eachPeriodDate(timesheet.period.start, timesheet.period.endExclusive);
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
-  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "portrait" });
+  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "landscape" });
   writeHeading(
     doc,
     "Folha de horas - aulas de grupo",
@@ -235,29 +253,18 @@ export async function generateGroupHoursPdf({ month, teacherId }: { month?: stri
     return { id: row.id, cells };
   });
 
-  chunkDates(periodDates, 14).forEach((dateChunk, index) => {
-    if (index > 0) {
-      doc.addPage();
-      writeHeading(
-        doc,
-        "Folha de horas - aulas de grupo",
-        `${timesheet.teacher.name} - ${formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)} - continuacao`,
-        formatCurrency(grandTotal)
-      );
-    }
-    drawTimesheetTable({
-      doc,
-      firstColumns: [
-        { key: "name", label: "Caract.", width: 92 },
-        { key: "rate", label: "Valor/hora", width: 44 }
-      ],
-      periodDates: dateChunk,
-      rows: groupRows,
-      totalColumns: [
-        { key: "total", label: "Total horas", width: 48 },
-        { key: "partial", label: "Parcial", width: 52 }
-      ]
-    });
+  drawTimesheetTable({
+    doc,
+    firstColumns: [
+      { key: "name", label: "Caract.", width: 86 },
+      { key: "rate", label: "Valor/hora", width: 38 }
+    ],
+    periodDates,
+    rows: groupRows,
+    totalColumns: [
+      { key: "total", label: "Total horas", width: 44 },
+      { key: "partial", label: "Parcial", width: 48 }
+    ]
   });
 
   if (timesheet.absenceDetails.length > 0) {
@@ -269,7 +276,8 @@ export async function generateGroupHoursPdf({ month, teacherId }: { month?: stri
           `${formatDateValue(item.date)} - ${formatMinutes(item.startMinutes)}-${formatMinutes(item.endMinutes)} - ${item.title}${
             item.accumulation ? " (ACUM.)" : ""
           } - ${classLabel(item)} - Substituto: ${item.substituteTeacherName}`
-      )
+      ),
+      2
     );
   }
 
@@ -282,7 +290,8 @@ export async function generateGroupHoursPdf({ month, teacherId }: { month?: stri
           `${formatDateValue(item.date)} - ${formatMinutes(item.startMinutes)}-${formatMinutes(item.endMinutes)} - ${item.title}${
             item.accumulation ? " (ACUM.)" : ""
           } - ${classLabel(item)} - Por: ${item.absentTeacherName}`
-      )
+      ),
+      2
     );
   }
 
@@ -290,7 +299,8 @@ export async function generateGroupHoursPdf({ month, teacherId }: { month?: stri
     writeSectionTitle(doc, "Outros", "Outros registos considerados na folha.");
     writeBulletLines(
       doc,
-      timesheet.otherDetails.map((item) => `${formatDateValue(item.date)} - ${formatMinutes(item.startMinutes)}-${formatMinutes(item.endMinutes)} - ${item.title} - ${item.responsibleName}`)
+      timesheet.otherDetails.map((item) => `${formatDateValue(item.date)} - ${formatMinutes(item.startMinutes)}-${formatMinutes(item.endMinutes)} - ${item.title} - ${item.responsibleName}`),
+      2
     );
   }
 
@@ -309,7 +319,7 @@ export async function generatePersonalTrainingPdf({ month, teacherId }: { month?
   const periodDates = eachPeriodDate(timesheet.period.start, timesheet.period.endExclusive);
   const periodMonthKeys = Array.from(new Set(periodDates.map((date) => monthKey(date))));
   const grandTotal = timesheet.rows.reduce((total, row) => total + row.totalValue, 0);
-  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "portrait" });
+  const doc = new PDFDocument({ margin: 24, size: "A4", layout: "landscape" });
   writeHeading(
     doc,
     "Folha de treinos personalizados",
@@ -331,30 +341,19 @@ export async function generatePersonalTrainingPdf({ month, teacherId }: { month?
     return { id: row.id, cells };
   });
 
-  chunkDates(periodDates, 12).forEach((dateChunk, index) => {
-    if (index > 0) {
-      doc.addPage();
-      writeHeading(
-        doc,
-        "Folha de treinos personalizados",
-        `${timesheet.teacher.name} - ${formatBillingPeriod(timesheet.period.start, timesheet.period.endExclusive)} - continuacao`,
-        formatCurrency(grandTotal)
-      );
-    }
-    drawTimesheetTable({
-      doc,
-      firstColumns: [
-        { key: "name", label: "Caract.", width: 82 },
-        { key: "students", label: "N. alunos", width: 38 },
-        { key: "value", label: "Valor/aluno", width: 48 }
-      ],
-      periodDates: dateChunk,
-      rows: trainingRows,
-      totalColumns: [
-        { key: "total", label: "Total aulas", width: 48 },
-        { key: "partial", label: "Parcial", width: 52 }
-      ]
-    });
+  drawTimesheetTable({
+    doc,
+    firstColumns: [
+      { key: "name", label: "Caract.", width: 76 },
+      { key: "students", label: "N. alunos", width: 34 },
+      { key: "value", label: "Valor/aluno", width: 42 }
+    ],
+    periodDates,
+    rows: trainingRows,
+    totalColumns: [
+      { key: "total", label: "Total aulas", width: 44 },
+      { key: "partial", label: "Parcial", width: 48 }
+    ]
   });
 
   if (periodMonthKeys.length > 1) {
@@ -368,7 +367,8 @@ export async function generatePersonalTrainingPdf({ month, teacherId }: { month?
       timesheet.studentDetails.map((item) => {
         const students = item.students.map((student) => `${student.memberNumber} - ${student.fullName}`).join(" / ");
         return `${students} ${item.trainingLabel} (${item.days.join(", ")})`;
-      })
+      }),
+      3
     );
   }
 
@@ -376,7 +376,8 @@ export async function generatePersonalTrainingPdf({ month, teacherId }: { month?
     writeSectionTitle(doc, "Pagamentos sem Caract.", "Pagamentos que existem, mas ainda nao entram em nenhuma regra da folha de treinos.");
     writeBulletLines(
       doc,
-      timesheet.unmatched.map((item) => `${item.date} - ${item.student} - ${item.paymentType} - ${formatCellValue(item.lessons)} aulas - ${formatCurrency(item.value)}`)
+      timesheet.unmatched.map((item) => `${item.date} - ${item.student} - ${item.paymentType} - ${formatCellValue(item.lessons)} aulas - ${formatCurrency(item.value)}`),
+      3
     );
   }
 
