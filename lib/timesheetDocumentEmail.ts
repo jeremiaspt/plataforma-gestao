@@ -1,4 +1,4 @@
-import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit/js/pdfkit.standalone";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel } from "@/lib/billingCycles";
 import { getTimesheetDocumentsEmailSettings, parseEmailList, sendResendEmail } from "@/lib/email";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
