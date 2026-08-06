@@ -377,7 +377,8 @@ export async function sendTimesheetDocumentsEmail({
     return { ok: false, reason: "Envio desativado." };
   }
 
-  const attachments: PdfAttachment[] = [];
+  try {
+    const attachments: PdfAttachment[] = [];
   if (documentType === "group" || documentType === "both") {
     const groupPdf = await generateGroupHoursPdf({ month: selectedMonth, teacherId });
     if (groupPdf) {
@@ -392,7 +393,7 @@ export async function sendTimesheetDocumentsEmail({
   }
 
   if (attachments.length === 0) {
-    return { ok: false, reason: "Sem documentos para enviar." };
+    throw new Error("Sem documentos para enviar.");
   }
 
   const html = `
@@ -404,7 +405,6 @@ export async function sendTimesheetDocumentsEmail({
   `;
   const text = `Olá ${teacher.name},\n\nSegue em anexo a documentação selecionada referente ao período ${selectedMonth}.`;
 
-  try {
     const providerId = await sendResendEmail({
       attachments,
       cc,

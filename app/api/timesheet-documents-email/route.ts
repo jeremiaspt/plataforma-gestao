@@ -22,12 +22,14 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl("/envio-folhas?error=1", request));
   }
 
-  const result = await sendTimesheetDocumentsEmail({ documentType, month, teacherId });
-  const params = new URLSearchParams({
-    month,
-    teacherId,
-    [result.ok ? "success" : "error"]: "1"
-  });
+  const params = new URLSearchParams({ documentType, month, teacherId });
+
+  try {
+    const result = await sendTimesheetDocumentsEmail({ documentType, month, teacherId });
+    params.set(result.ok ? "success" : "error", "1");
+  } catch {
+    params.set("error", "1");
+  }
 
   return NextResponse.redirect(appRedirectUrl(`/envio-folhas?${params.toString()}`, request));
 }
