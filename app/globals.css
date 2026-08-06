@@ -316,6 +316,37 @@ select {
   padding: 14px;
 }
 
+.timesheet-send-panel {
+  display: grid;
+  gap: 14px;
+  max-width: 980px;
+}
+
+.timesheet-send-form {
+  align-items: flex-end;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 1fr) 170px minmax(240px, 320px) auto;
+  padding: 14px;
+}
+
+.timesheet-send-note {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
+.timesheet-send-note span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .group-classes-panel {
   display: grid;
   gap: 14px;
@@ -3970,6 +4001,7 @@ h1 {
   .hourly-rate-row,
   .training-timesheet-rule-form,
   .training-timesheet-rule-row,
+  .timesheet-send-form,
   .timesheet-filter {
     grid-template-columns: 1fr;
     width: 100%;

@@ -106,6 +106,7 @@ export async function AppShell({
         { href: "/configuracoes-email", icon: Mail, label: "Emails", tone: "admin" },
         { href: "/configuracoes-sistema", icon: Settings, label: "Sistema", tone: "admin" },
         { href: "/valor-hora-aulas", icon: FileSpreadsheet, label: "Valor hora", tone: "admin" },
+        { href: "/envio-folhas", icon: Mail, label: "Envio folhas", tone: "admin" },
         { href: "/treinos-personalizados/tipos", icon: Dumbbell, label: "Treinos personalizados", tone: "admin" },
         { href: "/configurar-folha-treinos", icon: FileSpreadsheet, label: "Config. folha treinos", tone: "admin" }
       ]

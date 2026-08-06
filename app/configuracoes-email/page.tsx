@@ -1,7 +1,13 @@
 import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
-import { getClassStudentEmailSettings, getGroupClassScheduleEmailSettings, getPaymentEmailSettings, getSubstitutionEmailSettings } from "@/lib/email";
+import {
+  getClassStudentEmailSettings,
+  getGroupClassScheduleEmailSettings,
+  getPaymentEmailSettings,
+  getSubstitutionEmailSettings,
+  getTimesheetDocumentsEmailSettings
+} from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export default async function EmailSettingsPage({
@@ -18,11 +24,12 @@ export default async function EmailSettingsPage({
     redirect("/dashboard");
   }
 
-  const [paymentSettings, substitutionSettings, classStudentSettings, groupClassScheduleSettings, logs] = await Promise.all([
+  const [paymentSettings, substitutionSettings, classStudentSettings, groupClassScheduleSettings, timesheetDocumentsSettings, logs] = await Promise.all([
     getPaymentEmailSettings(),
     getSubstitutionEmailSettings(),
     getClassStudentEmailSettings(),
     getGroupClassScheduleEmailSettings(),
+    getTimesheetDocumentsEmailSettings(),
     prisma.emailLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 100
@@ -120,6 +127,23 @@ export default async function EmailSettingsPage({
                   id="groupClassScheduleCcEmails"
                   name="groupClassScheduleCcEmails"
                   defaultValue={groupClassScheduleSettings.ccEmails || ""}
+                  placeholder="email1@exemplo.pt, email2@exemplo.pt"
+                  rows={3}
+                />
+              </div>
+            </div>
+            <div className="email-settings-section">
+              <h2>Envio de folhas</h2>
+              <label className="checkbox">
+                <input type="checkbox" name="timesheetDocumentsEnabled" defaultChecked={timesheetDocumentsSettings.enabled} />
+                Permitir envio da folha de horas e folha de treinos em PDF
+              </label>
+              <div className="field">
+                <label htmlFor="timesheetDocumentsCcEmails">CC diretor/coordenadores</label>
+                <textarea
+                  id="timesheetDocumentsCcEmails"
+                  name="timesheetDocumentsCcEmails"
+                  defaultValue={timesheetDocumentsSettings.ccEmails || ""}
                   placeholder="email1@exemplo.pt, email2@exemplo.pt"
                   rows={3}
                 />

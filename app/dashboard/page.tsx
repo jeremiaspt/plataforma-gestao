@@ -83,6 +83,14 @@ const sections: ToolSection[] = [
         tone: "admin"
       },
       {
+        title: "Envio folhas",
+        description: "Enviar folhas de horas e treinos em PDF.",
+        roles: ["admin"],
+        href: "/envio-folhas",
+        icon: Mail,
+        tone: "admin"
+      },
+      {
         title: "Treinos personalizados",
         description: "Configurar tipos, créditos e valores.",
         roles: ["admin"],

@@ -4,6 +4,7 @@ const paymentNotificationKey = "personal_training_payment";
 const substitutionNotificationKey = "group_class_substitution";
 const classStudentNotificationKey = "class_student_notifications";
 const groupClassScheduleNotificationKey = "group_class_schedule";
+const timesheetDocumentsNotificationKey = "timesheet_documents";
 
 export function parseEmailList(value?: string | null) {
   return (value || "")
@@ -60,10 +61,28 @@ export async function getGroupClassScheduleEmailSettings() {
   });
 }
 
+export async function getTimesheetDocumentsEmailSettings() {
+  return prisma.emailSettings.upsert({
+    where: { key: timesheetDocumentsNotificationKey },
+    update: {},
+    create: {
+      key: timesheetDocumentsNotificationKey,
+      enabled: true,
+      ccEmails: ""
+    }
+  });
+}
+
+type EmailAttachment = {
+  filename: string;
+  content: string;
+};
+
 export async function sendResendEmail({
   to,
   cc,
   bcc,
+  attachments,
   subject,
   html,
   text
@@ -71,6 +90,7 @@ export async function sendResendEmail({
   to: string | string[];
   cc: string[];
   bcc?: string[];
+  attachments?: EmailAttachment[];
   subject: string;
   html: string;
   text: string;
@@ -93,6 +113,7 @@ export async function sendResendEmail({
       to: Array.isArray(to) ? to : [to],
       cc,
       bcc,
+      attachments,
       subject,
       html,
       text
