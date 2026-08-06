@@ -24,10 +24,12 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { currentBillingMonthValue } from "@/lib/billingCycles";
+import { parseEmailList } from "@/lib/email";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
 import { calculatePersonalTrainingTimesheet } from "@/lib/personalTrainingTimesheet";
+import { prisma } from "@/lib/prisma";
 
 type NavItem = {
   href: string;
@@ -56,6 +58,25 @@ function NavSection({ items, title }: { title: string; items: NavItem[] }) {
       })}
     </div>
   );
+}
+
+function todayBounds() {
+  const start = new Date();
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+  return { end, start };
+}
+
+function countEmailRecipients(log: { ccEmails: string | null; toEmail: string }) {
+  const toCount = parseEmailList(log.toEmail).length || (log.toEmail ? 1 : 0);
+  return toCount + parseEmailList(log.ccEmails).length;
+}
+
+function emailUsageTone(count: number) {
+  if (count < 50) return "ok";
+  if (count <= 80) return "warning";
+  return "danger";
 }
 
 export async function AppShell({
@@ -97,6 +118,22 @@ export async function AppShell({
       : null;
   const groupHoursTotal = summary?.[0]?.rows.reduce((total, row) => total + row.totalValue, 0) || 0;
   const personalTrainingTotal = summary?.[1]?.rows.reduce((total, row) => total + row.totalValue, 0) || 0;
+  const emailDayBounds = todayBounds();
+  const sentEmailLogs = await prisma.emailLog.findMany({
+    where: {
+      createdAt: {
+        gte: emailDayBounds.start,
+        lt: emailDayBounds.end
+      },
+      status: "sent"
+    },
+    select: {
+      ccEmails: true,
+      toEmail: true
+    }
+  });
+  const dailyEmailCount = sentEmailLogs.reduce((total, log) => total + countEmailRecipients(log), 0);
+  const dailyEmailTone = emailUsageTone(dailyEmailCount);
 
   const mainItems: NavItem[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tone: "general" }];
   const adminItems: NavItem[] = isAdmin
@@ -209,18 +246,24 @@ export async function AppShell({
             <p className="eyebrow">Sessão iniciada</p>
             <h1>{userName}</h1>
           </div>
-          {isProfessor ? (
-            <div className="user-month-summary">
-              <span>
-                <small>Folha horas</small>
-                <strong>{formatCurrency(groupHoursTotal)}</strong>
-              </span>
-              <span>
-                <small>Treinos ciclo</small>
-                <strong>{formatCurrency(personalTrainingTotal)}</strong>
-              </span>
-            </div>
-          ) : null}
+          <div className="user-month-summary">
+            {isProfessor ? (
+              <>
+                <span>
+                  <small>Folha horas</small>
+                  <strong>{formatCurrency(groupHoursTotal)}</strong>
+                </span>
+                <span>
+                  <small>Treinos ciclo</small>
+                  <strong>{formatCurrency(personalTrainingTotal)}</strong>
+                </span>
+              </>
+            ) : null}
+            <span className={`email-daily-summary email-daily-summary-${dailyEmailTone}`}>
+              <small>Emails hoje</small>
+              <strong>{dailyEmailCount}/100</strong>
+            </span>
+          </div>
         </div>
         {children}
       </main>

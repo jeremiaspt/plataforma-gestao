@@ -246,6 +246,33 @@ select {
   font-size: 16px;
 }
 
+.user-month-summary .email-daily-summary-ok {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+
+.user-month-summary .email-daily-summary-ok strong {
+  color: #047857;
+}
+
+.user-month-summary .email-daily-summary-warning {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+
+.user-month-summary .email-daily-summary-warning strong {
+  color: #c2410c;
+}
+
+.user-month-summary .email-daily-summary-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.user-month-summary .email-daily-summary-danger strong {
+  color: #b91c1c;
+}
+
 .maintenance-banner {
   align-items: center;
   background: #fff7ed;
