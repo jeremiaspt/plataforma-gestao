@@ -25,6 +25,44 @@ function weekdayDate(weekStart: Date, weekday: number) {
   return addDays(weekStart, weekday === 0 ? 6 : weekday - 1);
 }
 
+const monthOptions = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro"
+];
+const weekSelectOptions = [1, 2, 3, 4, 5, 6];
+
+function validYear(value?: string) {
+  const year = Number(value);
+  return Number.isInteger(year) && year >= 2020 && year <= 2100 ? year : null;
+}
+
+function validMonthIndex(value?: string) {
+  const month = Number(value);
+  return Number.isInteger(month) && month >= 1 && month <= 12 ? month - 1 : null;
+}
+
+function monthWeeks(year: number, monthIndex: number) {
+  const firstWeekStart = startOfWeek(new Date(year, monthIndex, 1));
+  const lastDay = new Date(year, monthIndex + 1, 0);
+  const weeks: Date[] = [];
+
+  for (let weekStart = firstWeekStart; weekStart <= lastDay; weekStart = addDays(weekStart, 7)) {
+    weeks.push(new Date(weekStart));
+  }
+
+  return weeks;
+}
+
 function poolLabel(poolKey: string) {
   return Object.values(poolMaps).find((poolMap) => poolMap.key === poolKey)?.eyebrow || poolKey;
 }
@@ -69,7 +107,16 @@ function mergeSameClassBlocks<
 export default async function GroupClassesPage({
   searchParams
 }: {
-  searchParams: Promise<{ emailError?: string; emailSuccess?: string; teacherId?: string; tab?: string; week?: string }>;
+  searchParams: Promise<{
+    emailError?: string;
+    emailSuccess?: string;
+    month?: string;
+    tab?: string;
+    teacherId?: string;
+    week?: string;
+    weekIndex?: string;
+    year?: string;
+  }>;
 }) {
   const user = await requireUser();
   const params = await searchParams;
@@ -97,12 +144,35 @@ export default async function GroupClassesPage({
   const selectedTeacherId = activeTab === "professor" ? params.teacherId || teachers[0]?.id || user.id : user.id;
   const selectedTeacherName =
     activeTab === "professor" ? teachers.find((teacher) => teacher.id === selectedTeacherId)?.name || "Professor" : user.name;
-  const selectedWeekStart = startOfWeek(parseDateParam(params.week));
+  const weekFromParam = startOfWeek(parseDateParam(params.week));
+  const selectorYear = validYear(params.year) ?? weekFromParam.getFullYear();
+  const selectorMonthIndex = validMonthIndex(params.month) ?? weekFromParam.getMonth();
+  const selectorWeeks = monthWeeks(selectorYear, selectorMonthIndex);
+  const weekIndexFromParam = Number(params.weekIndex);
+  const matchingWeekIndex = selectorWeeks.findIndex((weekStart) => dateToInputValue(weekStart) === dateToInputValue(weekFromParam));
+  const selectedWeekIndex =
+    Number.isInteger(weekIndexFromParam) && weekIndexFromParam >= 1
+      ? Math.min(weekIndexFromParam - 1, selectorWeeks.length - 1)
+      : matchingWeekIndex >= 0
+        ? matchingWeekIndex
+        : 0;
+  const selectedWeekStart = params.month || params.year || params.weekIndex ? selectorWeeks[selectedWeekIndex] || selectorWeeks[0] : weekFromParam;
   const selectedWeekValue = dateToInputValue(selectedWeekStart);
   const previousWeek = dateToInputValue(addDays(selectedWeekStart, -7));
   const nextWeek = dateToInputValue(addDays(selectedWeekStart, 7));
   const currentWeek = dateToInputValue(startOfWeek(new Date()));
-  const tabHref = (tab: "mine" | "professor") => `/aulas-grupo?tab=${tab}&week=${selectedWeekValue}`;
+  const displayedMonthIndex = (params.month || params.year || params.weekIndex ? selectorMonthIndex : selectedWeekStart.getMonth()) + 1;
+  const displayedYear = params.month || params.year || params.weekIndex ? selectorYear : selectedWeekStart.getFullYear();
+  const displayedWeeks = params.month || params.year || params.weekIndex ? selectorWeeks : monthWeeks(displayedYear, displayedMonthIndex - 1);
+  const displayedWeekIndex =
+    displayedWeeks.findIndex((weekStart) => dateToInputValue(weekStart) === selectedWeekValue) >= 0
+      ? displayedWeeks.findIndex((weekStart) => dateToInputValue(weekStart) === selectedWeekValue) + 1
+      : 1;
+  const tabHref = (tab: "mine" | "professor") => {
+    const query = new URLSearchParams({ tab, week: selectedWeekValue });
+    if (tab === "professor") query.set("teacherId", selectedTeacherId);
+    return `/aulas-grupo?${query.toString()}`;
+  };
 
   const blocks = await prisma.poolScheduleBlock.findMany({
     where: {
@@ -245,6 +315,38 @@ export default async function GroupClassesPage({
               Semana seguinte
             </a>
           </div>
+
+          <form className="group-date-picker" method="get" action="/aulas-grupo">
+            <input type="hidden" name="tab" value={activeTab} />
+            <input type="hidden" name="teacherId" value={selectedTeacherId} />
+            <div className="field compact-field">
+              <label htmlFor="weekIndex">Semana</label>
+              <select id="weekIndex" name="weekIndex" defaultValue={displayedWeekIndex}>
+                {weekSelectOptions.map((weekNumber) => (
+                  <option value={weekNumber} key={weekNumber}>
+                    {weekNumber}ª semana
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field compact-field">
+              <label htmlFor="month">Mês</label>
+              <select id="month" name="month" defaultValue={displayedMonthIndex}>
+                {monthOptions.map((month, index) => (
+                  <option value={index + 1} key={month}>
+                    {month}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="field compact-field year-field">
+              <label htmlFor="year">Ano</label>
+              <input id="year" name="year" type="number" min="2020" max="2100" defaultValue={displayedYear} />
+            </div>
+            <button className="button secondary" type="submit">
+              Ver
+            </button>
+          </form>
 
           {activeTab === "professor" && isAdmin ? (
             <div className="group-teacher-actions">
