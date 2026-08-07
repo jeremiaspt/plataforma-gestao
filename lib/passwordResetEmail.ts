@@ -33,9 +33,12 @@ export async function sendPasswordResetEmail({
   resetUrl: string;
 }) {
   const subject = "Recuperacao de password";
+  const previewText = "Recuperacao de password da gestao.gcp.ad";
   const safeUserName = escapeHtml(userName);
   const safeResetUrl = escapeHtml(resetUrl);
   const text = [
+    previewText,
+    "",
     `Ola ${userName},`,
     "",
     "Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.",
@@ -47,6 +50,7 @@ export async function sendPasswordResetEmail({
   ].join("\n");
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
       <h2>Recuperacao de password</h2>
       <p>Ola ${safeUserName},</p>
       <p>Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.</p>

@@ -480,8 +480,10 @@ export async function sendTimesheetDocumentsEmail({
     throw new Error("Sem documentos para enviar.");
   }
 
+  const previewText = `Folhas em anexo - ${teacher.name} - ${selectedMonth}`;
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
       <h2>Folhas em anexo</h2>
       <p>Olá ${teacher.name},</p>
       <p>Segue em anexo a documentação selecionada referente ao período ${selectedMonth}.</p>
@@ -494,7 +496,7 @@ export async function sendTimesheetDocumentsEmail({
       cc,
       html,
       subject,
-      text,
+      text: `${previewText}\n\n${text}`,
       to: teacher.email
     });
 
