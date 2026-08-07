@@ -105,6 +105,10 @@ function parseSender(value: string) {
   return { email: value.trim() };
 }
 
+function brevoRecipients(value: string | string[] | undefined) {
+  return emailArray(value).map((email) => ({ email }));
+}
+
 async function sendBrevoEmail({
   to,
   cc,
@@ -121,6 +125,38 @@ async function sendBrevoEmail({
     throw new Error("BREVO_API_KEY ou EMAIL_FROM em falta.");
   }
 
+  const toRecipients = brevoRecipients(to);
+  const ccRecipients = brevoRecipients(cc);
+  const bccRecipients = brevoRecipients(bcc);
+  const attachmentItems = attachments?.filter((attachment) => attachment.filename && attachment.content).map((attachment) => ({
+    content: attachment.content,
+    name: attachment.filename
+  }));
+
+  if (toRecipients.length === 0) {
+    throw new Error("Destinatario em falta.");
+  }
+
+  const body: Record<string, unknown> = {
+    sender: parseSender(from),
+    to: toRecipients,
+    subject,
+    htmlContent: html,
+    textContent: text
+  };
+
+  if (ccRecipients.length > 0) {
+    body.cc = ccRecipients;
+  }
+
+  if (bccRecipients.length > 0) {
+    body.bcc = bccRecipients;
+  }
+
+  if (attachmentItems && attachmentItems.length > 0) {
+    body.attachment = attachmentItems;
+  }
+
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: {
@@ -128,19 +164,7 @@ async function sendBrevoEmail({
       "api-key": apiKey,
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({
-      sender: parseSender(from),
-      to: emailArray(to).map((email) => ({ email })),
-      cc: emailArray(cc).map((email) => ({ email })),
-      bcc: emailArray(bcc).map((email) => ({ email })),
-      attachment: attachments?.map((attachment) => ({
-        content: attachment.content,
-        name: attachment.filename
-      })),
-      subject,
-      htmlContent: html,
-      textContent: text
-    })
+    body: JSON.stringify(body)
   });
 
   const data = (await response.json().catch(() => ({}))) as {
