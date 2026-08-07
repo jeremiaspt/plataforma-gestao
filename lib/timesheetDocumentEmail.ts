@@ -104,6 +104,16 @@ function writeSectionTitle(doc: PDFKit.PDFDocument, title: string, subtitle?: st
   doc.moveDown(0.3);
 }
 
+function writeNote(doc: PDFKit.PDFDocument, text: string) {
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  ensureSpace(doc, 18);
+  doc.x = doc.page.margins.left;
+  doc.fillColor("#64748b").font("Helvetica").fontSize(7).text(text, doc.page.margins.left, doc.y, {
+    width
+  });
+  doc.moveDown(0.25);
+}
+
 function drawCell(
   doc: PDFKit.PDFDocument,
   text: string,
@@ -381,7 +391,7 @@ export async function generatePersonalTrainingPdf({ month, teacherId }: { month?
   });
 
   if (periodMonthKeys.length > 1) {
-    doc.fillColor("#64748b").font("Helvetica").fontSize(8).text("Nota: esta folha inclui dias de dois meses por causa do ciclo de faturacao do professor.");
+    writeNote(doc, "Nota: esta folha inclui dias de dois meses por causa do ciclo de faturacao do professor.");
   }
 
   if (timesheet.studentDetails.length > 0) {
