@@ -9,6 +9,7 @@ import {
   Dumbbell,
   FileSpreadsheet,
   Mail,
+  Printer,
   Repeat2,
   Search,
   Settings,
@@ -88,6 +89,14 @@ const sections: ToolSection[] = [
         roles: ["admin"],
         href: "/envio-folhas",
         icon: Mail,
+        tone: "admin"
+      },
+      {
+        title: "Impressao de mapa",
+        description: "Gerar PDFs dos mapas semanais ou por dia.",
+        roles: ["admin"],
+        href: "/impressao-mapa",
+        icon: Printer,
         tone: "admin"
       },
       {

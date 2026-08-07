@@ -349,6 +349,42 @@ select {
   width: 100%;
 }
 
+.print-map-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.print-map-card {
+  align-items: flex-end;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 240px) minmax(160px, 220px) auto;
+  padding: 14px;
+}
+
+.print-map-card:first-child {
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 240px) auto;
+}
+
+.print-map-card h2,
+.print-map-card p,
+.print-map-note p {
+  margin: 0;
+}
+
+.print-map-note {
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: #475569;
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+}
+
 .timesheet-send-form {
   align-items: flex-end;
   background: #f8fafc;
@@ -4062,6 +4098,7 @@ h1 {
   .hourly-rate-row,
   .training-timesheet-rule-form,
   .training-timesheet-rule-row,
+  .print-map-card,
   .timesheet-send-form,
   .timesheet-filter {
     grid-template-columns: 1fr;
