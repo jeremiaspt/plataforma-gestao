@@ -59,17 +59,17 @@ export default async function ResetPasswordPage({
           </form>
         ) : (
           <>
-            {token ? <p className="error">Este codigo ja nao e valido. Pede uma nova recuperacao de password.</p> : null}
+            {token ? <p className="error">Este link ja nao e valido. Pede uma nova recuperacao de password.</p> : null}
             <form className="form" action="/redefinir-password" method="get">
               <div className="field">
-                <label htmlFor="token">Codigo de recuperacao</label>
+                <label htmlFor="token">Codigo ou token de recuperacao</label>
                 <input id="token" name="token" type="text" required autoComplete="one-time-code" />
               </div>
               <button className="button" type="submit">
                 Continuar
               </button>
             </form>
-            <Link href="/recuperar-password">Pedir novo codigo</Link>
+            <Link href="/recuperar-password">Pedir novo link</Link>
           </>
         )}
       </section>

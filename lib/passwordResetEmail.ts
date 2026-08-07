@@ -24,28 +24,28 @@ function escapeHtml(value: string) {
 }
 
 export async function sendPasswordResetEmail({
-  resetToken,
+  resetUrl,
   to,
   userName
 }: {
-  resetToken: string;
+  resetUrl: string;
   to: string;
   userName: string;
 }) {
   const subject = "Recuperacao de password";
   const previewText = "Recuperacao de password da gestao.gcp.ad";
   const safeUserName = escapeHtml(userName);
-  const safeResetToken = escapeHtml(resetToken);
+  const safeResetUrl = escapeHtml(resetUrl);
   const text = [
     previewText,
     "",
     `Ola ${userName},`,
     "",
     "Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.",
-    "Vai a gestao.gcp.ad/redefinir-password e copia este codigo:",
-    resetToken,
+    "Usa este link para definires uma nova password:",
+    resetUrl,
     "",
-    "Este codigo e valido durante 1 hora.",
+    "Este link e valido durante 1 hora.",
     "Se nao pediste esta recuperacao, podes ignorar este email."
   ].join("\n");
   const html = `
@@ -55,9 +55,9 @@ export async function sendPasswordResetEmail({
       <h2>Recuperacao de password</h2>
       <p>Ola ${safeUserName},</p>
       <p>Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.</p>
-      <p>Vai a <strong>gestao.gcp.ad/redefinir-password</strong> e copia este codigo:</p>
-      <p style="word-break:break-all;background:#f3f7fb;border:1px solid #cbd8e6;border-radius:6px;padding:10px 12px;color:#0f2a44;">${safeResetToken}</p>
-      <p>Este codigo e valido durante 1 hora.</p>
+      <p><a href="${safeResetUrl}" style="display:inline-block;background:#0f766e;color:#ffffff;padding:10px 14px;border-radius:6px;text-decoration:none;font-weight:bold;">Definir nova password</a></p>
+      <p style="word-break:break-all;background:#f3f7fb;border:1px solid #cbd8e6;border-radius:6px;padding:10px 12px;color:#0f2a44;">${safeResetUrl}</p>
+      <p>Este link e valido durante 1 hora.</p>
       <p>Se nao pediste esta recuperacao, podes ignorar este email.</p>
     </div>
   `;
