@@ -30,6 +30,11 @@ type PrintPage = {
 
 const poolOrder = [poolMaps.piscina25m, poolMaps.apoioCais, poolMaps.tanqueAprendizagem];
 const weekdayOrder = [1, 2, 3, 4, 5, 6, 0];
+const poolWidthWeights: Record<string, number> = {
+  apoio_cais: 1.45,
+  piscina_25m: 6,
+  tanque_aprendizagem: 5
+};
 
 function collectPdfBuffer(doc: PDFKit.PDFDocument) {
   return new Promise<Buffer>((resolve, reject) => {
@@ -117,10 +122,45 @@ function drawTextFit(
 }
 
 function blockLabel(block: ScheduleBlock) {
+  if (block.poolKey === poolMaps.apoioCais.key) {
+    return block.teacher?.name || block.title;
+  }
+
   const parts = [block.title];
   if (block.teacher?.name) parts.push(block.teacher.name);
   if (block.notes) parts.push(block.notes);
   return parts.filter(Boolean).join(" - ");
+}
+
+function drawCenteredBlockText(
+  doc: PDFKit.PDFDocument,
+  text: string,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  options: { bold?: boolean; color?: string; size?: number } = {}
+) {
+  const fontSize = options.size || 5.4;
+  const textHeight = Math.min(
+    height - 4,
+    doc
+      .font(options.bold ? "Helvetica-Bold" : "Helvetica")
+      .fontSize(fontSize)
+      .heightOfString(text, { width: width - 5 })
+  );
+  const textY = y + Math.max(2, (height - textHeight) / 2);
+
+  doc
+    .fillColor(options.color || "#0f172a")
+    .font(options.bold ? "Helvetica-Bold" : "Helvetica")
+    .fontSize(fontSize)
+    .text(text, x + 2.5, textY, {
+      align: "center",
+      ellipsis: true,
+      height: height - 4,
+      width: width - 5
+    });
 }
 
 function drawPoolGrid({
@@ -144,32 +184,38 @@ function drawPoolGrid({
   width: number;
   x: number;
 }) {
-  const headerHeight = 34;
+  const headerHeight = 38;
   const bodyTop = gridTop + headerHeight;
   const bodyHeight = gridBottom - bodyTop;
   const minutesRange = endMinutes - startMinutes;
   const groupGap = 4;
-  const totalLaneCount = poolOrder.reduce((total, poolMap) => total + poolMap.lanes.length, 0);
+  const totalWeight = poolOrder.reduce((total, poolMap) => total + poolWidthWeights[poolMap.key], 0);
   let cursorX = x;
 
   for (const poolMap of poolOrder) {
-    const poolWidth = (width - groupGap * (poolOrder.length - 1)) * (poolMap.lanes.length / totalLaneCount);
+    const poolWidth = (width - groupGap * (poolOrder.length - 1)) * (poolWidthWeights[poolMap.key] / totalWeight);
     const laneWidth = poolWidth / poolMap.lanes.length;
 
-    doc.rect(cursorX, gridTop, poolWidth, 17).fill("#0f3d73");
-    drawTextFit(doc, poolMap.eyebrow, cursorX + 4, gridTop + 4, poolWidth - 8, { bold: true, color: "#ffffff", size: 6.8 });
+    doc.rect(cursorX, gridTop, poolWidth, 20).fill("#0f3d73");
+    drawTextFit(doc, poolMap.eyebrow, cursorX + 4, gridTop + 6, poolWidth - 8, { bold: true, color: "#ffffff", size: poolMap.key === "apoio_cais" ? 5.4 : 6.8 });
 
     poolMap.lanes.forEach((lane, index) => {
       const laneX = cursorX + index * laneWidth;
-      doc.rect(laneX, gridTop + 17, laneWidth, 17).fill("#e8f1fb");
-      doc.rect(laneX, gridTop + 17, laneWidth, 17).strokeColor("#cbd5e1").lineWidth(0.4).stroke();
-      drawTextFit(doc, lane.label, laneX + 2, gridTop + 22, laneWidth - 4, { bold: true, color: "#0f172a", size: 5.8 });
+      doc.rect(laneX, gridTop + 20, laneWidth, 18).fill("#e8f1fb");
+      doc.rect(laneX, gridTop + 20, laneWidth, 18).strokeColor("#cbd5e1").lineWidth(0.4).stroke();
+      drawTextFit(doc, lane.label, laneX + 2, gridTop + 25, laneWidth - 4, { bold: true, color: "#0f172a", size: 5.8 });
       doc.rect(laneX, bodyTop, laneWidth, bodyHeight).strokeColor("#cbd5e1").lineWidth(0.35).stroke();
     });
 
-    for (let time = startMinutes; time <= endMinutes; time += 30) {
+    for (let time = startMinutes; time <= endMinutes; time += 5) {
       const y = bodyTop + ((time - startMinutes) / minutesRange) * bodyHeight;
-      doc.moveTo(cursorX, y).lineTo(cursorX + poolWidth, y).strokeColor("#e2e8f0").lineWidth(0.25).stroke();
+      const major = time % 30 === 0;
+      doc
+        .moveTo(cursorX, y)
+        .lineTo(cursorX + poolWidth, y)
+        .strokeColor(major ? "#d1dbe8" : "#eef2f7")
+        .lineWidth(major ? 0.28 : 0.18)
+        .stroke();
     }
 
     const poolBlocks = blocks.filter((block) => block.poolKey === poolMap.key);
@@ -198,8 +244,8 @@ function drawPoolGrid({
           .stroke();
       }
 
-      const label = `${formatMinutes(block.startMinutes)}-${formatMinutes(block.endMinutes)} | ${blockLabel(block)}`;
-      drawTextFit(doc, label, blockX + 3, blockY + 4, blockW - 6, { bold: true, color: textColor, size: blockH < 22 ? 4.6 : 5.5 });
+      const label = `${formatMinutes(block.startMinutes)}-${formatMinutes(block.endMinutes)}\n${blockLabel(block)}`;
+      drawCenteredBlockText(doc, label, blockX + 2, blockY + 2, blockW - 4, blockH - 4, { bold: true, color: textColor, size: blockH < 22 ? 4.3 : 5.2 });
     }
 
     cursorX += poolWidth + groupGap;
@@ -207,17 +253,23 @@ function drawPoolGrid({
 }
 
 function drawTimeAxis(doc: PDFKit.PDFDocument, x: number, y: number, width: number, height: number, startMinutes: number, endMinutes: number) {
-  const headerHeight = 34;
+  const headerHeight = 38;
   const bodyTop = y + headerHeight;
   const bodyHeight = height - headerHeight;
   doc.rect(x, y, width, headerHeight).fill("#0f3d73");
-  drawTextFit(doc, "Hora", x + 4, y + 11, width - 8, { bold: true, color: "#ffffff", size: 7 });
+  drawTextFit(doc, "Hora", x + 4, y + 13, width - 8, { bold: true, color: "#ffffff", size: 7 });
   doc.rect(x, bodyTop, width, bodyHeight).fill("#f8fafc").strokeColor("#cbd5e1").lineWidth(0.4).stroke();
 
-  for (let time = startMinutes; time <= endMinutes; time += 30) {
+  for (let time = startMinutes; time <= endMinutes; time += 5) {
     const lineY = bodyTop + ((time - startMinutes) / (endMinutes - startMinutes)) * bodyHeight;
-    doc.moveTo(x, lineY).lineTo(x + width, lineY).strokeColor("#cbd5e1").lineWidth(0.25).stroke();
-    drawTextFit(doc, formatMinutes(time), x + 3, lineY + 2, width - 6, { bold: true, color: "#0f3d73", size: 6 });
+    const major = time % 30 === 0;
+    doc
+      .moveTo(x, lineY)
+      .lineTo(x + width, lineY)
+      .strokeColor(major ? "#cbd5e1" : "#e8eef5")
+      .lineWidth(major ? 0.25 : 0.16)
+      .stroke();
+    drawTextFit(doc, formatMinutes(time), x + 2, lineY + 1, width - 4, { bold: major, color: "#0f3d73", size: 4.6 });
   }
 }
 
@@ -229,7 +281,7 @@ function drawPage(doc: PDFKit.PDFDocument, page: PrintPage, blocks: ScheduleBloc
   const gridBottom = doc.page.height - doc.page.margins.bottom - 18;
   const axisWidth = 38;
 
-  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(14).text(`Impressao de mapa - ${weekdayLabel(page.weekday)}`, margin, titleY, {
+  doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(14).text(weekdayLabel(page.weekday), margin, titleY, {
     width: pageWidth - 120
   });
   doc
