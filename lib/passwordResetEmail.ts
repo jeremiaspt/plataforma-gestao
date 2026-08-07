@@ -14,6 +14,15 @@ export function hashPasswordResetToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export async function sendPasswordResetEmail({
   to,
   userName,
@@ -23,24 +32,28 @@ export async function sendPasswordResetEmail({
   userName: string;
   resetUrl: string;
 }) {
-  const subject = "Recuperação de password";
+  const subject = "Recuperacao de password";
+  const safeUserName = escapeHtml(userName);
+  const safeResetUrl = escapeHtml(resetUrl);
   const text = [
-    `Olá ${userName},`,
+    `Ola ${userName},`,
     "",
-    "Foi pedido um link para recuperar a password da gestao.gcp.ad - gestão operacional.",
-    "Este link é válido durante 1 hora:",
+    "Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.",
+    "Copia este endereco e cola no browser para definires uma nova password:",
     resetUrl,
     "",
-    "Se não pediste esta recuperação, podes ignorar este email."
+    "Este link e valido durante 1 hora.",
+    "Se nao pediste esta recuperacao, podes ignorar este email."
   ].join("\n");
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
-      <h2>Recuperação de password</h2>
-      <p>Olá ${userName},</p>
-      <p>Foi pedido um link para recuperar a password da gestao.gcp.ad - gestão operacional.</p>
-      <p><a href="${resetUrl}" style="display:inline-block;background:#0f766e;color:#ffffff;padding:10px 14px;border-radius:6px;text-decoration:none;font-weight:bold;">Definir nova password</a></p>
-      <p>Este link é válido durante 1 hora.</p>
-      <p>Se não pediste esta recuperação, podes ignorar este email.</p>
+      <h2>Recuperacao de password</h2>
+      <p>Ola ${safeUserName},</p>
+      <p>Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.</p>
+      <p>Copia este endereco e cola no browser para definires uma nova password:</p>
+      <p style="word-break:break-all;background:#f3f7fb;border:1px solid #cbd8e6;border-radius:6px;padding:10px 12px;color:#0f2a44;">${safeResetUrl}</p>
+      <p>Este link e valido durante 1 hora.</p>
+      <p>Se nao pediste esta recuperacao, podes ignorar este email.</p>
     </div>
   `;
 
@@ -50,7 +63,8 @@ export async function sendPasswordResetEmail({
       cc: [],
       subject,
       html,
-      text
+      text,
+      disableTracking: true
     });
 
     await prisma.emailLog.create({

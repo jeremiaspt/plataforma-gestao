@@ -83,6 +83,7 @@ type SendEmailPayload = {
   cc: string[];
   bcc?: string[];
   attachments?: EmailAttachment[];
+  disableTracking?: boolean;
   subject: string;
   html: string;
   text: string;
@@ -114,6 +115,7 @@ async function sendBrevoEmail({
   cc,
   bcc,
   attachments,
+  disableTracking,
   subject,
   html,
   text
@@ -155,6 +157,16 @@ async function sendBrevoEmail({
 
   if (attachmentItems && attachmentItems.length > 0) {
     body.attachment = attachmentItems;
+  }
+
+  if (disableTracking) {
+    body.headers = {
+      "X-Mailin-Track": "0",
+      "X-Mailin-Track-Click": "0",
+      "X-Mailin-Track-Clicks": "0",
+      "X-Mailin-Track-Open": "0",
+      "X-Mailin-Track-Opens": "0"
+    };
   }
 
   const response = await fetch("https://api.brevo.com/v3/smtp/email", {
