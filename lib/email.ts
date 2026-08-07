@@ -159,7 +159,9 @@ async function sendBrevoEmail({
     body.attachment = attachmentItems;
   }
 
-  if (disableTracking) {
+  const shouldDisableTracking = disableTracking ?? true;
+
+  if (shouldDisableTracking) {
     body.headers = {
       "X-Mailin-Track": "0",
       "X-Mailin-Track-Click": "0",
@@ -236,7 +238,7 @@ async function sendResendEmailProvider({
   return data.id || null;
 }
 
-function selectedEmailProvider() {
+export function selectedEmailProvider() {
   const provider = (process.env.EMAIL_PROVIDER || "").toLowerCase().trim();
 
   if (provider === "brevo" || provider === "resend") {
@@ -244,6 +246,10 @@ function selectedEmailProvider() {
   }
 
   return process.env.BREVO_API_KEY ? "brevo" : "resend";
+}
+
+export function dailyEmailLimit() {
+  return selectedEmailProvider() === "brevo" ? 300 : 100;
 }
 
 export async function sendTransactionalEmail(payload: SendEmailPayload) {

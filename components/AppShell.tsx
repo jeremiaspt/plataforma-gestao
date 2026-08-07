@@ -25,7 +25,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { currentBillingMonthValue } from "@/lib/billingCycles";
-import { parseEmailList } from "@/lib/email";
+import { dailyEmailLimit, parseEmailList } from "@/lib/email";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
@@ -74,9 +74,11 @@ function countEmailRecipients(log: { ccEmails: string | null; toEmail: string })
   return toCount + parseEmailList(log.ccEmails).length;
 }
 
-function emailUsageTone(count: number) {
-  if (count < 50) return "ok";
-  if (count <= 80) return "warning";
+function emailUsageTone(count: number, limit: number) {
+  const usagePercent = limit > 0 ? (count / limit) * 100 : 100;
+
+  if (usagePercent <= 50) return "ok";
+  if (usagePercent <= 80) return "warning";
   return "danger";
 }
 
@@ -176,7 +178,8 @@ export async function AppShell({
       })
     : [];
   const dailyEmailCount = sentEmailLogs.reduce((total, log) => total + countEmailRecipients(log), 0);
-  const dailyEmailTone = emailUsageTone(dailyEmailCount);
+  const emailDailyLimit = dailyEmailLimit();
+  const dailyEmailTone = emailUsageTone(dailyEmailCount, emailDailyLimit);
 
   const mainItems: NavItem[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tone: "general" }];
   const adminItems: NavItem[] = isAdmin
@@ -306,7 +309,9 @@ export async function AppShell({
             {isAdmin ? (
               <span className={`email-daily-summary email-daily-summary-${dailyEmailTone}`}>
                 <small>Emails hoje</small>
-                <strong>{dailyEmailCount}/100</strong>
+                <strong>
+                  {dailyEmailCount}/{emailDailyLimit}
+                </strong>
               </span>
             ) : null}
           </div>
