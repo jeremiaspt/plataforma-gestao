@@ -22,8 +22,6 @@ export async function POST(request: Request) {
 
   const { token, tokenHash } = createPasswordResetToken();
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  const resetUrl = appRedirectUrl(`/redefinir-password?token=${token}`, request).toString();
-
   await prisma.passwordResetToken.deleteMany({
     where: {
       userId: user.id,
@@ -41,9 +39,9 @@ export async function POST(request: Request) {
 
   try {
     await sendPasswordResetEmail({
+      resetToken: token,
       to: user.email,
-      userName: user.name,
-      resetUrl
+      userName: user.name
     });
   } catch {
     return NextResponse.redirect(appRedirectUrl("/recuperar-password?error=1", request));

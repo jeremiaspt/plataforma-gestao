@@ -24,39 +24,40 @@ function escapeHtml(value: string) {
 }
 
 export async function sendPasswordResetEmail({
+  resetToken,
   to,
-  userName,
-  resetUrl
+  userName
 }: {
+  resetToken: string;
   to: string;
   userName: string;
-  resetUrl: string;
 }) {
   const subject = "Recuperacao de password";
   const previewText = "Recuperacao de password da gestao.gcp.ad";
   const safeUserName = escapeHtml(userName);
-  const safeResetUrl = escapeHtml(resetUrl);
+  const safeResetToken = escapeHtml(resetToken);
   const text = [
     previewText,
     "",
     `Ola ${userName},`,
     "",
     "Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.",
-    "Copia este endereco e cola no browser para definires uma nova password:",
-    resetUrl,
+    "Vai a gestao.gcp.ad/redefinir-password e copia este codigo:",
+    resetToken,
     "",
-    "Este link e valido durante 1 hora.",
+    "Este codigo e valido durante 1 hora.",
     "Se nao pediste esta recuperacao, podes ignorar este email."
   ].join("\n");
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
       <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
+      <p style="color:#475569;font-size:13px;margin:0 0 4px;">${previewText}</p>
       <h2>Recuperacao de password</h2>
       <p>Ola ${safeUserName},</p>
       <p>Foi pedido um link para recuperar a password da gestao.gcp.ad - gestao operacional.</p>
-      <p>Copia este endereco e cola no browser para definires uma nova password:</p>
-      <p style="word-break:break-all;background:#f3f7fb;border:1px solid #cbd8e6;border-radius:6px;padding:10px 12px;color:#0f2a44;">${safeResetUrl}</p>
-      <p>Este link e valido durante 1 hora.</p>
+      <p>Vai a <strong>gestao.gcp.ad/redefinir-password</strong> e copia este codigo:</p>
+      <p style="word-break:break-all;background:#f3f7fb;border:1px solid #cbd8e6;border-radius:6px;padding:10px 12px;color:#0f2a44;">${safeResetToken}</p>
+      <p>Este codigo e valido durante 1 hora.</p>
       <p>Se nao pediste esta recuperacao, podes ignorar este email.</p>
     </div>
   `;

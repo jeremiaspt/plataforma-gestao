@@ -143,8 +143,7 @@ async function sendBrevoEmail({
     sender: parseSender(from),
     to: toRecipients,
     subject,
-    htmlContent: html,
-    textContent: text
+    htmlContent: html
   };
 
   if (ccRecipients.length > 0) {

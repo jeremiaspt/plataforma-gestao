@@ -11,7 +11,7 @@ export default async function ResetPasswordPage({
 }) {
   const user = await getSessionUser();
   const params = await searchParams;
-  const token = String(params.token || "");
+  const token = String(params.token || "").trim();
 
   if (user) redirect("/dashboard");
 
@@ -32,11 +32,11 @@ export default async function ResetPasswordPage({
   return (
     <main className="login-page">
       <section className="login-box">
-        <p className="eyebrow">gestao.gcp.ad - gestão operacional</p>
+        <p className="eyebrow">gestao.gcp.ad - gestao operacional</p>
         <h1>Nova password</h1>
         {params.success ? (
           <>
-            <p className="success">Password alterada com sucesso. Já podes entrar.</p>
+            <p className="success">Password alterada com sucesso. Ja podes entrar.</p>
             <Link className="button" href="/login">
               Entrar
             </Link>
@@ -52,17 +52,24 @@ export default async function ResetPasswordPage({
               <label htmlFor="confirmPassword">Confirmar password</label>
               <input id="confirmPassword" name="confirmPassword" type="password" required minLength={8} autoComplete="new-password" />
             </div>
-            {params.error ? <p className="error">Confirma se as passwords coincidem e têm pelo menos 8 caracteres.</p> : null}
+            {params.error ? <p className="error">Confirma se as passwords coincidem e tem pelo menos 8 caracteres.</p> : null}
             <button className="button" type="submit">
               Guardar nova password
             </button>
           </form>
         ) : (
           <>
-            <p className="error">Este link já não é válido. Pede uma nova recuperação de password.</p>
-            <Link className="button" href="/recuperar-password">
-              Pedir novo link
-            </Link>
+            {token ? <p className="error">Este codigo ja nao e valido. Pede uma nova recuperacao de password.</p> : null}
+            <form className="form" action="/redefinir-password" method="get">
+              <div className="field">
+                <label htmlFor="token">Codigo de recuperacao</label>
+                <input id="token" name="token" type="text" required autoComplete="one-time-code" />
+              </div>
+              <button className="button" type="submit">
+                Continuar
+              </button>
+            </form>
+            <Link href="/recuperar-password">Pedir novo codigo</Link>
           </>
         )}
       </section>

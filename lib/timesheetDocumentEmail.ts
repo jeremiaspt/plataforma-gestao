@@ -484,6 +484,7 @@ export async function sendTimesheetDocumentsEmail({
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">
       <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
+      <p style="color:#475569;font-size:13px;margin:0 0 4px;">${previewText}</p>
       <h2>Folhas em anexo</h2>
       <p>Olá ${teacher.name},</p>
       <p>Segue em anexo a documentação selecionada referente ao período ${selectedMonth}.</p>
