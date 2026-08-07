@@ -369,6 +369,7 @@ model PersonalTrainingPayment {
   updatedAt           DateTime                    @updatedAt
 
   @@index([teacherId, studentId])
+  @@index([teacherId, createdAt])
   @@index([status])
   @@index([createdAt])
 }
@@ -477,6 +478,7 @@ model PersonalTrainingBookingLog {
 
   @@index([bookingDate])
   @@index([bookingGroupId])
+  @@index([createdAt])
 }
 
 model EmailSettings {
@@ -515,4 +517,5 @@ model EmailLog {
   @@index([createdAt])
   @@index([type])
   @@index([status])
+  @@index([status, createdAt])
 }

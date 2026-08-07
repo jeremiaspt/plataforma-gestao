@@ -80,6 +80,54 @@ function emailUsageTone(count: number) {
   return "danger";
 }
 
+const professorSummaryCache = new Map<string, { expiresAt: number; groupHoursTotal: number; personalTrainingTotal: number }>();
+const professorSummaryTtlMs = 60 * 1000;
+
+async function getProfessorMonthSummary({
+  monthValue,
+  systemSettings,
+  teacherId
+}: {
+  monthValue: string;
+  systemSettings: Awaited<ReturnType<typeof getSystemSettings>>;
+  teacherId: string;
+}) {
+  const settingsKey = [
+    systemSettings.excludeDockSupportOverlapWithClasses,
+    systemSettings.includeChristmasEveHoliday,
+    systemSettings.includeLisbonMunicipalHolidays,
+    systemSettings.includeNewYearsEveHoliday
+  ].join(":");
+  const cacheKey = `${teacherId}:${monthValue}:${settingsKey}`;
+  const cached = professorSummaryCache.get(cacheKey);
+
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached;
+  }
+
+  const [groupTimesheet, personalTimesheet] = await Promise.all([
+    calculateGroupClassTimesheet({
+      excludeDockSupportOverlapWithClasses: systemSettings.excludeDockSupportOverlapWithClasses,
+      holidayOptions: {
+        includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
+        includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
+        includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
+      },
+      month: monthValue,
+      teacherId
+    }),
+    calculatePersonalTrainingTimesheet({ month: monthValue, teacherId })
+  ]).catch(() => [null, null] as const);
+
+  const summary = {
+    expiresAt: Date.now() + professorSummaryTtlMs,
+    groupHoursTotal: groupTimesheet?.rows.reduce((total, row) => total + row.totalValue, 0) || 0,
+    personalTrainingTotal: personalTimesheet?.rows.reduce((total, row) => total + row.totalValue, 0) || 0
+  };
+  professorSummaryCache.set(cacheKey, summary);
+  return summary;
+}
+
 export async function AppShell({
   children,
   userName,
@@ -103,36 +151,30 @@ export async function AppShell({
   const monthValue = currentBillingMonthValue();
   const summary =
     isProfessor && currentUser
-      ? await Promise.all([
-          calculateGroupClassTimesheet({
-            excludeDockSupportOverlapWithClasses: systemSettings.excludeDockSupportOverlapWithClasses,
-            holidayOptions: {
-              includeChristmasEveHoliday: systemSettings.includeChristmasEveHoliday,
-              includeLisbonMunicipalHolidays: systemSettings.includeLisbonMunicipalHolidays,
-              includeNewYearsEveHoliday: systemSettings.includeNewYearsEveHoliday
-            },
-            month: monthValue,
-            teacherId: currentUser.id
-          }),
-          calculatePersonalTrainingTimesheet({ month: monthValue, teacherId: currentUser.id })
-        ]).catch(() => [null, null] as const)
+      ? await getProfessorMonthSummary({
+          monthValue,
+          systemSettings,
+          teacherId: currentUser.id
+        })
       : null;
-  const groupHoursTotal = summary?.[0]?.rows.reduce((total, row) => total + row.totalValue, 0) || 0;
-  const personalTrainingTotal = summary?.[1]?.rows.reduce((total, row) => total + row.totalValue, 0) || 0;
+  const groupHoursTotal = summary?.groupHoursTotal || 0;
+  const personalTrainingTotal = summary?.personalTrainingTotal || 0;
   const emailDayBounds = todayBounds();
-  const sentEmailLogs = await prisma.emailLog.findMany({
-    where: {
-      createdAt: {
-        gte: emailDayBounds.start,
-        lt: emailDayBounds.end
-      },
-      status: "sent"
-    },
-    select: {
-      ccEmails: true,
-      toEmail: true
-    }
-  });
+  const sentEmailLogs = isAdmin
+    ? await prisma.emailLog.findMany({
+        where: {
+          createdAt: {
+            gte: emailDayBounds.start,
+            lt: emailDayBounds.end
+          },
+          status: "sent"
+        },
+        select: {
+          ccEmails: true,
+          toEmail: true
+        }
+      })
+    : [];
   const dailyEmailCount = sentEmailLogs.reduce((total, log) => total + countEmailRecipients(log), 0);
   const dailyEmailTone = emailUsageTone(dailyEmailCount);
 

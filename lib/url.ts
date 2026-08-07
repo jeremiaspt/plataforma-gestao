@@ -1,4 +1,8 @@
 export function appRedirectUrl(path: string, request: Request) {
+  if (!path.startsWith("/") || path.startsWith("//")) {
+    throw new Error("Redirect interno invalido.");
+  }
+
   const publicUrl = process.env.APP_URL;
 
   if (publicUrl) {

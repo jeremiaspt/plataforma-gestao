@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
 const confirmationTexts = new Set(["REPOR BACKUP TP", "REPOR BACKUP PLATAFORMA"]);
+const maxBackupBytes = 25 * 1024 * 1024;
 
 type BackupData = Record<string, Record<string, unknown>[] | undefined>;
 
@@ -282,11 +283,17 @@ export async function POST(request: Request) {
   const typedConfirmation = String(formData.get("restoreConfirmation") || "").trim();
   const redirectPath = "/atividade?tab=maintenance";
 
-  if (!(file instanceof File) || !confirmationTexts.has(typedConfirmation)) {
+  if (!(file instanceof File) || file.size === 0 || file.size > maxBackupBytes || !confirmationTexts.has(typedConfirmation)) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&restoreError=1`, request));
   }
 
-  const payload = JSON.parse(await file.text()) as BackupPayload;
+  let payload: BackupPayload;
+
+  try {
+    payload = JSON.parse(await file.text()) as BackupPayload;
+  } catch {
+    return NextResponse.redirect(appRedirectUrl(`${redirectPath}&restoreError=1`, request));
+  }
 
   if (payload.scope !== "platform-full-backup" || !payload.data) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&restoreError=1`, request));
@@ -326,68 +333,72 @@ export async function POST(request: Request) {
     emailLogs: cleanRows(data.emailLogs, fields.emailLogs)
   };
 
-  await prisma.$transaction([
-    prisma.emailLog.deleteMany({}),
-    prisma.passwordResetToken.deleteMany({}),
-    prisma.userLoginLog.deleteMany({}),
-    prisma.lostFoundItemLog.deleteMany({}),
-    prisma.lostFoundItemPhoto.deleteMany({}),
-    prisma.lostFoundItem.deleteMany({}),
-    prisma.birthdayPartyPaymentLog.deleteMany({}),
-    prisma.birthdayPartyMonitor.deleteMany({}),
-    prisma.birthdayParty.deleteMany({}),
-    prisma.groupClassSubstitutionItem.deleteMany({}),
-    prisma.groupClassSubstitutionRequest.deleteMany({}),
-    prisma.personalTrainingBookingLog.deleteMany({}),
-    prisma.personalTrainingBooking.deleteMany({}),
-    prisma.personalTrainingCreditAdjustment.deleteMany({}),
-    prisma.personalTrainingPaymentLog.deleteMany({}),
-    prisma.personalTrainingPayment.deleteMany({}),
-    prisma.personalTrainingAvailability.deleteMany({}),
-    prisma.personalTrainingTimesheetRuleItem.deleteMany({}),
-    prisma.personalTrainingTimesheetRule.deleteMany({}),
-    prisma.poolScheduleBlock.deleteMany({}),
-    prisma.groupClassHourlyRate.deleteMany({}),
-    prisma.personalTrainingPaymentType.deleteMany({}),
-    prisma.personalTrainingStudent.deleteMany({}),
-    prisma.emailSettings.deleteMany({}),
-    prisma.systemSettings.deleteMany({}),
-    prisma.userRole.deleteMany({}),
-    prisma.rolePermission.deleteMany({}),
-    prisma.user.deleteMany({}),
-    prisma.permission.deleteMany({}),
-    prisma.role.deleteMany({}),
-    ...createMany(rows.roles, (items) => prisma.role.createMany({ data: items })),
-    ...createMany(rows.permissions, (items) => prisma.permission.createMany({ data: items })),
-    ...createMany(rows.users, (items) => prisma.user.createMany({ data: items })),
-    ...createMany(rows.userRoles, (items) => prisma.userRole.createMany({ data: items })),
-    ...createMany(rows.rolePermissions, (items) => prisma.rolePermission.createMany({ data: items })),
-    ...createMany(rows.emailSettings, (items) => prisma.emailSettings.createMany({ data: items })),
-    ...createMany(rows.systemSettings, (items) => prisma.systemSettings.createMany({ data: items })),
-    ...createMany(rows.personalTrainingPaymentTypes, (items) => prisma.personalTrainingPaymentType.createMany({ data: items })),
-    ...createMany(rows.personalTrainingStudents, (items) => prisma.personalTrainingStudent.createMany({ data: items })),
-    ...createMany(rows.groupClassHourlyRates, (items) => prisma.groupClassHourlyRate.createMany({ data: items })),
-    ...createMany(rows.poolScheduleBlocks, (items) => prisma.poolScheduleBlock.createMany({ data: items })),
-    ...createMany(rows.personalTrainingTimesheetRules, (items) => prisma.personalTrainingTimesheetRule.createMany({ data: items })),
-    ...createMany(rows.personalTrainingTimesheetRuleItems, (items) => prisma.personalTrainingTimesheetRuleItem.createMany({ data: items })),
-    ...createMany(rows.personalTrainingAvailabilities, (items) => prisma.personalTrainingAvailability.createMany({ data: items })),
-    ...createMany(rows.personalTrainingPayments, (items) => prisma.personalTrainingPayment.createMany({ data: items })),
-    ...createMany(rows.personalTrainingPaymentLogs, (items) => prisma.personalTrainingPaymentLog.createMany({ data: items })),
-    ...createMany(rows.personalTrainingCreditAdjustments, (items) => prisma.personalTrainingCreditAdjustment.createMany({ data: items })),
-    ...createMany(rows.personalTrainingBookings, (items) => prisma.personalTrainingBooking.createMany({ data: items })),
-    ...createMany(rows.personalTrainingBookingLogs, (items) => prisma.personalTrainingBookingLog.createMany({ data: items })),
-    ...createMany(rows.groupClassSubstitutionRequests, (items) => prisma.groupClassSubstitutionRequest.createMany({ data: items })),
-    ...createMany(rows.groupClassSubstitutionItems, (items) => prisma.groupClassSubstitutionItem.createMany({ data: items })),
-    ...createMany(rows.birthdayParties, (items) => prisma.birthdayParty.createMany({ data: items })),
-    ...createMany(rows.birthdayPartyMonitors, (items) => prisma.birthdayPartyMonitor.createMany({ data: items })),
-    ...createMany(rows.birthdayPartyPaymentLogs, (items) => prisma.birthdayPartyPaymentLog.createMany({ data: items })),
-    ...createMany(rows.lostFoundItems, (items) => prisma.lostFoundItem.createMany({ data: items })),
-    ...createMany(rows.lostFoundItemPhotos, (items) => prisma.lostFoundItemPhoto.createMany({ data: items })),
-    ...createMany(rows.lostFoundItemLogs, (items) => prisma.lostFoundItemLog.createMany({ data: items })),
-    ...createMany(rows.userLoginLogs, (items) => prisma.userLoginLog.createMany({ data: items })),
-    ...createMany(rows.passwordResetTokens, (items) => prisma.passwordResetToken.createMany({ data: items })),
-    ...createMany(rows.emailLogs, (items) => prisma.emailLog.createMany({ data: items }))
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.emailLog.deleteMany({}),
+      prisma.passwordResetToken.deleteMany({}),
+      prisma.userLoginLog.deleteMany({}),
+      prisma.lostFoundItemLog.deleteMany({}),
+      prisma.lostFoundItemPhoto.deleteMany({}),
+      prisma.lostFoundItem.deleteMany({}),
+      prisma.birthdayPartyPaymentLog.deleteMany({}),
+      prisma.birthdayPartyMonitor.deleteMany({}),
+      prisma.birthdayParty.deleteMany({}),
+      prisma.groupClassSubstitutionItem.deleteMany({}),
+      prisma.groupClassSubstitutionRequest.deleteMany({}),
+      prisma.personalTrainingBookingLog.deleteMany({}),
+      prisma.personalTrainingBooking.deleteMany({}),
+      prisma.personalTrainingCreditAdjustment.deleteMany({}),
+      prisma.personalTrainingPaymentLog.deleteMany({}),
+      prisma.personalTrainingPayment.deleteMany({}),
+      prisma.personalTrainingAvailability.deleteMany({}),
+      prisma.personalTrainingTimesheetRuleItem.deleteMany({}),
+      prisma.personalTrainingTimesheetRule.deleteMany({}),
+      prisma.poolScheduleBlock.deleteMany({}),
+      prisma.groupClassHourlyRate.deleteMany({}),
+      prisma.personalTrainingPaymentType.deleteMany({}),
+      prisma.personalTrainingStudent.deleteMany({}),
+      prisma.emailSettings.deleteMany({}),
+      prisma.systemSettings.deleteMany({}),
+      prisma.userRole.deleteMany({}),
+      prisma.rolePermission.deleteMany({}),
+      prisma.user.deleteMany({}),
+      prisma.permission.deleteMany({}),
+      prisma.role.deleteMany({}),
+      ...createMany(rows.roles, (items) => prisma.role.createMany({ data: items })),
+      ...createMany(rows.permissions, (items) => prisma.permission.createMany({ data: items })),
+      ...createMany(rows.users, (items) => prisma.user.createMany({ data: items })),
+      ...createMany(rows.userRoles, (items) => prisma.userRole.createMany({ data: items })),
+      ...createMany(rows.rolePermissions, (items) => prisma.rolePermission.createMany({ data: items })),
+      ...createMany(rows.emailSettings, (items) => prisma.emailSettings.createMany({ data: items })),
+      ...createMany(rows.systemSettings, (items) => prisma.systemSettings.createMany({ data: items })),
+      ...createMany(rows.personalTrainingPaymentTypes, (items) => prisma.personalTrainingPaymentType.createMany({ data: items })),
+      ...createMany(rows.personalTrainingStudents, (items) => prisma.personalTrainingStudent.createMany({ data: items })),
+      ...createMany(rows.groupClassHourlyRates, (items) => prisma.groupClassHourlyRate.createMany({ data: items })),
+      ...createMany(rows.poolScheduleBlocks, (items) => prisma.poolScheduleBlock.createMany({ data: items })),
+      ...createMany(rows.personalTrainingTimesheetRules, (items) => prisma.personalTrainingTimesheetRule.createMany({ data: items })),
+      ...createMany(rows.personalTrainingTimesheetRuleItems, (items) => prisma.personalTrainingTimesheetRuleItem.createMany({ data: items })),
+      ...createMany(rows.personalTrainingAvailabilities, (items) => prisma.personalTrainingAvailability.createMany({ data: items })),
+      ...createMany(rows.personalTrainingPayments, (items) => prisma.personalTrainingPayment.createMany({ data: items })),
+      ...createMany(rows.personalTrainingPaymentLogs, (items) => prisma.personalTrainingPaymentLog.createMany({ data: items })),
+      ...createMany(rows.personalTrainingCreditAdjustments, (items) => prisma.personalTrainingCreditAdjustment.createMany({ data: items })),
+      ...createMany(rows.personalTrainingBookings, (items) => prisma.personalTrainingBooking.createMany({ data: items })),
+      ...createMany(rows.personalTrainingBookingLogs, (items) => prisma.personalTrainingBookingLog.createMany({ data: items })),
+      ...createMany(rows.groupClassSubstitutionRequests, (items) => prisma.groupClassSubstitutionRequest.createMany({ data: items })),
+      ...createMany(rows.groupClassSubstitutionItems, (items) => prisma.groupClassSubstitutionItem.createMany({ data: items })),
+      ...createMany(rows.birthdayParties, (items) => prisma.birthdayParty.createMany({ data: items })),
+      ...createMany(rows.birthdayPartyMonitors, (items) => prisma.birthdayPartyMonitor.createMany({ data: items })),
+      ...createMany(rows.birthdayPartyPaymentLogs, (items) => prisma.birthdayPartyPaymentLog.createMany({ data: items })),
+      ...createMany(rows.lostFoundItems, (items) => prisma.lostFoundItem.createMany({ data: items })),
+      ...createMany(rows.lostFoundItemPhotos, (items) => prisma.lostFoundItemPhoto.createMany({ data: items })),
+      ...createMany(rows.lostFoundItemLogs, (items) => prisma.lostFoundItemLog.createMany({ data: items })),
+      ...createMany(rows.userLoginLogs, (items) => prisma.userLoginLog.createMany({ data: items })),
+      ...createMany(rows.passwordResetTokens, (items) => prisma.passwordResetToken.createMany({ data: items })),
+      ...createMany(rows.emailLogs, (items) => prisma.emailLog.createMany({ data: items }))
+    ]);
+  } catch {
+    return NextResponse.redirect(appRedirectUrl(`${redirectPath}&restoreError=1`, request));
+  }
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&restoreSuccess=1`, request));
 }
