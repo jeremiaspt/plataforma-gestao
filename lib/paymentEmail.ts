@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { getPaymentEmailSettings, parseEmailList, sendResendEmail } from "@/lib/email";
+import { getPaymentEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
 import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
@@ -72,7 +72,7 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
   `;
 
   try {
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       to: payload.teacherEmail,
       cc,
       subject,

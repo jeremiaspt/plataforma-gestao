@@ -1,4 +1,4 @@
-import { getSubstitutionEmailSettings, parseEmailList, sendResendEmail } from "@/lib/email";
+import { getSubstitutionEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
 import { formatMinutes, getPoolMapByKey } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 
@@ -116,7 +116,7 @@ export async function sendSubstitutionRequestEmail(payload: SubstitutionRequestE
   `;
 
   try {
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       to: payload.substituteTeacherEmail,
       cc,
       subject,
@@ -186,7 +186,7 @@ export async function sendSubstitutionResponseEmail(payload: SubstitutionRespons
   `;
 
   try {
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       to: payload.absentTeacherEmail,
       cc,
       subject,

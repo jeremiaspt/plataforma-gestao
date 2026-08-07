@@ -149,7 +149,7 @@ export default async function EmailSettingsPage({
                 />
               </div>
             </div>
-            <p className="muted">No Render devem estar definidas as variáveis RESEND_API_KEY e EMAIL_FROM.</p>
+            <p className="muted">No Render devem estar definidas as variáveis EMAIL_PROVIDER, BREVO_API_KEY e EMAIL_FROM.</p>
             <button className="button" type="submit">
               Guardar configuração
             </button>

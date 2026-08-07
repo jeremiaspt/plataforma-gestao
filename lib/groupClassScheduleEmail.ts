@@ -1,4 +1,4 @@
-import { getGroupClassScheduleEmailSettings, parseEmailList, sendResendEmail } from "@/lib/email";
+import { getGroupClassScheduleEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
 import { getHolidayForDate } from "@/lib/holidays";
 import { getSystemSettings } from "@/lib/maintenance";
 import { dateToInputValue, formatMinutes, poolBlockAppliesToDate, poolMaps, poolWeekdays } from "@/lib/pool";
@@ -295,7 +295,7 @@ export async function sendGroupClassScheduleEmail({ teacherId, weekStart }: { te
     </div>
   `;
   try {
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       to: teacher.email,
       cc,
       subject,

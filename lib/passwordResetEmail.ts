@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { sendResendEmail } from "@/lib/email";
+import { sendTransactionalEmail } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export function createPasswordResetToken() {
@@ -45,7 +45,7 @@ export async function sendPasswordResetEmail({
   `;
 
   try {
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       to,
       cc: [],
       subject,

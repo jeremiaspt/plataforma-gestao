@@ -20,6 +20,10 @@ services:
         sync: false
       - key: ADMIN_SEED_SECRET
         sync: false
+      - key: EMAIL_PROVIDER
+        value: brevo
+      - key: BREVO_API_KEY
+        sync: false
       - key: RESEND_API_KEY
         sync: false
       - key: EMAIL_FROM

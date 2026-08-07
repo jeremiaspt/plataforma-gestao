@@ -1,6 +1,6 @@
 import PDFDocument from "pdfkit/js/pdfkit.standalone";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel } from "@/lib/billingCycles";
-import { getTimesheetDocumentsEmailSettings, parseEmailList, sendResendEmail } from "@/lib/email";
+import { getTimesheetDocumentsEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
@@ -489,7 +489,7 @@ export async function sendTimesheetDocumentsEmail({
   `;
   const text = `Olá ${teacher.name},\n\nSegue em anexo a documentação selecionada referente ao período ${selectedMonth}.`;
 
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       attachments,
       cc,
       html,

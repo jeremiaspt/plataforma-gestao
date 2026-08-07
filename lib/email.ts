@@ -78,15 +78,7 @@ type EmailAttachment = {
   content: string;
 };
 
-export async function sendResendEmail({
-  to,
-  cc,
-  bcc,
-  attachments,
-  subject,
-  html,
-  text
-}: {
+type SendEmailPayload = {
   to: string | string[];
   cc: string[];
   bcc?: string[];
@@ -94,7 +86,86 @@ export async function sendResendEmail({
   subject: string;
   html: string;
   text: string;
-}) {
+};
+
+function emailArray(value: string | string[] | undefined) {
+  return (Array.isArray(value) ? value : value ? [value] : []).filter(Boolean);
+}
+
+function parseSender(value: string) {
+  const match = value.match(/^\s*(.*?)\s*<([^>]+)>\s*$/);
+
+  if (match) {
+    return {
+      email: match[2].trim(),
+      name: match[1].replace(/^"|"$/g, "").trim() || undefined
+    };
+  }
+
+  return { email: value.trim() };
+}
+
+async function sendBrevoEmail({
+  to,
+  cc,
+  bcc,
+  attachments,
+  subject,
+  html,
+  text
+}: SendEmailPayload) {
+  const apiKey = process.env.BREVO_API_KEY;
+  const from = process.env.EMAIL_FROM;
+
+  if (!apiKey || !from) {
+    throw new Error("BREVO_API_KEY ou EMAIL_FROM em falta.");
+  }
+
+  const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "api-key": apiKey,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      sender: parseSender(from),
+      to: emailArray(to).map((email) => ({ email })),
+      cc: emailArray(cc).map((email) => ({ email })),
+      bcc: emailArray(bcc).map((email) => ({ email })),
+      attachment: attachments?.map((attachment) => ({
+        content: attachment.content,
+        name: attachment.filename
+      })),
+      subject,
+      htmlContent: html,
+      textContent: text
+    })
+  });
+
+  const data = (await response.json().catch(() => ({}))) as {
+    code?: string;
+    message?: string;
+    messageId?: string;
+    messageIds?: string[];
+  };
+
+  if (!response.ok) {
+    throw new Error(data.message || data.code || `Erro Brevo ${response.status}`);
+  }
+
+  return data.messageId || data.messageIds?.[0] || null;
+}
+
+async function sendResendEmailProvider({
+  to,
+  cc,
+  bcc,
+  attachments,
+  subject,
+  html,
+  text
+}: SendEmailPayload) {
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
 
@@ -128,3 +199,19 @@ export async function sendResendEmail({
 
   return data.id || null;
 }
+
+function selectedEmailProvider() {
+  const provider = (process.env.EMAIL_PROVIDER || "").toLowerCase().trim();
+
+  if (provider === "brevo" || provider === "resend") {
+    return provider;
+  }
+
+  return process.env.BREVO_API_KEY ? "brevo" : "resend";
+}
+
+export async function sendTransactionalEmail(payload: SendEmailPayload) {
+  return selectedEmailProvider() === "brevo" ? sendBrevoEmail(payload) : sendResendEmailProvider(payload);
+}
+
+export const sendResendEmail = sendTransactionalEmail;

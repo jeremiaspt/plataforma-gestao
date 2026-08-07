@@ -1,4 +1,4 @@
-import { getClassStudentEmailSettings, parseEmailList, sendResendEmail } from "@/lib/email";
+import { getClassStudentEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
 import type { GroupClassOption } from "@/lib/groupClassOptions";
 import { formatGroupClassOption } from "@/lib/groupClassOptions";
 import { prisma } from "@/lib/prisma";
@@ -125,7 +125,7 @@ export async function sendClassChangeEmail(payload: ClassChangeEmailPayload) {
   `;
 
   try {
-    const providerId = await sendResendEmail({ to, cc: ccForSend, bcc: teacherEmails, subject, html, text });
+    const providerId = await sendTransactionalEmail({ to, cc: ccForSend, bcc: teacherEmails, subject, html, text });
     await logEmail({
       type: "class_student_change",
       status: "sent",
@@ -195,7 +195,7 @@ export async function sendClassEnrollmentEmail(payload: ClassEnrollmentEmailPayl
   `;
 
   try {
-    const providerId = await sendResendEmail({
+    const providerId = await sendTransactionalEmail({
       to: payload.classOption.teacherEmail,
       cc,
       subject,
