@@ -639,7 +639,7 @@ export default async function ActivityPage({
             {isSuperadmin ? (
               <div className="maintenance-card">
                 <div>
-                  <h2>Backup antes da limpeza</h2>
+                  <h2>Backup total da plataforma</h2>
                   <p className="muted">
                     Exporta pagamentos, ajustes de créditos, marcações PT, histórico de emails e respetivos logs para um ficheiro JSON.
                   </p>
@@ -757,7 +757,7 @@ export default async function ActivityPage({
                 <div>
                   <h2>Repor backup</h2>
                   <p className="muted">
-                    Carrega o ficheiro JSON exportado. A reposição substitui os dados TP operacionais atuais pelos dados do backup.
+                    Carrega o ficheiro JSON exportado. A reposição substitui a base de dados da plataforma pelos dados do backup total.
                   </p>
                 </div>
                 <div className="field">
@@ -766,7 +766,7 @@ export default async function ActivityPage({
                 </div>
                 <div className="field">
                   <label htmlFor="restoreConfirmation">Frase de segurança</label>
-                  <input id="restoreConfirmation" name="restoreConfirmation" placeholder="REPOR BACKUP TP" required />
+                  <input id="restoreConfirmation" name="restoreConfirmation" placeholder="REPOR BACKUP PLATAFORMA" required />
                 </div>
                 <button className="button secondary" type="submit">
                   Repor backup
