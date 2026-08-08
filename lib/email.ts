@@ -5,6 +5,8 @@ const substitutionNotificationKey = "group_class_substitution";
 const classStudentNotificationKey = "class_student_notifications";
 const groupClassScheduleNotificationKey = "group_class_schedule";
 const timesheetDocumentsNotificationKey = "timesheet_documents";
+const emailProviderKey = "email_provider";
+type EmailProvider = "resend" | "brevo";
 
 export function parseEmailList(value?: string | null) {
   return (value || "")
@@ -73,6 +75,51 @@ export async function getTimesheetDocumentsEmailSettings() {
   });
 }
 
+export function emailProviderAvailability() {
+  return {
+    brevo: Boolean(process.env.BREVO_API_KEY && (process.env.BREVO_EMAIL_FROM || process.env.EMAIL_FROM)),
+    resend: Boolean(process.env.RESEND_API_KEY && (process.env.RESEND_EMAIL_FROM || process.env.EMAIL_FROM))
+  };
+}
+
+function configuredDefaultEmailProvider(): EmailProvider {
+  const provider = (process.env.EMAIL_PROVIDER || "").toLowerCase().trim();
+  const availability = emailProviderAvailability();
+
+  if ((provider === "resend" || provider === "brevo") && availability[provider]) {
+    return provider;
+  }
+
+  if (availability.resend) return "resend";
+  return "brevo";
+}
+
+export async function getEmailProviderSettings() {
+  const defaultProvider = configuredDefaultEmailProvider();
+
+  return prisma.emailSettings.upsert({
+    where: { key: emailProviderKey },
+    update: {},
+    create: {
+      key: emailProviderKey,
+      enabled: true,
+      ccEmails: defaultProvider
+    }
+  });
+}
+
+export function setEmailProvider(provider: EmailProvider) {
+  return prisma.emailSettings.upsert({
+    where: { key: emailProviderKey },
+    update: { ccEmails: provider },
+    create: {
+      key: emailProviderKey,
+      enabled: true,
+      ccEmails: provider
+    }
+  });
+}
+
 type EmailAttachment = {
   filename: string;
   content: string;
@@ -121,10 +168,10 @@ async function sendBrevoEmail({
   text
 }: SendEmailPayload) {
   const apiKey = process.env.BREVO_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const from = process.env.BREVO_EMAIL_FROM || process.env.EMAIL_FROM;
 
   if (!apiKey || !from) {
-    throw new Error("BREVO_API_KEY ou EMAIL_FROM em falta.");
+    throw new Error("BREVO_API_KEY ou BREVO_EMAIL_FROM em falta.");
   }
 
   const toRecipients = brevoRecipients(to);
@@ -204,10 +251,10 @@ async function sendResendEmailProvider({
   text
 }: SendEmailPayload) {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
+  const from = process.env.RESEND_EMAIL_FROM || process.env.EMAIL_FROM;
 
   if (!apiKey || !from) {
-    throw new Error("RESEND_API_KEY ou EMAIL_FROM em falta.");
+    throw new Error("RESEND_API_KEY ou RESEND_EMAIL_FROM em falta.");
   }
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -237,22 +284,24 @@ async function sendResendEmailProvider({
   return data.id || null;
 }
 
-export function selectedEmailProvider() {
-  const provider = (process.env.EMAIL_PROVIDER || "").toLowerCase().trim();
+export async function selectedEmailProvider(): Promise<EmailProvider> {
+  const availability = emailProviderAvailability();
+  const settings = await getEmailProviderSettings().catch(() => null);
+  const configuredProvider = (settings?.ccEmails || "").toLowerCase().trim();
 
-  if (provider === "brevo" || provider === "resend") {
-    return provider;
+  if ((configuredProvider === "resend" || configuredProvider === "brevo") && availability[configuredProvider]) {
+    return configuredProvider;
   }
 
-  return process.env.BREVO_API_KEY ? "brevo" : "resend";
+  return configuredDefaultEmailProvider();
 }
 
-export function dailyEmailLimit() {
-  return selectedEmailProvider() === "brevo" ? 300 : 100;
+export async function dailyEmailLimit() {
+  return (await selectedEmailProvider()) === "brevo" ? 300 : 100;
 }
 
 export async function sendTransactionalEmail(payload: SendEmailPayload) {
-  return selectedEmailProvider() === "brevo" ? sendBrevoEmail(payload) : sendResendEmailProvider(payload);
+  return (await selectedEmailProvider()) === "brevo" ? sendBrevoEmail(payload) : sendResendEmailProvider(payload);
 }
 
 export const sendResendEmail = sendTransactionalEmail;

@@ -36,7 +36,7 @@ function extractEmail(value: string) {
 }
 
 function notificationTo(cc: string[]) {
-  return extractEmail(process.env.EMAIL_NOTIFICATION_TO || cc[0] || process.env.EMAIL_FROM || "");
+  return extractEmail(process.env.EMAIL_NOTIFICATION_TO || cc[0] || process.env.RESEND_EMAIL_FROM || process.env.BREVO_EMAIL_FROM || process.env.EMAIL_FROM || "");
 }
 
 async function logEmail({

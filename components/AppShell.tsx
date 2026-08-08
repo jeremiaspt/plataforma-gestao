@@ -178,7 +178,7 @@ export async function AppShell({
       })
     : [];
   const dailyEmailCount = sentEmailLogs.reduce((total, log) => total + countEmailRecipients(log), 0);
-  const emailDailyLimit = dailyEmailLimit();
+  const emailDailyLimit = await dailyEmailLimit();
   const dailyEmailTone = emailUsageTone(dailyEmailCount, emailDailyLimit);
 
   const mainItems: NavItem[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tone: "general" }];

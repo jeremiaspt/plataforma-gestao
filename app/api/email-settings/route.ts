@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
+import { emailProviderAvailability, setEmailProvider } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -21,9 +22,16 @@ export async function POST(request: Request) {
   const groupClassScheduleCcEmails = String(formData.get("groupClassScheduleCcEmails") || "").trim();
   const timesheetDocumentsEnabled = formData.get("timesheetDocumentsEnabled") === "on";
   const timesheetDocumentsCcEmails = String(formData.get("timesheetDocumentsCcEmails") || "").trim();
+  const selectedProvider = String(formData.get("emailProvider") || "").toLowerCase().trim();
+  const availability = emailProviderAvailability();
+
+  if ((selectedProvider !== "resend" && selectedProvider !== "brevo") || !availability[selectedProvider]) {
+    return NextResponse.redirect(appRedirectUrl("/configuracoes-email?tab=settings&error=1", request));
+  }
 
   try {
     await prisma.$transaction([
+      setEmailProvider(selectedProvider),
       prisma.emailSettings.upsert({
         where: { key: "personal_training_payment" },
         update: {
