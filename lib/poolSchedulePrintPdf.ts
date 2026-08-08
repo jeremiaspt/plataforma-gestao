@@ -167,25 +167,21 @@ function drawCenteredBlockText(
   options: { bold?: boolean; color?: string; size?: number } = {}
 ) {
   const fontSize = options.size || 5.4;
-  const textHeight = Math.min(
-    height - 4,
-    doc
-      .font(options.bold ? "Helvetica-Bold" : "Helvetica")
-      .fontSize(fontSize)
-      .heightOfString(text, { width: width - 5 })
-  );
+  const lines = text.split("\n").filter(Boolean);
+  const lineHeight = fontSize * 1.25;
+  const textHeight = Math.min(height - 4, lines.length * lineHeight);
   const textY = y + Math.max(2, (height - textHeight) / 2);
 
-  doc
-    .fillColor(options.color || "#0f172a")
-    .font(options.bold ? "Helvetica-Bold" : "Helvetica")
-    .fontSize(fontSize)
-    .text(text, x + 2.5, textY, {
+  doc.fillColor(options.color || "#0f172a").font(options.bold ? "Helvetica-Bold" : "Helvetica").fontSize(fontSize);
+
+  lines.forEach((line, index) => {
+    doc.text(line, x + 2.5, textY + index * lineHeight, {
       align: "center",
       ellipsis: true,
-      height: height - 4,
+      lineBreak: false,
       width: width - 5
     });
+  });
 }
 
 function drawPoolGrid({
