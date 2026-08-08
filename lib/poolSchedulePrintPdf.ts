@@ -167,17 +167,51 @@ function drawCenteredBlockText(
   options: { bold?: boolean; color?: string; size?: number } = {}
 ) {
   const fontSize = options.size || 5.4;
-  const lines = text.split("\n").filter(Boolean);
-  const lineHeight = fontSize * 1.25;
-  const textHeight = Math.min(height - 4, lines.length * lineHeight);
+  const maxWidth = width - 5;
+  const baseFont = options.bold ? "Helvetica-Bold" : "Helvetica";
+  const minFontSize = 3.4;
+  doc.font(baseFont).fontSize(fontSize);
+
+  const wrappedLines = text
+    .split("\n")
+    .filter(Boolean)
+    .flatMap((line) => {
+      const words = line.split(/\s+/).filter(Boolean);
+      const lines: string[] = [];
+      let currentLine = "";
+
+      for (const word of words) {
+        const nextLine = currentLine ? `${currentLine} ${word}` : word;
+        if (doc.widthOfString(nextLine) <= maxWidth || !currentLine) {
+          currentLine = nextLine;
+        } else {
+          lines.push(currentLine);
+          currentLine = word;
+        }
+      }
+
+      if (currentLine) lines.push(currentLine);
+      return lines;
+    });
+  const naturalHeight = wrappedLines.length * fontSize * 1.25;
+  const fittedFontSize = Math.max(minFontSize, Math.min(fontSize, ((height - 4) / Math.max(wrappedLines.length, 1)) / 1.25));
+  const lineHeight = fittedFontSize * 1.25;
+  const textHeight = Math.min(height - 4, naturalHeight, wrappedLines.length * lineHeight);
   const textY = y + Math.max(2, (height - textHeight) / 2);
 
-  doc.fillColor(options.color || "#0f172a").font(options.bold ? "Helvetica-Bold" : "Helvetica").fontSize(fontSize);
+  doc.fillColor(options.color || "#0f172a").font(baseFont);
 
-  lines.forEach((line, index) => {
+  wrappedLines.forEach((line, index) => {
+    let lineFontSize = fittedFontSize;
+    doc.fontSize(lineFontSize);
+
+    while (doc.widthOfString(line) > maxWidth && lineFontSize > minFontSize) {
+      lineFontSize -= 0.2;
+      doc.fontSize(lineFontSize);
+    }
+
     doc.text(line, x + 2.5, textY + index * lineHeight, {
       align: "center",
-      ellipsis: true,
       lineBreak: false,
       width: width - 5
     });
