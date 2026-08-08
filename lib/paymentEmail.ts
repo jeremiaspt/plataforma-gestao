@@ -72,12 +72,13 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
   `;
 
   try {
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       to: payload.teacherEmail,
       cc,
       subject,
       html,
-      text
+      text,
+      emailType: "personal_training_payment"
     });
 
     await prisma.emailLog.create({
@@ -87,7 +88,8 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
         toEmail: payload.teacherEmail,
         ccEmails: cc.join(", "),
         subject,
-        providerId,
+        provider: emailResult.provider,
+        providerId: emailResult.providerId,
         paymentId: paymentIdValue
       }
     });

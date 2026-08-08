@@ -486,6 +486,7 @@ model EmailSettings {
   key       String   @unique
   enabled   Boolean  @default(true)
   ccEmails  String?
+  provider  String   @default("resend")
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 }
@@ -506,6 +507,7 @@ model EmailLog {
   id         String   @id @default(cuid())
   type       String
   status     String
+  provider   String?
   toEmail    String
   ccEmails   String?
   subject    String
@@ -515,6 +517,7 @@ model EmailLog {
   createdAt  DateTime @default(now())
 
   @@index([createdAt])
+  @@index([provider, createdAt])
   @@index([type])
   @@index([status])
   @@index([status, createdAt])

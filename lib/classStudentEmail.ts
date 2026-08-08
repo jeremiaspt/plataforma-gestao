@@ -41,6 +41,7 @@ function notificationTo(cc: string[]) {
 
 async function logEmail({
   error,
+  provider,
   providerId,
   status,
   subject,
@@ -50,6 +51,7 @@ async function logEmail({
 }: {
   ccEmails: string;
   error?: string;
+  provider?: string | null;
   providerId?: string | null;
   status: string;
   subject: string;
@@ -63,6 +65,7 @@ async function logEmail({
       toEmail,
       ccEmails,
       subject,
+      provider,
       providerId,
       error
     }
@@ -125,14 +128,15 @@ export async function sendClassChangeEmail(payload: ClassChangeEmailPayload) {
   `;
 
   try {
-    const providerId = await sendTransactionalEmail({ to, cc: ccForSend, bcc: teacherEmails, subject, html, text });
+    const emailResult = await sendTransactionalEmail({ to, cc: ccForSend, bcc: teacherEmails, subject, html, text, emailType: "class_student_notifications" });
     await logEmail({
       type: "class_student_change",
       status: "sent",
       toEmail: recipientSummary,
       ccEmails: cc.join(", "),
       subject,
-      providerId
+      provider: emailResult.provider,
+      providerId: emailResult.providerId
     });
   } catch (error) {
     await logEmail({
@@ -195,12 +199,13 @@ export async function sendClassEnrollmentEmail(payload: ClassEnrollmentEmailPayl
   `;
 
   try {
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       to: payload.classOption.teacherEmail,
       cc,
       subject,
       html,
-      text
+      text,
+      emailType: "class_student_notifications"
     });
     await logEmail({
       type: "class_student_enrollment",
@@ -208,7 +213,8 @@ export async function sendClassEnrollmentEmail(payload: ClassEnrollmentEmailPayl
       toEmail: payload.classOption.teacherEmail,
       ccEmails: cc.join(", "),
       subject,
-      providerId
+      provider: emailResult.provider,
+      providerId: emailResult.providerId
     });
   } catch (error) {
     await logEmail({

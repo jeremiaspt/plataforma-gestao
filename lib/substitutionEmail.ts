@@ -51,6 +51,7 @@ async function logEmail({
   ccEmails,
   subject,
   providerId,
+  provider,
   error,
   requestId
 }: {
@@ -59,6 +60,7 @@ async function logEmail({
   toEmail: string;
   ccEmails: string;
   subject: string;
+  provider?: string | null;
   providerId?: string | null;
   error?: string;
   requestId: string;
@@ -70,6 +72,7 @@ async function logEmail({
       toEmail,
       ccEmails,
       subject,
+      provider,
       providerId,
       paymentId: requestId,
       error
@@ -116,12 +119,13 @@ export async function sendSubstitutionRequestEmail(payload: SubstitutionRequestE
   `;
 
   try {
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       to: payload.substituteTeacherEmail,
       cc,
       subject,
       html,
-      text
+      text,
+      emailType: "group_class_substitution"
     });
 
     await logEmail({
@@ -130,7 +134,8 @@ export async function sendSubstitutionRequestEmail(payload: SubstitutionRequestE
       toEmail: payload.substituteTeacherEmail,
       ccEmails: cc.join(", "),
       subject,
-      providerId,
+      provider: emailResult.provider,
+      providerId: emailResult.providerId,
       requestId: payload.requestId
     });
   } catch (error) {
@@ -186,12 +191,13 @@ export async function sendSubstitutionResponseEmail(payload: SubstitutionRespons
   `;
 
   try {
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       to: payload.absentTeacherEmail,
       cc,
       subject,
       html,
-      text
+      text,
+      emailType: "group_class_substitution"
     });
 
     await logEmail({
@@ -200,7 +206,8 @@ export async function sendSubstitutionResponseEmail(payload: SubstitutionRespons
       toEmail: payload.absentTeacherEmail,
       ccEmails: cc.join(", "),
       subject,
-      providerId,
+      provider: emailResult.provider,
+      providerId: emailResult.providerId,
       requestId: payload.requestId
     });
   } catch (error) {

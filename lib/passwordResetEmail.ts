@@ -63,13 +63,14 @@ export async function sendPasswordResetEmail({
   `;
 
   try {
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       to,
       cc: [],
       subject,
       html,
       text,
-      disableTracking: true
+      disableTracking: true,
+      emailType: "password_reset"
     });
 
     await prisma.emailLog.create({
@@ -78,7 +79,8 @@ export async function sendPasswordResetEmail({
         status: "sent",
         toEmail: to,
         subject,
-        providerId
+        provider: emailResult.provider,
+        providerId: emailResult.providerId
       }
     });
   } catch (error) {

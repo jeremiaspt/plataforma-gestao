@@ -25,7 +25,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 import { getSessionUser } from "@/lib/auth";
 import { currentBillingMonthValue } from "@/lib/billingCycles";
-import { dailyEmailLimit, parseEmailList } from "@/lib/email";
+import { configuredEmailProviders, emailProviderLimit, parseEmailList, type EmailProvider } from "@/lib/email";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
@@ -80,6 +80,10 @@ function emailUsageTone(count: number, limit: number) {
   if (usagePercent <= 50) return "ok";
   if (usagePercent <= 80) return "warning";
   return "danger";
+}
+
+function providerLabel(provider: EmailProvider) {
+  return provider === "brevo" ? "Brevo" : "Resend";
 }
 
 const professorSummaryCache = new Map<string, { expiresAt: number; groupHoursTotal: number; personalTrainingTotal: number }>();
@@ -173,13 +177,18 @@ export async function AppShell({
         },
         select: {
           ccEmails: true,
+          provider: true,
           toEmail: true
         }
       })
     : [];
-  const dailyEmailCount = sentEmailLogs.reduce((total, log) => total + countEmailRecipients(log), 0);
-  const emailDailyLimit = await dailyEmailLimit();
-  const dailyEmailTone = emailUsageTone(dailyEmailCount, emailDailyLimit);
+  const configuredProviders = isAdmin ? await configuredEmailProviders() : [];
+  const dailyEmailCounts = new Map<EmailProvider, number>();
+
+  for (const log of sentEmailLogs) {
+    const provider = log.provider === "brevo" ? "brevo" : "resend";
+    dailyEmailCounts.set(provider, (dailyEmailCounts.get(provider) || 0) + countEmailRecipients(log));
+  }
 
   const mainItems: NavItem[] = [{ href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", tone: "general" }];
   const adminItems: NavItem[] = isAdmin
@@ -306,14 +315,22 @@ export async function AppShell({
                 </span>
               </>
             ) : null}
-            {isAdmin ? (
-              <span className={`email-daily-summary email-daily-summary-${dailyEmailTone}`}>
-                <small>Emails hoje</small>
-                <strong>
-                  {dailyEmailCount}/{emailDailyLimit}
-                </strong>
-              </span>
-            ) : null}
+            {isAdmin
+              ? configuredProviders.map((provider) => {
+                  const count = dailyEmailCounts.get(provider) || 0;
+                  const limit = emailProviderLimit(provider);
+                  const tone = emailUsageTone(count, limit);
+
+                  return (
+                    <span className={`email-daily-summary email-daily-summary-${tone}`} key={provider}>
+                      <small>{providerLabel(provider)} hoje</small>
+                      <strong>
+                        {count}/{limit}
+                      </strong>
+                    </span>
+                  );
+                })
+              : null}
           </div>
         </div>
         {children}

@@ -249,7 +249,7 @@ const fields = {
     "createdByName",
     "createdAt"
   ],
-  emailSettings: ["id", "key", "enabled", "ccEmails", "updatedAt", "createdAt"],
+  emailSettings: ["id", "key", "enabled", "ccEmails", "provider", "updatedAt", "createdAt"],
   systemSettings: [
     "id",
     "key",
@@ -261,7 +261,7 @@ const fields = {
     "updatedAt",
     "createdAt"
   ],
-  emailLogs: ["id", "type", "status", "toEmail", "ccEmails", "subject", "providerId", "error", "paymentId", "createdAt"]
+  emailLogs: ["id", "type", "status", "provider", "toEmail", "ccEmails", "subject", "providerId", "error", "paymentId", "createdAt"]
 } as const;
 
 export async function POST(request: Request) {

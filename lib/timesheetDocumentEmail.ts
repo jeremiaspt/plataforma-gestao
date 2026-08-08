@@ -492,13 +492,14 @@ export async function sendTimesheetDocumentsEmail({
   `;
   const text = `Olá ${teacher.name},\n\nSegue em anexo a documentação selecionada referente ao período ${selectedMonth}.`;
 
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       attachments,
       cc,
       html,
       subject,
       text: `${previewText}\n\n${text}`,
-      to: teacher.email
+      to: teacher.email,
+      emailType: "timesheet_documents"
     });
 
     await prisma.emailLog.create({
@@ -508,7 +509,8 @@ export async function sendTimesheetDocumentsEmail({
         toEmail: teacher.email,
         ccEmails: cc.join(", "),
         subject,
-        providerId,
+        provider: emailResult.provider,
+        providerId: emailResult.providerId,
         paymentId: teacher.id
       }
     });

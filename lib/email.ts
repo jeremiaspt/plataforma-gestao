@@ -5,8 +5,16 @@ const substitutionNotificationKey = "group_class_substitution";
 const classStudentNotificationKey = "class_student_notifications";
 const groupClassScheduleNotificationKey = "group_class_schedule";
 const timesheetDocumentsNotificationKey = "timesheet_documents";
-const emailProviderKey = "email_provider";
-type EmailProvider = "resend" | "brevo";
+const passwordResetNotificationKey = "password_reset";
+export type EmailProvider = "resend" | "brevo";
+export const emailNotificationKeys = [
+  passwordResetNotificationKey,
+  paymentNotificationKey,
+  substitutionNotificationKey,
+  classStudentNotificationKey,
+  groupClassScheduleNotificationKey,
+  timesheetDocumentsNotificationKey
+] as const;
 
 export function parseEmailList(value?: string | null) {
   return (value || "")
@@ -22,7 +30,8 @@ export async function getPaymentEmailSettings() {
     create: {
       key: paymentNotificationKey,
       enabled: true,
-      ccEmails: ""
+      ccEmails: "",
+      provider: "resend"
     }
   });
 }
@@ -34,7 +43,8 @@ export async function getSubstitutionEmailSettings() {
     create: {
       key: substitutionNotificationKey,
       enabled: true,
-      ccEmails: ""
+      ccEmails: "",
+      provider: "resend"
     }
   });
 }
@@ -46,7 +56,8 @@ export async function getClassStudentEmailSettings() {
     create: {
       key: classStudentNotificationKey,
       enabled: true,
-      ccEmails: ""
+      ccEmails: "",
+      provider: "resend"
     }
   });
 }
@@ -58,7 +69,8 @@ export async function getGroupClassScheduleEmailSettings() {
     create: {
       key: groupClassScheduleNotificationKey,
       enabled: true,
-      ccEmails: ""
+      ccEmails: "",
+      provider: "resend"
     }
   });
 }
@@ -70,7 +82,21 @@ export async function getTimesheetDocumentsEmailSettings() {
     create: {
       key: timesheetDocumentsNotificationKey,
       enabled: true,
-      ccEmails: ""
+      ccEmails: "",
+      provider: "resend"
+    }
+  });
+}
+
+export async function getPasswordResetEmailSettings() {
+  return prisma.emailSettings.upsert({
+    where: { key: passwordResetNotificationKey },
+    update: {},
+    create: {
+      key: passwordResetNotificationKey,
+      enabled: true,
+      ccEmails: "",
+      provider: "resend"
     }
   });
 }
@@ -94,30 +120,54 @@ function configuredDefaultEmailProvider(): EmailProvider {
   return "brevo";
 }
 
-export async function getEmailProviderSettings() {
-  const defaultProvider = configuredDefaultEmailProvider();
-
-  return prisma.emailSettings.upsert({
-    where: { key: emailProviderKey },
-    update: {},
-    create: {
-      key: emailProviderKey,
-      enabled: true,
-      ccEmails: defaultProvider
-    }
-  });
+function isEmailProvider(value?: string | null): value is EmailProvider {
+  return value === "resend" || value === "brevo";
 }
 
-export function setEmailProvider(provider: EmailProvider) {
-  return prisma.emailSettings.upsert({
-    where: { key: emailProviderKey },
-    update: { ccEmails: provider },
-    create: {
-      key: emailProviderKey,
-      enabled: true,
-      ccEmails: provider
-    }
+export function normalizeEmailProvider(value?: string | null): EmailProvider {
+  return isEmailProvider(value) ? value : configuredDefaultEmailProvider();
+}
+
+export function resolveAvailableEmailProvider(value?: string | null): EmailProvider {
+  const requestedProvider = normalizeEmailProvider(value);
+  const availability = emailProviderAvailability();
+
+  if (availability[requestedProvider]) {
+    return requestedProvider;
+  }
+
+  return configuredDefaultEmailProvider();
+}
+
+export async function selectedEmailProviderForType(emailType?: string): Promise<EmailProvider> {
+  if (!emailType) {
+    return configuredDefaultEmailProvider();
+  }
+
+  const settings = await prisma.emailSettings.findUnique({ where: { key: emailType }, select: { provider: true } }).catch(() => null);
+  return resolveAvailableEmailProvider(settings?.provider);
+}
+
+export async function configuredEmailProviders() {
+  const settings = await prisma.emailSettings.findMany({
+    where: { key: { in: [...emailNotificationKeys] } },
+    select: { provider: true }
   });
+  const providers = new Set<EmailProvider>();
+
+  if (settings.length < emailNotificationKeys.length) {
+    providers.add(configuredDefaultEmailProvider());
+  }
+
+  for (const setting of settings) {
+    providers.add(resolveAvailableEmailProvider(setting.provider));
+  }
+
+  if (providers.size === 0) {
+    providers.add(configuredDefaultEmailProvider());
+  }
+
+  return Array.from(providers);
 }
 
 type EmailAttachment = {
@@ -131,6 +181,7 @@ type SendEmailPayload = {
   bcc?: string[];
   attachments?: EmailAttachment[];
   disableTracking?: boolean;
+  emailType?: string;
   subject: string;
   html: string;
   text: string;
@@ -284,24 +335,15 @@ async function sendResendEmailProvider({
   return data.id || null;
 }
 
-export async function selectedEmailProvider(): Promise<EmailProvider> {
-  const availability = emailProviderAvailability();
-  const settings = await getEmailProviderSettings().catch(() => null);
-  const configuredProvider = (settings?.ccEmails || "").toLowerCase().trim();
-
-  if ((configuredProvider === "resend" || configuredProvider === "brevo") && availability[configuredProvider]) {
-    return configuredProvider;
-  }
-
-  return configuredDefaultEmailProvider();
-}
-
-export async function dailyEmailLimit() {
-  return (await selectedEmailProvider()) === "brevo" ? 300 : 100;
+export function emailProviderLimit(provider: EmailProvider) {
+  return provider === "brevo" ? 300 : 100;
 }
 
 export async function sendTransactionalEmail(payload: SendEmailPayload) {
-  return (await selectedEmailProvider()) === "brevo" ? sendBrevoEmail(payload) : sendResendEmailProvider(payload);
+  const provider = await selectedEmailProviderForType(payload.emailType);
+  const providerId = provider === "brevo" ? await sendBrevoEmail(payload) : await sendResendEmailProvider(payload);
+
+  return { provider, providerId };
 }
 
 export const sendResendEmail = sendTransactionalEmail;

@@ -3497,6 +3497,13 @@ h1 {
   margin: 0 0 4px;
 }
 
+.email-provider-limit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 .email-stats-legend {
   display: flex;
   flex-wrap: wrap;
@@ -3537,7 +3544,23 @@ h1 {
   gap: 6px;
   grid-template-rows: 1fr auto;
   height: 205px;
-  min-width: 16px;
+  min-width: 34px;
+}
+
+.email-day-provider-bars {
+  display: grid;
+  gap: 3px;
+  grid-template-columns: 1fr 1fr;
+  height: 100%;
+  width: 100%;
+}
+
+.email-provider-bar-wrap {
+  align-items: center;
+  display: grid;
+  gap: 3px;
+  grid-template-rows: 1fr auto;
+  min-width: 0;
 }
 
 .email-day-bar-track {
@@ -3548,6 +3571,13 @@ h1 {
   height: 100%;
   overflow: hidden;
   width: 100%;
+}
+
+.email-provider-bar-wrap small {
+  color: #64748b;
+  font-size: 0.62rem;
+  line-height: 1;
+  text-align: center;
 }
 
 .email-day-bar-stack {

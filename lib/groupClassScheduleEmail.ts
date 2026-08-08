@@ -176,6 +176,7 @@ async function logEmail({
   ccEmails,
   subject,
   providerId,
+  provider,
   error,
   teacherId
 }: {
@@ -183,6 +184,7 @@ async function logEmail({
   toEmail: string;
   ccEmails: string;
   subject: string;
+  provider?: string | null;
   providerId?: string | null;
   error?: string;
   teacherId: string;
@@ -194,6 +196,7 @@ async function logEmail({
       toEmail,
       ccEmails,
       subject,
+      provider,
       providerId,
       paymentId: teacherId,
       error
@@ -295,12 +298,13 @@ export async function sendGroupClassScheduleEmail({ teacherId, weekStart }: { te
     </div>
   `;
   try {
-    const providerId = await sendTransactionalEmail({
+    const emailResult = await sendTransactionalEmail({
       to: teacher.email,
       cc,
       subject,
       html,
-      text: textLines.join("\n")
+      text: textLines.join("\n"),
+      emailType: "group_class_schedule"
     });
 
     await logEmail({
@@ -308,7 +312,8 @@ export async function sendGroupClassScheduleEmail({ teacherId, weekStart }: { te
       toEmail: teacher.email,
       ccEmails: cc.join(", "),
       subject,
-      providerId,
+      provider: emailResult.provider,
+      providerId: emailResult.providerId,
       teacherId
     });
     return { ok: true };

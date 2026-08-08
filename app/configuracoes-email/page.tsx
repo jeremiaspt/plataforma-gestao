@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { hasRole, requireUser } from "@/lib/auth";
 import {
-  dailyEmailLimit,
+  emailProviderLimit,
   emailProviderAvailability,
+  type EmailProvider,
   getClassStudentEmailSettings,
-  getEmailProviderSettings,
   getGroupClassScheduleEmailSettings,
   getPaymentEmailSettings,
+  getPasswordResetEmailSettings,
   getSubstitutionEmailSettings,
   getTimesheetDocumentsEmailSettings,
   parseEmailList
@@ -55,6 +56,41 @@ const emailTypeOrder = [
   "class_student_enrollment"
 ];
 
+function providerLabel(provider: EmailProvider) {
+  return provider === "brevo" ? "Brevo" : "Resend";
+}
+
+function resolveProvider(value?: string | null): EmailProvider {
+  return value === "brevo" ? "brevo" : "resend";
+}
+
+function ProviderSelect({
+  availability,
+  name,
+  value
+}: {
+  availability: Record<EmailProvider, boolean>;
+  name: string;
+  value?: string | null;
+}) {
+  const requested = resolveProvider(value);
+  const selected = availability[requested] ? requested : availability.resend ? "resend" : "brevo";
+
+  return (
+    <div className="field email-provider-field">
+      <label htmlFor={name}>Servico de envio</label>
+      <select id={name} name={name} defaultValue={selected}>
+        <option disabled={!availability.resend} value="resend">
+          Resend {availability.resend ? "" : "(por configurar)"}
+        </option>
+        <option disabled={!availability.brevo} value="brevo">
+          Brevo {availability.brevo ? "" : "(por configurar)"}
+        </option>
+      </select>
+    </div>
+  );
+}
+
 export default async function EmailSettingsPage({
   searchParams
 }: {
@@ -76,8 +112,7 @@ export default async function EmailSettingsPage({
     classStudentSettings,
     groupClassScheduleSettings,
     timesheetDocumentsSettings,
-    providerSettings,
-    currentDailyLimit,
+    passwordResetSettings,
     logs,
     monthlyLogs
   ] = await Promise.all([
@@ -86,8 +121,7 @@ export default async function EmailSettingsPage({
     getClassStudentEmailSettings(),
     getGroupClassScheduleEmailSettings(),
     getTimesheetDocumentsEmailSettings(),
-    getEmailProviderSettings(),
-    dailyEmailLimit(),
+    getPasswordResetEmailSettings(),
     prisma.emailLog.findMany({
       orderBy: { createdAt: "desc" },
       take: 100
@@ -104,13 +138,14 @@ export default async function EmailSettingsPage({
       select: {
         ccEmails: true,
         createdAt: true,
+        provider: true,
         toEmail: true,
         type: true
       }
     })
   ]);
   const providerAvailability = emailProviderAvailability();
-  const selectedProvider = providerSettings.ccEmails === "brevo" || providerSettings.ccEmails === "resend" ? providerSettings.ccEmails : "resend";
+  const providerList: EmailProvider[] = ["resend", "brevo"];
   const monthlyTypeSet = new Set(monthlyLogs.map((log) => log.type));
   const monthlyTypes = [
     ...emailTypeOrder.filter((type) => monthlyTypeSet.has(type)),
@@ -119,17 +154,21 @@ export default async function EmailSettingsPage({
   const daysInMonth = new Date(emailMonthBounds.start.getFullYear(), emailMonthBounds.start.getMonth() + 1, 0).getDate();
   const dailyStats = Array.from({ length: daysInMonth }, (_, index) => ({
     day: index + 1,
-    total: 0,
-    types: new Map<string, number>()
+    providers: new Map<EmailProvider, { total: number; types: Map<string, number> }>(),
+    total: 0
   }));
 
   for (const log of monthlyLogs) {
     const stat = dailyStats[log.createdAt.getDate() - 1];
+    const provider = resolveProvider(log.provider);
+    const providerStat = stat.providers.get(provider) || { total: 0, types: new Map<string, number>() };
     const count = countRecipients(log);
     stat.total += count;
-    stat.types.set(log.type, (stat.types.get(log.type) || 0) + count);
+    providerStat.total += count;
+    providerStat.types.set(log.type, (providerStat.types.get(log.type) || 0) + count);
+    stat.providers.set(provider, providerStat);
   }
-  const maxDailyTotal = Math.max(1, ...dailyStats.map((stat) => stat.total));
+  const maxDailyProviderTotal = Math.max(1, ...dailyStats.flatMap((stat) => providerList.map((provider) => stat.providers.get(provider)?.total || 0)));
 
   return (
     <AppShell userName={user.name} roles={roleKeys}>
@@ -160,23 +199,14 @@ export default async function EmailSettingsPage({
         {activeTab === "settings" ? (
           <form className="email-settings-form email-settings-card" action="/api/email-settings" method="post">
             <div className="email-settings-section">
-              <h2>Fornecedor de envio</h2>
-              <p className="muted">Quando Resend e Brevo estao configurados, a plataforma usa Resend por defeito. Podes alterar aqui.</p>
-              <div className="email-provider-options">
-                <label className="checkbox">
-                  <input type="radio" name="emailProvider" value="resend" defaultChecked={selectedProvider === "resend"} disabled={!providerAvailability.resend} />
-                  Resend {providerAvailability.resend ? "(configurado)" : "(por configurar)"}
-                </label>
-                <label className="checkbox">
-                  <input type="radio" name="emailProvider" value="brevo" defaultChecked={selectedProvider === "brevo"} disabled={!providerAvailability.brevo} />
-                  Brevo {providerAvailability.brevo ? "(configurado)" : "(por configurar)"}
-                </label>
-              </div>
-              <p className="muted">Limite usado no contador: {currentDailyLimit} emails/dia.</p>
+              <h2>Recuperacao de password</h2>
+              <p className="muted">Fornecedor usado para enviar links de redefinicao de password.</p>
+              <ProviderSelect availability={providerAvailability} name="passwordResetProvider" value={passwordResetSettings.provider} />
             </div>
 
             <div className="email-settings-section">
               <h2>Pagamentos TP</h2>
+              <ProviderSelect availability={providerAvailability} name="paymentProvider" value={paymentSettings.provider} />
               <label className="checkbox">
                 <input type="checkbox" name="paymentEnabled" defaultChecked={paymentSettings.enabled} />
                 Enviar emails ao professor quando é lançado um pagamento TP
@@ -195,6 +225,7 @@ export default async function EmailSettingsPage({
 
             <div className="email-settings-section">
               <h2>Substituições</h2>
+              <ProviderSelect availability={providerAvailability} name="substitutionProvider" value={substitutionSettings.provider} />
               <label className="checkbox">
                 <input type="checkbox" name="substitutionEnabled" defaultChecked={substitutionSettings.enabled} />
                 Enviar emails de pedidos e respostas de substituições
@@ -213,6 +244,7 @@ export default async function EmailSettingsPage({
 
             <div className="email-settings-section">
               <h2>Trocas e inscricoes</h2>
+              <ProviderSelect availability={providerAvailability} name="classStudentProvider" value={classStudentSettings.provider} />
               <label className="checkbox">
                 <input type="checkbox" name="classStudentEnabled" defaultChecked={classStudentSettings.enabled} />
                 Enviar emails de trocas de turma e novas inscricoes
@@ -231,6 +263,7 @@ export default async function EmailSettingsPage({
 
             <div className="email-settings-section">
               <h2>Mapa de aulas de grupo</h2>
+              <ProviderSelect availability={providerAvailability} name="groupClassScheduleProvider" value={groupClassScheduleSettings.provider} />
               <label className="checkbox">
                 <input type="checkbox" name="groupClassScheduleEnabled" defaultChecked={groupClassScheduleSettings.enabled} />
                 Permitir envio do mapa semanal de aulas ao professor
@@ -248,6 +281,7 @@ export default async function EmailSettingsPage({
             </div>
             <div className="email-settings-section">
               <h2>Envio de folhas</h2>
+              <ProviderSelect availability={providerAvailability} name="timesheetDocumentsProvider" value={timesheetDocumentsSettings.provider} />
               <label className="checkbox">
                 <input type="checkbox" name="timesheetDocumentsEnabled" defaultChecked={timesheetDocumentsSettings.enabled} />
                 Permitir envio da folha de horas e folha de treinos em PDF
@@ -303,7 +337,13 @@ export default async function EmailSettingsPage({
                 <h2>Emails enviados este mes</h2>
                 <p className="muted">Contagem diaria por tipo de email. Um email com CC conta por cada destinatario.</p>
               </div>
-              <span className="status active">Limite diario: {currentDailyLimit}</span>
+              <div className="email-provider-limit-list">
+                {providerList.map((provider) => (
+                  <span className="status active" key={provider}>
+                    {providerLabel(provider)}: {emailProviderLimit(provider)}/dia
+                  </span>
+                ))}
+              </div>
             </div>
             <div className="email-stats-legend">
               {monthlyTypes.length === 0 ? <span className="muted">Sem emails enviados este mes.</span> : null}
@@ -317,21 +357,42 @@ export default async function EmailSettingsPage({
             <div className="email-month-chart">
               {dailyStats.map((stat) => (
                 <div className="email-day-bar" key={stat.day} title={`${stat.day}: ${stat.total} email(s)`}>
-                  <div className="email-day-bar-track">
-                    <div className="email-day-bar-stack" style={{ height: `${Math.max(3, (stat.total / maxDailyTotal) * 100)}%` }}>
-                      {monthlyTypes.map((type, index) => {
-                        const value = stat.types.get(type) || 0;
-                        if (!value) return null;
-                        return (
-                          <span
-                            className={`email-day-bar-part email-stat-bg-${index % 8}`}
-                            key={type}
-                            style={{ height: `${(value / Math.max(1, stat.total)) * 100}%` }}
-                            title={`${emailTypeLabel(type)}: ${value}`}
-                          />
-                        );
-                      })}
-                    </div>
+                  <div className="email-day-provider-bars">
+                    {providerList.map((provider) => {
+                      const providerStat = stat.providers.get(provider) || { total: 0, types: new Map<string, number>() };
+                      const detail = monthlyTypes
+                        .map((type) => {
+                          const value = providerStat.types.get(type) || 0;
+                          return value ? `${emailTypeLabel(type)}: ${value}` : "";
+                        })
+                        .filter(Boolean)
+                        .join(" | ");
+
+                      return (
+                        <div className="email-provider-bar-wrap" key={provider}>
+                          <div
+                            className="email-day-bar-track"
+                            title={`${stat.day} ${providerLabel(provider)}: ${providerStat.total}${detail ? ` | ${detail}` : ""}`}
+                          >
+                            <div className="email-day-bar-stack" style={{ height: `${providerStat.total ? Math.max(3, (providerStat.total / maxDailyProviderTotal) * 100) : 0}%` }}>
+                              {monthlyTypes.map((type, index) => {
+                                const value = providerStat.types.get(type) || 0;
+                                if (!value) return null;
+                                return (
+                                  <span
+                                    className={`email-day-bar-part email-stat-bg-${index % 8}`}
+                                    key={type}
+                                    style={{ height: `${(value / Math.max(1, providerStat.total)) * 100}%` }}
+                                    title={`${emailTypeLabel(type)}: ${value}`}
+                                  />
+                                );
+                              })}
+                            </div>
+                          </div>
+                          <small>{providerStat.total}</small>
+                        </div>
+                      );
+                    })}
                   </div>
                   <span>{stat.day}</span>
                 </div>
