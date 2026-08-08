@@ -25,20 +25,24 @@ export async function POST(request: Request) {
   const passwordHash = await bcrypt.hash(password, 12);
   const roles = await prisma.role.findMany({ where: { key: { in: roleKeys } } });
 
-  await prisma.user.create({
-    data: {
-      name,
-      email,
-      phone,
-      billingCycle: "calendar_month",
-      passwordHash,
-      roles: {
-        create: roles.map((role) => ({
-          role: { connect: { id: role.id } }
-        }))
+  try {
+    await prisma.user.create({
+      data: {
+        name,
+        email,
+        phone,
+        billingCycle: "calendar_month",
+        passwordHash,
+        roles: {
+          create: roles.map((role) => ({
+            role: { connect: { id: role.id } }
+          }))
+        }
       }
-    }
-  });
+    });
+  } catch {
+    return NextResponse.redirect(appRedirectUrl("/utilizadores?error=1", request));
+  }
 
   return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
 }

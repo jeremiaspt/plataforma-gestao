@@ -1,5 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { getPaymentEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/html";
 import { formatCurrency } from "@/lib/money";
 import { prisma } from "@/lib/prisma";
 
@@ -57,15 +58,15 @@ export async function sendPaymentNotificationEmail(payload: PaymentEmailPayload)
       <h2>Pagamento TP lançado</h2>
       <p>Foi lançado um pagamento de treino personalizado.</p>
       <table style="border-collapse: collapse;">
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Professor</strong></td><td>${payload.teacherName}</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Professor</strong></td><td>${escapeHtml(payload.teacherName)}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Utentes</strong></td><td>${payload.students
-          .map((student) => `${student.fullName} (${student.memberNumber})`)
+          .map((student) => `${escapeHtml(student.fullName)} (${escapeHtml(student.memberNumber)})`)
           .join("<br />")}</td></tr>
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Tipo</strong></td><td>${payload.paymentTypeDescription}</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Tipo</strong></td><td>${escapeHtml(payload.paymentTypeDescription)}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Quantidade</strong></td><td>${payload.quantity}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Créditos</strong></td><td>${payload.totalCredits}</td></tr>
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Total professor</strong></td><td>${formatCurrency(payload.teacherTotal)}</td></tr>
-        <tr><td style="padding: 4px 10px 4px 0;"><strong>Lançado por</strong></td><td>${payload.createdByName}</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Total professor</strong></td><td>${escapeHtml(formatCurrency(payload.teacherTotal))}</td></tr>
+        <tr><td style="padding: 4px 10px 4px 0;"><strong>Lançado por</strong></td><td>${escapeHtml(payload.createdByName)}</td></tr>
         <tr><td style="padding: 4px 10px 4px 0;"><strong>Data</strong></td><td>${payload.createdAt.toLocaleString("pt-PT")}</td></tr>
       </table>
     </div>

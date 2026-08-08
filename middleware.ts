@@ -29,8 +29,11 @@ export function middleware(request: NextRequest) {
   }
 
   const response = NextResponse.next();
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin");
   response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-DNS-Prefetch-Control", "off");
   response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Permitted-Cross-Domain-Policies", "none");
   response.headers.set("Referrer-Policy", "same-origin");
   response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 

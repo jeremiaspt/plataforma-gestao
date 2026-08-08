@@ -1,4 +1,5 @@
 import { getSubstitutionEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
+import { escapeHtml } from "@/lib/html";
 import { formatMinutes, getPoolMapByKey } from "@/lib/pool";
 import { prisma } from "@/lib/prisma";
 
@@ -111,10 +112,10 @@ export async function sendSubstitutionRequestEmail(payload: SubstitutionRequestE
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
       <h2>Pedido de substituição</h2>
-      <p>Olá ${payload.substituteTeacherName},</p>
-      <p><strong>${payload.absentTeacherName}</strong> pediu substituição para <strong>${formatDate(payload.substitutionDate)}</strong>.</p>
-      <ul>${itemLines.map((line) => `<li>${line}</li>`).join("")}</ul>
-      <p><a href="${payload.actionUrl}" style="display:inline-block;padding:10px 14px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;">Ver pedido</a></p>
+      <p>Olá ${escapeHtml(payload.substituteTeacherName)},</p>
+      <p><strong>${escapeHtml(payload.absentTeacherName)}</strong> pediu substituição para <strong>${formatDate(payload.substitutionDate)}</strong>.</p>
+      <ul>${itemLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+      <p><a href="${escapeHtml(payload.actionUrl)}" style="display:inline-block;padding:10px 14px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;">Ver pedido</a></p>
     </div>
   `;
 
@@ -183,10 +184,10 @@ export async function sendSubstitutionResponseEmail(payload: SubstitutionRespons
   const html = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5;">
       <h2>Substituição ${payload.response === "approved" ? "aceite" : "rejeitada"}</h2>
-      <p>Olá ${payload.absentTeacherName},</p>
-      <p><strong>${payload.substituteTeacherName}</strong> ${responseLabel} a substituição de <strong>${formatDate(payload.substitutionDate)}</strong>.</p>
-      <ul>${itemLines.map((line) => `<li>${line}</li>`).join("")}</ul>
-      <p><a href="${payload.actionUrl}" style="display:inline-block;padding:10px 14px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;">Ver pedido</a></p>
+      <p>Olá ${escapeHtml(payload.absentTeacherName)},</p>
+      <p><strong>${escapeHtml(payload.substituteTeacherName)}</strong> ${responseLabel} a substituição de <strong>${formatDate(payload.substitutionDate)}</strong>.</p>
+      <ul>${itemLines.map((line) => `<li>${escapeHtml(line)}</li>`).join("")}</ul>
+      <p><a href="${escapeHtml(payload.actionUrl)}" style="display:inline-block;padding:10px 14px;background:#0f766e;color:#ffffff;text-decoration:none;border-radius:6px;">Ver pedido</a></p>
     </div>
   `;
 

@@ -94,21 +94,25 @@ export async function POST(
 
   const roles = await prisma.role.findMany({ where: { key: { in: roleKeys } } });
 
-  await prisma.user.update({
-    where: { id },
-    data: {
-      name,
-      email,
-      phone,
-      billingCycle,
-      roles: {
-        deleteMany: {},
-        create: roles.map((role) => ({
-          role: { connect: { id: role.id } }
-        }))
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: {
+        name,
+        email,
+        phone,
+        billingCycle,
+        roles: {
+          deleteMany: {},
+          create: roles.map((role) => ({
+            role: { connect: { id: role.id } }
+          }))
+        }
       }
-    }
-  });
+    });
+  } catch {
+    return NextResponse.redirect(appRedirectUrl("/utilizadores?error=1", request));
+  }
 
   return NextResponse.redirect(appRedirectUrl("/utilizadores", request));
 }

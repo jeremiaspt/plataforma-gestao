@@ -2,6 +2,7 @@ import PDFDocument from "pdfkit/js/pdfkit.standalone";
 import { currentBillingMonthValue, formatBillingPeriod, getBillingCycleLabel } from "@/lib/billingCycles";
 import { getTimesheetDocumentsEmailSettings, parseEmailList, sendTransactionalEmail } from "@/lib/email";
 import { calculateGroupClassTimesheet } from "@/lib/groupClassTimesheet";
+import { escapeHtml } from "@/lib/html";
 import { getSystemSettings } from "@/lib/maintenance";
 import { formatCurrency } from "@/lib/money";
 import { calculatePersonalTrainingTimesheet, eachPeriodDate } from "@/lib/personalTrainingTimesheet";
@@ -481,13 +482,14 @@ export async function sendTimesheetDocumentsEmail({
   }
 
   const previewText = `Folhas em anexo - ${teacher.name} - ${selectedMonth}`;
+  const safePreviewText = escapeHtml(previewText);
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#0f172a;">
-      <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${previewText}</div>
-      <p style="color:#475569;font-size:13px;margin:0 0 4px;">${previewText}</p>
+      <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${safePreviewText}</div>
+      <p style="color:#475569;font-size:13px;margin:0 0 4px;">${safePreviewText}</p>
       <h2>Folhas em anexo</h2>
-      <p>Olá ${teacher.name},</p>
-      <p>Segue em anexo a documentação selecionada referente ao período ${selectedMonth}.</p>
+      <p>Olá ${escapeHtml(teacher.name)},</p>
+      <p>Segue em anexo a documentação selecionada referente ao período ${escapeHtml(selectedMonth)}.</p>
     </div>
   `;
   const text = `Olá ${teacher.name},\n\nSegue em anexo a documentação selecionada referente ao período ${selectedMonth}.`;

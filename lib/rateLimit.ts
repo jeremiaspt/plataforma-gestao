@@ -4,9 +4,28 @@ type RateLimitEntry = {
 };
 
 const buckets = new Map<string, RateLimitEntry>();
+const maxBuckets = 5000;
+
+function pruneExpiredBuckets(now: number) {
+  for (const [key, entry] of buckets.entries()) {
+    if (entry.resetAt <= now) {
+      buckets.delete(key);
+    }
+  }
+
+  while (buckets.size > maxBuckets) {
+    const oldestKey = buckets.keys().next().value;
+    if (!oldestKey) break;
+    buckets.delete(oldestKey);
+  }
+}
 
 export function isRateLimited(key: string, limit: number, windowMs: number) {
   const now = Date.now();
+  if (buckets.size > maxBuckets) {
+    pruneExpiredBuckets(now);
+  }
+
   const current = buckets.get(key);
 
   if (!current || current.resetAt <= now) {

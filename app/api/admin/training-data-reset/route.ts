@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { hasRole, requireUser } from "@/lib/auth";
+import { deleteCloudinaryPhoto } from "@/lib/cloudinary";
 import { prisma } from "@/lib/prisma";
 import { appRedirectUrl } from "@/lib/url";
 
@@ -63,6 +64,18 @@ export async function POST(request: Request) {
     return NextResponse.redirect(appRedirectUrl(`${redirectPath}&resetError=1`, request));
   }
 
+  const [lostFoundPhotoRows, lostFoundLegacyPhotoRows] = selectedTargets.has("lostFound")
+    ? await Promise.all([
+        prisma.lostFoundItemPhoto.findMany({ select: { publicId: true } }),
+        prisma.lostFoundItem.findMany({ where: { photoPublicId: { not: null } }, select: { photoPublicId: true } })
+      ])
+    : [[], []];
+  const lostFoundPhotoPublicIds = Array.from(
+    new Set([
+      ...lostFoundPhotoRows.map((photo) => photo.publicId),
+      ...lostFoundLegacyPhotoRows.map((photo) => photo.photoPublicId).filter((publicId): publicId is string => Boolean(publicId))
+    ])
+  );
   const operations: Prisma.PrismaPromise<unknown>[] = [];
 
   if (selectedTargets.has("emailLogs")) {
@@ -108,6 +121,7 @@ export async function POST(request: Request) {
   }
 
   await prisma.$transaction(operations);
+  await Promise.all(lostFoundPhotoPublicIds.map((publicId) => deleteCloudinaryPhoto(publicId).catch(() => null)));
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&resetSuccess=1`, request));
 }

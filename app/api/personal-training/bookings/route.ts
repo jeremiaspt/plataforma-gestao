@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { hasRole, requireUser } from "@/lib/auth";
 import { getHolidayForDate } from "@/lib/holidays";
@@ -193,92 +194,118 @@ export async function POST(request: Request) {
 
   const bookingGroupId = crypto.randomUUID();
 
-  await prisma.$transaction(async (tx) => {
-    if (existingBookingGroupId) {
-      const existingBooking = existingBookingsForEdit[0];
-
-      await tx.personalTrainingBooking.updateMany({
+  try {
+    await prisma.$transaction(async (tx) => {
+      const currentOverlappingBookings = await tx.personalTrainingBooking.findMany({
         where: {
-          bookingGroupId: existingBookingGroupId,
-          teacherId,
-          status: { not: "cancelled" }
+          bookingDate: bookingDateValue,
+          poolBlockId,
+          status: { not: "cancelled" },
+          bookingGroupId: existingBookingGroupId ? { not: existingBookingGroupId } : undefined,
+          startMinutes: { lt: endMinutes },
+          endMinutes: { gt: startMinutes }
         },
-        data: { status: "cancelled" }
+        include: { paymentType: true }
+      });
+      const currentOverlappingGroups = new Set(currentOverlappingBookings.map((booking) => booking.bookingGroupId));
+      const currentSameTeacherOrStudent = currentOverlappingBookings.some(
+        (booking) => booking.teacherId === teacherId || (!isExperimentalBooking && studentIds.includes(booking.studentId))
+      );
+      const currentExistingExclusive = currentOverlappingBookings.some((booking) => isExclusiveTrainingType(booking.paymentType?.description));
+      const currentExceedsCapacity = currentOverlappingGroups.size >= 2;
+
+      if (currentSameTeacherOrStudent || currentExistingExclusive || (newExclusive && currentOverlappingGroups.size > 0) || currentExceedsCapacity) {
+        throw new Error("booking_conflict");
+      }
+
+      if (existingBookingGroupId) {
+        const existingBooking = existingBookingsForEdit[0];
+
+        await tx.personalTrainingBooking.updateMany({
+          where: {
+            bookingGroupId: existingBookingGroupId,
+            teacherId,
+            status: { not: "cancelled" }
+          },
+          data: { status: "cancelled" }
+        });
+
+        if (existingBooking) {
+          await tx.personalTrainingBookingLog.create({
+            data: {
+              action: "alteracao_cancelou_anterior",
+              bookingGroupId: existingBookingGroupId,
+              bookingDate: existingBooking.bookingDate,
+              teacherName: bookingTeacher.name,
+              studentNames: existingBookingsForEdit.map((booking) => booking.experimentalStudentName || booking.student.fullName).join(", "),
+              paymentType: existingBooking.paymentType?.description || null,
+              poolBlockTitle: existingBooking.poolBlock.title,
+              laneNumber: existingBooking.poolBlock.laneNumber,
+              startMinutes: existingBooking.startMinutes,
+              endMinutes: existingBooking.endMinutes,
+              createdById: user.id,
+              createdByName: user.name
+            }
+          });
+        }
+      }
+
+      const bookingStudentIds = isExperimentalBooking
+        ? [
+            (
+              await tx.personalTrainingStudent.create({
+                data: {
+                  fullName: experimentalStudentName,
+                  memberNumber: `EXP-${crypto.randomUUID()}`
+                },
+                select: { id: true }
+              })
+            ).id
+          ]
+        : studentIds;
+
+      await tx.personalTrainingBooking.createMany({
+        data: bookingStudentIds.map((studentId) => ({
+          bookingGroupId,
+          bookingDate: bookingDateValue,
+          poolBlockId,
+          teacherId,
+          studentId,
+          paymentTypeId: paymentType.id,
+          experimentalStudentName: isExperimentalBooking ? experimentalStudentName : null,
+          isExperimental: isExperimentalBooking,
+          startMinutes,
+          endMinutes,
+          durationMinutes,
+          creditsUsed: isExperimentalBooking ? 0 : 1
+        }))
       });
 
-      if (existingBooking) {
-        await tx.personalTrainingBookingLog.create({
-          data: {
-            action: "alteracao_cancelou_anterior",
-            bookingGroupId: existingBookingGroupId,
-            bookingDate: existingBooking.bookingDate,
-            teacherName: bookingTeacher.name,
-            studentNames: existingBookingsForEdit.map((booking) => booking.experimentalStudentName || booking.student.fullName).join(", "),
-            paymentType: existingBooking.paymentType?.description || null,
-            poolBlockTitle: existingBooking.poolBlock.title,
-            laneNumber: existingBooking.poolBlock.laneNumber,
-            startMinutes: existingBooking.startMinutes,
-            endMinutes: existingBooking.endMinutes,
-            createdById: user.id,
-            createdByName: user.name
-          }
-        });
-      }
-    }
+      const students = await tx.personalTrainingStudent.findMany({
+        where: { id: { in: bookingStudentIds } },
+        orderBy: { fullName: "asc" }
+      });
 
-    const bookingStudentIds = isExperimentalBooking
-      ? [
-          (
-            await tx.personalTrainingStudent.create({
-              data: {
-                fullName: experimentalStudentName,
-                memberNumber: `EXP-${crypto.randomUUID()}`
-              },
-              select: { id: true }
-            })
-          ).id
-        ]
-      : studentIds;
-
-    await tx.personalTrainingBooking.createMany({
-      data: bookingStudentIds.map((studentId) => ({
-        bookingGroupId,
-        bookingDate: bookingDateValue,
-        poolBlockId,
-        teacherId,
-        studentId,
-        paymentTypeId: paymentType.id,
-        experimentalStudentName: isExperimentalBooking ? experimentalStudentName : null,
-        isExperimental: isExperimentalBooking,
-        startMinutes,
-        endMinutes,
-        durationMinutes,
-        creditsUsed: isExperimentalBooking ? 0 : 1
-      }))
-    });
-
-    const students = await tx.personalTrainingStudent.findMany({
-      where: { id: { in: bookingStudentIds } },
-      orderBy: { fullName: "asc" }
-    });
-
-    await tx.personalTrainingBookingLog.create({
-      data: {
-        action: existingBookingGroupId ? "alteracao_criou_nova" : "criacao",
-        bookingGroupId,
-        bookingDate: bookingDateValue,
-        teacherName: bookingTeacher.name,
-        studentNames: isExperimentalBooking ? experimentalStudentName : students.map((student) => student.fullName).join(", "),
-        paymentType: paymentType.description,
-        poolBlockTitle: block.title,
-        laneNumber: block.laneNumber,
-        startMinutes,
-        endMinutes,
-        createdById: user.id,
-        createdByName: user.name
-      }
-    });
-  });
+      await tx.personalTrainingBookingLog.create({
+        data: {
+          action: existingBookingGroupId ? "alteracao_criou_nova" : "criacao",
+          bookingGroupId,
+          bookingDate: bookingDateValue,
+          teacherName: bookingTeacher.name,
+          studentNames: isExperimentalBooking ? experimentalStudentName : students.map((student) => student.fullName).join(", "),
+          paymentType: paymentType.description,
+          poolBlockTitle: block.title,
+          laneNumber: block.laneNumber,
+          startMinutes,
+          endMinutes,
+          createdById: user.id,
+          createdByName: user.name
+        }
+      });
+    }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
+  } catch {
+    return NextResponse.redirect(appRedirectUrl(errorPath, request));
+  }
 
   return NextResponse.redirect(appRedirectUrl(`${redirectPath}&success=1`, request));
 }
