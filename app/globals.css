@@ -385,6 +385,102 @@ select {
   padding: 12px 14px;
 }
 
+.print-color-card {
+  align-items: flex-end;
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(220px, 1fr) minmax(170px, 240px) minmax(220px, 1fr) 90px minmax(260px, 1.2fr) auto;
+  padding: 14px;
+}
+
+.print-color-card h2,
+.print-color-card p {
+  margin: 0;
+}
+
+.print-color-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.print-color-choice input {
+  position: absolute;
+  opacity: 0;
+}
+
+.print-color-choice span {
+  border: 2px solid;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 6px 9px;
+}
+
+.print-color-choice input:checked + span {
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.16);
+}
+
+.print-color-rules {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px;
+}
+
+.print-color-rules-header,
+.print-color-rule-row {
+  align-items: center;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: 58px minmax(170px, 1fr) minmax(220px, 1.2fr) 150px 80px 220px;
+  min-width: 980px;
+}
+
+.print-color-rules-header {
+  color: #475569;
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 0 8px;
+  text-transform: uppercase;
+}
+
+.print-color-rule-row {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.compact-checkbox {
+  justify-content: center;
+}
+
+.print-color-actions {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.print-color-swatch {
+  border: 2px solid;
+  border-radius: 999px;
+  display: inline-block;
+  height: 22px;
+  width: 22px;
+}
+
+.small-button {
+  padding: 9px 11px;
+}
+
 .timesheet-send-form {
   align-items: flex-end;
   background: #f8fafc;

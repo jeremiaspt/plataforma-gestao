@@ -173,6 +173,19 @@ model GroupClassHourlyRate {
   @@index([active, displayOrder])
 }
 
+model PrintMapColorRule {
+  id            String   @id @default(cuid())
+  name          String
+  matchPatterns String
+  colorKey      String   @default("mint")
+  displayOrder  Int      @default(0)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([active, displayOrder])
+}
+
 model BirthdayParty {
   id                 String                    @id @default(cuid())
   partyDate          DateTime                  @db.Date

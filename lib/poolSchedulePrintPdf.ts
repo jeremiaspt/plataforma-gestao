@@ -1,5 +1,6 @@
 import PDFDocument from "pdfkit/js/pdfkit.standalone";
 import { addDays, dateToInputValue, formatMinutes, poolBlockAppliesToDate, poolMaps, poolWeekdays } from "@/lib/pool";
+import { printMapPaletteItem, printMapRuleMatches } from "@/lib/printMapColors";
 import { prisma } from "@/lib/prisma";
 
 type PrintMode = "day" | "week";
@@ -18,6 +19,12 @@ type ScheduleBlock = {
   validFrom: Date | null;
   validTo: Date | null;
   weekday: number;
+};
+
+type PrintColorRule = {
+  active: boolean;
+  colorKey: string;
+  matchPatterns: string;
 };
 
 type PrintPage = {
@@ -132,6 +139,24 @@ function blockLabel(block: ScheduleBlock) {
   return parts.filter(Boolean).join(" - ");
 }
 
+function blockColors(block: ScheduleBlock, rules: PrintColorRule[], applies: boolean) {
+  if (!applies) {
+    return { fill: "#f1f5f9", stroke: "#94a3b8", text: "#64748b" };
+  }
+
+  const rule = rules.find((item) => item.active && printMapRuleMatches(block.title, item.matchPatterns));
+  if (rule) {
+    const color = printMapPaletteItem(rule.colorKey);
+    return { fill: color.fill, stroke: color.stroke, text: color.text };
+  }
+
+  if (block.type === "treino") {
+    return { fill: "#e6f5f2", stroke: "#0f766e", text: "#10233f" };
+  }
+
+  return { fill: "#dff0fb", stroke: "#2b6f9c", text: "#10233f" };
+}
+
 function drawCenteredBlockText(
   doc: PDFKit.PDFDocument,
   text: string,
@@ -165,6 +190,7 @@ function drawCenteredBlockText(
 
 function drawPoolGrid({
   blocks,
+  colorRules,
   date,
   doc,
   endMinutes,
@@ -183,6 +209,7 @@ function drawPoolGrid({
   startMinutes: number;
   width: number;
   x: number;
+  colorRules: PrintColorRule[];
 }) {
   const headerHeight = 38;
   const bodyTop = gridTop + headerHeight;
@@ -230,11 +257,9 @@ function drawPoolGrid({
       const blockW = laneWidth - 2.4;
       const blockH = Math.max(14, ((visibleEnd - visibleStart) / minutesRange) * bodyHeight - 2);
       const applies = poolBlockAppliesToDate(block, date);
-      const fill = applies ? (block.type === "treino" ? "#e6f5f2" : "#dff0fb") : "#f1f5f9";
-      const stroke = applies ? (block.type === "treino" ? "#0f766e" : "#2b6f9c") : "#94a3b8";
-      const textColor = applies ? "#10233f" : "#64748b";
+      const colors = blockColors(block, colorRules, applies);
 
-      doc.roundedRect(blockX, blockY, blockW, blockH, 3).fillAndStroke(fill, stroke);
+      doc.roundedRect(blockX, blockY, blockW, blockH, 3).fillAndStroke(colors.fill, colors.stroke);
       if (!applies) {
         doc
           .moveTo(blockX + 2, blockY + 2)
@@ -245,7 +270,7 @@ function drawPoolGrid({
       }
 
       const label = `${formatMinutes(block.startMinutes)}-${formatMinutes(block.endMinutes)}\n${blockLabel(block)}`;
-      drawCenteredBlockText(doc, label, blockX + 2, blockY + 2, blockW - 4, blockH - 4, { bold: true, color: textColor, size: blockH < 22 ? 4.3 : 5.2 });
+      drawCenteredBlockText(doc, label, blockX + 2, blockY + 2, blockW - 4, blockH - 4, { bold: true, color: colors.text, size: blockH < 22 ? 4.3 : 5.2 });
     }
 
     cursorX += poolWidth + groupGap;
@@ -273,7 +298,7 @@ function drawTimeAxis(doc: PDFKit.PDFDocument, x: number, y: number, width: numb
   }
 }
 
-function drawPage(doc: PDFKit.PDFDocument, page: PrintPage, blocks: ScheduleBlock[], pageNumber: number, pageCount: number) {
+function drawPage(doc: PDFKit.PDFDocument, page: PrintPage, blocks: ScheduleBlock[], colorRules: PrintColorRule[], pageNumber: number, pageCount: number) {
   const margin = doc.page.margins.left;
   const pageWidth = doc.page.width - margin - doc.page.margins.right;
   const titleY = doc.page.margins.top;
@@ -311,7 +336,8 @@ function drawPage(doc: PDFKit.PDFDocument, page: PrintPage, blocks: ScheduleBloc
     gridTop,
     startMinutes: page.startMinutes,
     width: pageWidth - axisWidth - 6,
-    x: margin + axisWidth + 6
+    x: margin + axisWidth + 6,
+    colorRules
   });
 
   doc
@@ -334,7 +360,8 @@ export async function generatePoolSchedulePrintPdf({
   const selectedWeekday = weekdayOrder.includes(Number(weekday)) ? Number(weekday) : 1;
   const pages = pageDefinitions(mode, selectedWeekday, startOfWeek);
   const weekdays = Array.from(new Set(pages.map((page) => page.weekday)));
-  const blocks = await prisma.poolScheduleBlock.findMany({
+  const [blocks, colorRules] = await Promise.all([
+    prisma.poolScheduleBlock.findMany({
     where: {
       active: true,
       poolKey: { in: poolOrder.map((poolMap) => poolMap.key) },
@@ -344,7 +371,13 @@ export async function generatePoolSchedulePrintPdf({
       teacher: { select: { name: true } }
     },
     orderBy: [{ poolKey: "asc" }, { laneNumber: "asc" }, { startMinutes: "asc" }]
-  });
+    }),
+    prisma.printMapColorRule.findMany({
+      where: { active: true },
+      orderBy: [{ displayOrder: "asc" }, { name: "asc" }],
+      select: { active: true, colorKey: true, matchPatterns: true }
+    })
+  ]);
 
   const doc = new PDFDocument({
     layout: "portrait",
@@ -358,6 +391,7 @@ export async function generatePoolSchedulePrintPdf({
       doc,
       page,
       blocks.filter((block) => block.weekday === page.weekday),
+      colorRules,
       index + 1,
       pages.length
     );

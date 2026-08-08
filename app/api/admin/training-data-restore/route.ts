@@ -261,7 +261,8 @@ const fields = {
     "updatedAt",
     "createdAt"
   ],
-  emailLogs: ["id", "type", "status", "provider", "toEmail", "ccEmails", "subject", "providerId", "error", "paymentId", "createdAt"]
+  emailLogs: ["id", "type", "status", "provider", "toEmail", "ccEmails", "subject", "providerId", "error", "paymentId", "createdAt"],
+  printMapColorRules: ["id", "name", "matchPatterns", "colorKey", "displayOrder", "active", "createdAt", "updatedAt"]
 } as const;
 
 export async function POST(request: Request) {
@@ -330,7 +331,8 @@ export async function POST(request: Request) {
     personalTrainingBookingLogs: cleanRows(data.personalTrainingBookingLogs, fields.personalTrainingBookingLogs),
     emailSettings: cleanRows(data.emailSettings, fields.emailSettings),
     systemSettings: cleanRows(data.systemSettings, fields.systemSettings),
-    emailLogs: cleanRows(data.emailLogs, fields.emailLogs)
+    emailLogs: cleanRows(data.emailLogs, fields.emailLogs),
+    printMapColorRules: cleanRows(data.printMapColorRules, fields.printMapColorRules)
   };
 
   try {
@@ -360,6 +362,7 @@ export async function POST(request: Request) {
       prisma.personalTrainingStudent.deleteMany({}),
       prisma.emailSettings.deleteMany({}),
       prisma.systemSettings.deleteMany({}),
+      prisma.printMapColorRule.deleteMany({}),
       prisma.userRole.deleteMany({}),
       prisma.rolePermission.deleteMany({}),
       prisma.user.deleteMany({}),
@@ -372,6 +375,7 @@ export async function POST(request: Request) {
       ...createMany(rows.rolePermissions, (items) => prisma.rolePermission.createMany({ data: items })),
       ...createMany(rows.emailSettings, (items) => prisma.emailSettings.createMany({ data: items })),
       ...createMany(rows.systemSettings, (items) => prisma.systemSettings.createMany({ data: items })),
+      ...createMany(rows.printMapColorRules, (items) => prisma.printMapColorRule.createMany({ data: items })),
       ...createMany(rows.personalTrainingPaymentTypes, (items) => prisma.personalTrainingPaymentType.createMany({ data: items })),
       ...createMany(rows.personalTrainingStudents, (items) => prisma.personalTrainingStudent.createMany({ data: items })),
       ...createMany(rows.groupClassHourlyRates, (items) => prisma.groupClassHourlyRate.createMany({ data: items })),

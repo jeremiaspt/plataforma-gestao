@@ -66,7 +66,8 @@ export async function GET() {
     personalTrainingBookingLogs,
     emailSettings,
     systemSettings,
-    emailLogs
+    emailLogs,
+    printMapColorRules
   ] = await Promise.all([
     prisma.user.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.role.findMany({ orderBy: { key: "asc" } }),
@@ -97,7 +98,8 @@ export async function GET() {
     prisma.personalTrainingBookingLog.findMany({ orderBy: { createdAt: "asc" } }),
     prisma.emailSettings.findMany({ orderBy: { key: "asc" } }),
     prisma.systemSettings.findMany({ orderBy: { key: "asc" } }),
-    prisma.emailLog.findMany({ orderBy: { createdAt: "asc" } })
+    prisma.emailLog.findMany({ orderBy: { createdAt: "asc" } }),
+    prisma.printMapColorRule.findMany({ orderBy: [{ displayOrder: "asc" }, { name: "asc" }] })
   ]);
 
   const exportedAt = new Date();
@@ -131,7 +133,8 @@ export async function GET() {
     personalTrainingBookingLogs,
     emailSettings,
     systemSettings,
-    emailLogs
+    emailLogs,
+    printMapColorRules
   };
   const counts = Object.fromEntries(Object.entries(data).map(([key, value]) => [key, value.length]));
   const payload = normalizeForJson({
